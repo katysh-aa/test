@@ -43,7 +43,9 @@
                 <span class="nav-label">План</span>
             </button>
             <button onclick="show('add')" class="nav-btn add-btn">
-                <img src="add-icon.png" alt="Добавить" class="add-icon">
+                <div class="add-btn-wrapper">
+                    <img src="add-icon.png" alt="Добавить" class="add-icon">
+                </div>
             </button>
             <button onclick="show('analytics')" class="nav-btn">
                 <span class="nav-icon-wrapper"><img src="analytics-icon.png" alt="Отчет" class="nav-icon"></span>
@@ -60,9 +62,9 @@
             <h2>🎯 Цель накоплений</h2>
             <div class="goal-section">
                 <label><strong>Установите цель:</strong></label>
-                <div class="input-group">
-                    <input type="number" id="savings-goal" value="500000" placeholder="500000" />
-                    <button onclick="saveGoal()" class="btn small">💾 Сохранить</button>
+                <div class="input-group full-width-group">
+                    <input type="number" id="savings-goal" value="500000" placeholder="500000" class="full-width-input" />
+                    <button onclick="saveGoal()" class="btn logout-btn small">💾 Сохранить</button>
                 </div>
             </div>
             <div class="savings-card">
