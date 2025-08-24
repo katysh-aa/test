@@ -512,44 +512,19 @@ document.getElementById('login-form').addEventListener('submit', e => {
         .catch(err => document.getElementById('auth-error').textContent = err.message);
 });
 
-// === 25. Прослушка состояния аутентификации
+// === 25. Прослушка аутентификации
 auth.onAuthStateChanged(user => {
-    // Ждём, пока DOM будет готов
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', () => {
-            handleAuthState(user);
-        });
+    if (user) {
+        document.getElementById('auth-screen').style.display = 'none';
+        document.getElementById('app').style.display = 'block';
+        loadFromFirebase();
+        loadGoalFromFirebase();
+        document.getElementById('date').valueAsDate = new Date();
     } else {
-        handleAuthState(user);
+        document.getElementById('app').style.display = 'none';
+        document.getElementById('auth-screen').style.display = 'block';
     }
 });
-
-function handleAuthState(user) {
-    if (user) {
-        console.log('🟢 Пользователь авторизован:', user.email);
-        const authScreen = document.getElementById('auth-screen');
-        const app = document.getElementById('app');
-        if (authScreen && app) {
-            authScreen.style.display = 'none';
-            app.style.display = 'block';
-            loadFromFirebase();
-            loadGoalFromFirebase();
-            if (typeof populateMonthSelect === 'function') {
-                populateMonthSelect();
-            }
-            const dateInput = document.getElementById('date');
-            if (dateInput) dateInput.valueAsDate = new Date();
-        }
-    } else {
-        console.log('🔴 Пользователь не авторизован');
-        const authScreen = document.getElementById('auth-screen');
-        const app = document.getElementById('app');
-        if (authScreen && app) {
-            app.style.display = 'none';
-            authScreen.style.display = 'block';
-        }
-    }
-}
 
 // === 26. Выход
 function logout() {
@@ -611,4 +586,76 @@ document.body.addEventListener('touchend', () => {
     isPulling = false;
     if (currentY - startY > 80) {
         refreshIndicator.style.opacity = 1;
- 
+        loadFromFirebase();
+        loadGoalFromFirebase();
+        setTimeout(() => refreshIndicator.style.opacity = 0, 1500);
+    } else {
+        refreshIndicator.style.opacity = 0;
+    }
+});
+
+// === 31. История
+function renderAllList(filtered = transactions) {
+    const list = document.getElementById('all-transactions');
+    list.innerHTML = '';
+    const sorted = [...filtered].sort((a, b) => new Date(b.date) - new Date(a.date));
+    sorted.forEach(tx => {
+        const li = document.createElement('li');
+        const amountColor = tx.type === 'income' ? '#34c759' : '#ff3b30';
+        const sign = tx.type === 'income' ? '+' : '-';
+        const comment = tx.comment ? `<div class="info">💬 ${tx.comment}</div>` : '';
+        li.innerHTML = `
+            <div>
+                <div><strong>${tx.category}</strong> <span style="color: ${amountColor}; font-weight: bold;">${sign}${formatNumber(tx.amount)} ₽</span></div>
+                <div class="info">${tx.date} · ${tx.author}</div>
+                ${comment}
+            </div>
+            <div class="actions">
+                <button class="btn small" onclick="startEdit('${tx.id}')">✏️</button>
+                <button class="btn small danger" onclick="deleteTransaction('${tx.id}')">🗑️</button>
+            </div>
+        `;
+        list.appendChild(li);
+    });
+}
+
+function filterByDate() {
+    const start = document.getElementById('filter-start').value;
+    const end = document.getElementById('filter-end').value;
+    let filtered = transactions;
+    if (start) filtered = filtered.filter(t => t.date >= start);
+    if (end) filtered = filtered.filter(t => t.date <= end);
+    renderAllList(filtered);
+}
+
+function clearFilter() {
+    document.getElementById('filter-start').value = '';
+    document.getElementById('filter-end').value = '';
+    renderAllList();
+}
+
+// === 32. Экспорт
+function exportToExcel() {
+    const start = document.getElementById('filter-start').value;
+    const end = document.getElementById('filter-end').value;
+    let filtered = [...transactions];
+    if (start) filtered = filtered.filter(t => t.date >= start);
+    if (end) filtered = filtered.filter(t => t.date <= end);
+    if (filtered.length === 0) {
+        alert('Нет данных для экспорта');
+        return;
+    }
+    const data = filtered.map(tx => ({
+        "Дата": tx.date,
+        "Категория": tx.category,
+        "Сумма": tx.amount,
+        "Тип": tx.type === 'income' ? 'Доход' : 'Расход',
+        "Автор": tx.author,
+        "Комментарий": tx.comment || ''
+    }));
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Операции");
+    const period = start && end ? `${start}_до_${end}` : "все";
+    XLSX.writeFile(wb, `финансы_экспорт_${period}.xlsx`);
+}
