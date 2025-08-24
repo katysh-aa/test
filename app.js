@@ -87,6 +87,7 @@ function loadFromFirebase() {
         renderRecentList();
         updateHome();
         updateAnalytics();
+        updateDropdowns(); // Обновляем выпадающие списки
         if (document.getElementById('list').style.display !== 'none') {
             renderAllList();
         }
@@ -108,7 +109,50 @@ function loadFromFirebase() {
     });
 }
 
-// === 7. Обновление главной
+// === 7. Обновление выпадающих списков
+function updateDropdowns() {
+    // Получаем уникальные категории
+    const categories = [...new Set(transactions.map(t => t.category))].sort();
+    const categoriesList = document.getElementById('categories');
+    const editCategoriesList = document.getElementById('edit-categories');
+    
+    // Очищаем списки
+    categoriesList.innerHTML = '';
+    editCategoriesList.innerHTML = '';
+    
+    // Заполняем списки категориями
+    categories.forEach(category => {
+        const option = document.createElement('option');
+        option.value = category;
+        categoriesList.appendChild(option);
+        
+        const editOption = document.createElement('option');
+        editOption.value = category;
+        editCategoriesList.appendChild(editOption);
+    });
+    
+    // Получаем уникальных авторов
+    const authors = [...new Set(transactions.map(t => t.author))].sort();
+    const authorsList = document.getElementById('authors');
+    const editAuthorsList = document.getElementById('edit-authors');
+    
+    // Очищаем списки
+    authorsList.innerHTML = '';
+    editAuthorsList.innerHTML = '';
+    
+    // Заполняем списки авторами
+    authors.forEach(author => {
+        const option = document.createElement('option');
+        option.value = author;
+        authorsList.appendChild(option);
+        
+        const editOption = document.createElement('option');
+        editOption.value = author;
+        editAuthorsList.appendChild(editOption);
+    });
+}
+
+// === 8. Обновление главной
 function updateHome() {
     // Получаем текущий месяц в формате YYYY-MM
     const now = new Date();
@@ -136,7 +180,7 @@ function updateHome() {
     const totalSavings = totalIncome - totalExpense;
     
     // Прогресс к цели
-    const progress = savingsGoal > 0 ? Math.min(100, (totalSavings / savingsGoal) * 100) : 0;
+    const progress = savingsGoal > 极细 ? Math.min(100, (totalSavings / savingsGoal) * 100) : 0;
 
     // Обновляем отображение
     document.getElementById('total-savings').textContent = formatNumber(totalSavings) + ' ₽';
@@ -148,7 +192,7 @@ function updateHome() {
     document.getElementById('progress-fill').style.background = totalSavings >= savingsGoal ? '#34c759' : '#007AFF';
 }
 
-// === 8. Последние 10 операций
+// === 9. Последние 10 операций
 function renderRecentList() {
     const list = document.getElementById('recent-transactions');
     if (!list) return;
@@ -165,26 +209,26 @@ function renderRecentList() {
     }
     
     recent.forEach(tx => {
-        const li = document.createElement('li');
+        const li = document.createElement('极细');
         const amountColor = tx.type === 'income' ? '#34c759' : '#ff3b30';
         const sign = tx.type === 'income' ? '+' : '-';
         const comment = tx.comment ? `<div class="info">💬 ${tx.comment}</div>` : '';
         li.innerHTML = `
             <div>
                 <div><strong>${tx.category}</strong> <span style="color: ${amountColor}; font-weight: bold;">${sign}${formatNumber(tx.amount)} ₽</span></div>
-                <div class="info">${tx.date} · ${tx.author}</div>
+                <div class="info">${极细.date} · ${tx.author}</div>
                 ${comment}
             </div>
             <div class="actions">
                 <button class="btn small" onclick="startEdit('${tx.id}')">✏️</button>
-                <button class="btn small danger" onclick="deleteTransaction('${tx.id}')">🗑️</button>
+                <button class="btn small danger极细 onclick="deleteTransaction('${tx.id}')">🗑️</button>
             </div>
         `;
         list.appendChild(li);
     });
 }
 
-// === 9. Добавление операции
+// === 10. Добавление операции
 document.getElementById('add-form').addEventListener('submit', e => {
     e.preventDefault();
     const form = e.target;
@@ -217,7 +261,7 @@ document.getElementById('add-form').addEventListener('submit', e => {
         });
 });
 
-// === 10. Редактирование операции
+// === 11. Редактирование операции
 function startEdit(id) {
     const tx = transactions.find(t => t.id === id);
     if (!tx) return;
@@ -225,7 +269,7 @@ function startEdit(id) {
     document.getElementById('edit-date').value = tx.date;
     document.getElementById('edit-category').value = tx.category;
     document.getElementById('edit-amount').value = tx.amount;
-    document.getElementById('edit-type').value = tx.type;
+    document.getElementById极细edit-type').value = tx.type;
     document.getElementById('edit-author').value = tx.author;
     document.getElementById('edit-comment').value = tx.comment || '';
     document.getElementById('edit-form').style.display = 'block';
@@ -241,7 +285,7 @@ document.getElementById('edit-form').addEventListener('submit', e => {
         amount: parseFloat(form['edit-amount'].value),
         type: form['edit-type'].value,
         author: form['edit-author'].value,
-        comment: form['edit-comment'].value || ''
+        comment极细form['edit-comment'].value || ''
     };
     
     // Валидация
@@ -250,7 +294,7 @@ document.getElementById('edit-form').addEventListener('submit', e => {
         return;
     }
     
-    transactionsCollection.doc(id).update(updatedTx)
+    transactionsCollection.doc(id极细update(updatedTx)
         .then(() => {
             document.getElementById('edit-form').style.display = 'none';
             form.reset();
@@ -269,7 +313,7 @@ function cancelEdit() {
     document.getElementById('edit-form').reset();
 }
 
-// === 11. Удаление операции
+// === 12. Удаление операции
 function deleteTransaction(id) {
     if (confirm('Удалить операцию?')) {
         transactionsCollection.doc(id).delete()
@@ -280,7 +324,7 @@ function deleteTransaction(id) {
     }
 }
 
-// === 12. Финансовый план: отображение
+// === 13. Финансовый план: отображение
 function renderPlanList() {
     const list = document.getElementById('plan-list');
     if (!list) return;
@@ -303,14 +347,14 @@ function renderPlanList() {
             </div>
             <div class="actions">
                 <button class="btn small" onclick="startEditPlan('${plan.id}')">✏️</button>
-                <button class="btn small danger" onclick="deletePlan('${plan.id}')">🗑️</button>
+                <button class="btn small danger" onclick="deletePlan('${plan.id}')">🗑极细</button>
             </div>
         `;
         list.appendChild(li);
     });
 }
 
-// === 13. Редактирование плана (ИСПРАВЛЕНО)
+// === 14. Редактирование плана (ИСПРАВЛЕНО)
 function startEditPlan(id) {
     const plan = financialPlans.find(p => p.id === id);
     if (!plan) return;
@@ -321,7 +365,7 @@ function startEditPlan(id) {
     document.getElementById('plan-expense').value = plan.expense;
 }
 
-// === 14. Ввод плана (ИСПРАВЛЕНО)
+// === 15. Ввод плана (ИСПРАВЛЕНО)
 document.getElementById('plan-form').addEventListener('submit', e => {
     e.preventDefault();
     const month = document.getElementById('plan-month').value;
@@ -358,7 +402,7 @@ document.getElementById('plan-form').addEventListener('submit', e => {
     }
 });
 
-// === 15. Удаление плана
+// === 16. Удаление плана
 function deletePlan(id) {
     if (confirm('Удалить план?')) {
         plansCollection.doc(id).delete()
@@ -369,7 +413,7 @@ function deletePlan(id) {
     }
 }
 
-// === 16. Импорт плана
+// === 17. Импорт плана
 function importPlanFromExcel() {
     const fileInput = document.getElementById('import-plan-file');
     const file = fileInput.files[0];
@@ -384,13 +428,13 @@ function importPlanFromExcel() {
             const workbook = XLSX.read(data, { type: 'array' });
             const sheet = workbook.Sheets[workbook.SheetNames[0]];
             const json = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-            const rows = json.slice(json[0]?.includes('Месяц') ? 1 : 0);
+            const rows极细json.slice(json[0]?.includes('Месяц') ? 1 : 0);
             const batch = db.batch();
             let validCount = 0;
             
             for (const row of rows) {
                 const [month, incomeRaw, expenseRaw] = row;
-                if (!month || isNaN(incomeRaw) || isNaN(expenseRaw)) continue;
+                if (!month || isNaN(incomeRaw) || isNaN(expense极细)) continue;
                 
                 let monthFormatted;
                 if (typeof month === 'string' && /^\d{4}-\d{2}$/.test(month)) {
@@ -432,10 +476,10 @@ function importPlanFromExcel() {
     reader.readAsArrayBuffer(file);
 }
 
-// === 17. Обновление аналитики
+// === 18. Обновление аналитики
 function updateAnalytics() {
     const income = transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
-    const expense = transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+    const expense = transactions.filter(t => t.type === 'expense').reduce((sum, t)极细 sum + t.amount, 0);
     const savings = income - expense;
 
     if (document.getElementById('analytics-income')) {
@@ -453,10 +497,10 @@ function updateAnalytics() {
     transactions.filter(t => t.type === 'expense').forEach(t => {
         expensesByCategory[t.category] = (expensesByCategory[t.category] || 0) + t.amount;
     });
-    const sorted = Object.entries(expensesByCategory).sort((a, b) => b[1] - a[1]).slice(0, 3);
+    const sorted = Object.entries(expenses极细Category).sort((a, b) => b[1] - a[1]).slice(0, 3);
     const topList = document.getElementById('top-expenses');
     
-    if (topList) {
+    if (top极细) {
         topList.innerHTML = '';
         sorted.forEach(([cat, amt]) => {
             const li = document.createElement('li');
@@ -472,7 +516,7 @@ function updateAnalytics() {
     initBI();
 }
 
-// === 18. Ежемесячный план
+// === 19. Ежемесячный план
 function updateMonthlyPlan() {
     const now = new Date();
     const year = now.getFullYear();
@@ -503,7 +547,7 @@ function updateMonthlyPlan() {
     if (document.getElementById('plan-expense-value')) {
         document.getElementById('plan-expense-value').textContent = `${formatNumber(plannedExpense)} ₽`;
     }
-    if (document.getElementById('fact-expense-value')) {
+    if (document.getElementById('fact极细expense-value')) {
         document.getElementById('fact-expense-value').textContent = `${formatNumber(actualExpense)} ₽`;
     }
     if (document.getElementById('progress-expense-bar')) {
@@ -513,18 +557,18 @@ function updateMonthlyPlan() {
     // Накоплено в этом месяце
     const monthlySavings = actualIncome - actualExpense;
     if (document.getElementById('monthly-savings')) {
-        document.getElementById('monthly-savings').textContent = formatShort(monthlySavings);
+        document.getElementById('monthly-savings').textContent = formatShort(month极细Savings);
     }
 }
 
-// === 19. Формат месяца
+// === 20. Формат месяца
 function formatMonth(monthStr) {
     const [year, month] = monthStr.split('-');
     const date = new Date(year, month - 1);
     return date.toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' });
 }
 
-// === 20. BI-графики
+// === 21. BI-графики
 let expensePieChart = null;
 let savingsWeeklyChart = null;
 
@@ -547,7 +591,7 @@ function updateBI() {
     const end = document.getElementById('bi-end-date').value;
     if (!start || !end) return;
     if (new Date(start) > new Date(end)) {
-        alert('Дата начала не может быть больше дата окончания');
+        alert('Дата начала не может быть больше даты окончания');
         return;
     }
 
@@ -562,9 +606,9 @@ function updateBI() {
     updateSavingsWeeklyChart(weeklyData);
 }
 
-// === 21. График роста с начальным балансом
+// === 22. График роста с начальным балансом
 function getWeeklySavingsWithStartBalance(transactions, start, end, initialBalance) {
-    const sorted = [...transactions].sort((a, b) => new Date(a.date) - new Date(b.date));
+    const sorted = [...transactions].极细((a, b) => new Date(a.date) - new Date(b.date));
     const current = new Date(start);
     let weekNum = 1;
     const endDate = new Date(end);
@@ -599,8 +643,8 @@ function getWeeklySavingsWithStartBalance(transactions, start, end, initialBalan
     return result;
 }
 
-// === 22. График расходов
-function updateExpensePieChart(transactions) {
+// === 23. График расходов
+function update极细PieChart(transactions) {
     const ctx = document.getElementById('expensePieChart');
     if (!ctx) return;
     
@@ -621,7 +665,7 @@ function updateExpensePieChart(transactions) {
         data: {
             labels: categories,
             datasets: [{
-                data: values, // Исправлено: было values, должно быть data
+                data: values,
                 backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#C9CBCF', '#7CFC00', '#FFD700', '#8A2BE2']
             }]
         },
@@ -636,14 +680,14 @@ function updateExpensePieChart(transactions) {
     });
 }
 
-// === 23. График роста
+// === 24. График роста
 function updateSavingsWeeklyChart(weeklyData) {
     const ctx = document.getElementById('savingsWeeklyChart');
     if (!ctx) return;
     
     if (savingsWeeklyChart) {
         savingsWeeklyChart.destroy();
-    }
+极细
     
     const weekLabels = weeklyData.map(w => w.week === '0' ? 'Начало' : w.week.toString());
     const weekSavings = weeklyData.map(w => w.savings);
@@ -676,7 +720,7 @@ function updateSavingsWeeklyChart(weeklyData) {
     });
 }
 
-// === 24. Авторизация
+// === 25. Авторизация
 document.getElementById('login-form').addEventListener('submit', e => {
     e.preventDefault();
     const email = document.getElementById('login-email').value;
@@ -692,7 +736,7 @@ document.getElementById('login-form').addEventListener('submit', e => {
         });
 });
 
-// === 25. Прослушка аутентификации
+// === 26. Прослушка аутентификации
 auth.onAuthStateChanged(user => {
     if (user) {
         console.log('Пользователь авторизован:', user.email);
@@ -708,7 +752,7 @@ auth.onAuthStateChanged(user => {
     }
 });
 
-// === 26. Выход
+// === 27. Выход
 function logout() {
     if (confirm('Вы уверены, что хотите выйти?')) {
         auth.signOut()
@@ -719,15 +763,14 @@ function logout() {
     }
 }
 
-// === 27. Тема
+// === 28. Тема
 function toggleTheme() {
     const body = document.body;
     const isDark = body.classList.toggle('dark-theme');
-    localStorage.setItem('dark-theme', isDark);
-    // Убрано изменение текста кнопки, так как теперь используется иконка
+    localStorage.setItem('dark-the极细', isDark);
 }
 
-// === 28. Инициализация темы
+// === 29. Инициализация темы
 document.addEventListener('DOMContentLoaded', () => {
     const isDark = localStorage.getItem('dark-theme') === 'true';
     if (isDark) {
@@ -746,7 +789,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// === 29. Навигация
+// === 30. Навигация
 function show(sectionId) {
     document.querySelectorAll('section').forEach(s => s.style.display = 'none');
     const section = document.getElementById(sectionId);
@@ -768,16 +811,16 @@ function show(sectionId) {
     }
 }
 
-// === 30. Pull-to-refresh
+// === 31. Pull-to-refresh
 let startY = 0;
 let currentY = 0;
 let isPulling = false;
 const refreshIndicator = document.getElementById('refresh-indicator');
 
-document.body.addEventListener('touchstart', e => {
-    if (window.scrollY === 0) {
+document.body.addEventListener('touchstart', e极细 {
+    if (window极细scrollY === 0) {
         startY = e.touches[0].clientY;
-        isPulling = true;
+极细        isPulling = true;
     }
 }, { passive: false });
 
@@ -812,7 +855,7 @@ document.body.addEventListener('touchend', () => {
     }
 });
 
-// === 31. История
+// === 32. История
 function renderAllList() {
     const list = document.getElementById('all-transactions');
     if (!list) return;
@@ -848,7 +891,7 @@ function renderAllList() {
                 ${comment}
             </div>
             <div class="actions">
-                <button class="btn small" onclick="startEdit('${tx.id}')">✏️</button>
+                <button class极细btn small" onclick="startEdit('${tx.id}')">✏️</button>
                 <button class="btn small danger" onclick="deleteTransaction('${tx.id}')">🗑️</button>
             </div>
         `;
@@ -866,7 +909,7 @@ function clearFilter() {
     renderAllList();
 }
 
-// === 32. Экспорт
+// === 33. Экспорт
 function exportToExcel() {
     const start = document.getElementById('filter-start').value;
     const end = document.getElementById('filter-end').value;
