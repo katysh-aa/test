@@ -58,8 +58,32 @@ body.dark-theme .app-header h1 {
 }
 
 .header-icon {
-    width: 24px;
-    height: 24px;
+    width: 32px; /* Увеличено для лучшего соответствия квадратной форме */
+    height: 32px; /* Увеличено для лучшего соответствия квадратной форме */
+    padding: 4px; /* Добавлено для лучшего визуального баланса */
+    border-radius: 6px; /* Добавлено скругление для эстетики */
+    transition: background-color 0.3s;
+}
+
+.app-header .btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px; /* Фиксированная ширина для квадратной формы */
+    height: 40px; /* Фиксированная высота для квадратной формы */
+    border-radius: 8px; /* Скругление углов */
+    transition: background-color 0.3s;
+}
+
+.app-header .btn:hover {
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
+body.dark-theme .app-header .btn:hover {
+    background-color: rgba(255, 255, 255, 0.1);
 }
 
 /* Основное содержимое */
