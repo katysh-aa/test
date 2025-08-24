@@ -73,13 +73,24 @@
             <h2>➕ Добавить операцию</h2>
             <form id="add-form">
                 <input type="date" id="date" required />
-                <input type="text" id="category" placeholder="Категория (еда, транспорт и т.д.)" required />
+                
+                <input list="categories" id="category" placeholder="Категория (еда, транспорт и т.д.)" required />
+                <datalist id="categories">
+                    <!-- Категории будут заполнены динамически -->
+                </datalist>
+                
                 <input type="number" id="amount" placeholder="Сумма" step="0.01" required />
+                
                 <select id="type" required>
                     <option value="income">Доход</option>
                     <option value="expense">Расход</option>
                 </select>
-                <input type="text" id="author" placeholder="Автор" required />
+                
+                <input list="authors" id="author" placeholder="Автор" required />
+                <datalist id="authors">
+                    <!-- Авторы будут заполнены динамически -->
+                </datalist>
+                
                 <input type="text" id="comment" placeholder="Комментарий (необязательно)" />
                 <button type="submit" class="btn">Добавить</button>
             </form>
@@ -87,13 +98,24 @@
             <form id="edit-form" style="display: none;">
                 <input type="hidden" id="edit-id" />
                 <input type="date" id="edit-date" required />
-                <input type="text" id="edit-category" placeholder="Категория" required />
+                
+                <input list="edit-categories" id="edit-category" placeholder="Категория" required />
+                <datalist id="edit-categories">
+                    <!-- Категории будут заполнены динамически -->
+                </datalist>
+                
                 <input type="number" id="edit-amount" placeholder="Сумма" step="0.01" required />
+                
                 <select id="edit-type" required>
                     <option value="income">Доход</option>
                     <option value="expense">Расход</option>
                 </select>
-                <input type="text" id="edit-author" placeholder="Автор" required />
+                
+                <input list="edit-authors" id="edit-author" placeholder="Автор" required />
+                <datalist id="edit-authors">
+                    <!-- Авторы будут заполнены динамически -->
+                </datalist>
+                
                 <input type="text" id="edit-comment" placeholder="Комментарий" />
                 <button type="submit" class="btn">Сохранить</button>
                 <button type="button" onclick="cancelEdit()" class="btn secondary">Отмена</button>
