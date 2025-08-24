@@ -12,11 +12,8 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-    <!-- Кнопка переключения темы -->
-    <button onclick="toggleTheme()" class="btn theme-toggle" title="Тёмная тема">🌙</button>
-    
-    <!-- Кнопка выхода -->
-    <button onclick="logout()" class="btn logout-btn" title="Выйти из аккаунта">🚪</button>
+    <!-- Загрузчик обновления -->
+    <div id="refresh-indicator" class="refresh-indicator"></div>
 
     <!-- Экран входа -->
     <section id="auth-screen" class="auth-screen">
@@ -32,17 +29,16 @@
 
     <!-- Основное приложение -->
     <div id="app" style="display: none;">
-        <!-- Загрузчик обновления -->
-        <div id="refresh-indicator" class="refresh-indicator"></div>
-
-        <!-- Навигация -->
-        <nav class="bottom-nav">
-            <button onclick="show('home')">🏠</button>
-            <button onclick="show('add')">➕</button>
-            <button onclick="show('plan')">📊</button>
-            <button onclick="show('analytics')">📈</button>
-            <button onclick="show('list')">📋</button>
-        </nav>
+        <!-- Заголовок с кнопками -->
+        <header class="app-header">
+            <button onclick="toggleTheme()" class="btn theme-toggle" title="Тёмная тема">
+                <img src="theme-icon.png" alt="Переключить тему" class="header-icon">
+            </button>
+            <h1 id="current-section-title">Главная</h1>
+            <button onclick="logout()" class="btn logout-btn" title="Выйти из аккаунта">
+                <img src="logout-icon.png" alt="Выйти" class="header-icon">
+            </button>
+        </header>
 
         <!-- Главная -->
         <section id="home">
@@ -54,17 +50,21 @@
                     <button onclick="saveGoal()" class="btn small">💾 Сохранить</button>
                 </div>
             </div>
-            <div class="savings-card">
-                <p class="total-savings" id="total-savings">0 ₽</p>
-                <p class="progress-text" id="progress-text">0% от цели</p>
-                <div class="progress-bar">
-                    <div id="progress-fill" class="progress-fill"></div>
+            
+            <h2>📊 Общий прогресс</h2>
+            <div class="stats-grid">
+                <div class="stat-card main-card">
+                    <h3>Всего накоплено</h3>
+                    <p class="value" id="total-savings">0 ₽</p>
                 </div>
-            </div>
-            <div class="card">
-                <h3>📊 Общий прогресс</h3>
-                <p><strong>Доход</strong> <span id="total-income">0 ₽</span></p>
-                <p><strong>Расход</strong> <span id="total-expense">0 ₽</span></p>
+                <div class="stat-card">
+                    <h3>Доход за месяц</h3>
+                    <p class="value" id="monthly-income">0 ₽</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Расход за месяц</h3>
+                    <p class="value" id="monthly-expense">0 ₽</p>
+                </div>
             </div>
         </section>
 
@@ -105,7 +105,7 @@
         <!-- Финансовый план -->
         <section id="plan" style="display: none;">
             <h2>📊 Финансовый план</h2>
-            <p>Запланируйте доходы и расходы по месяцам. Данные синхронизируются на всех устройствах.</p>
+            <p>Запланируйте доходы и расходы по месяцам. Данные синхронизируются на всех устройства.</p>
             <div class="card">
                 <h3>➕ Ввести вручную</h3>
                 <form id="plan-form">
@@ -161,7 +161,7 @@
                 <h3>📉 Расходы по категориям</h3>
                 <canvas id="expensePieChart"></canvas>
             </div>
-            <div class="chart-container">
+            <div class="chart-container fixed-height">
                 <h3>📈 Рост накоплений по неделям</h3>
                 <canvas id="savingsWeeklyChart"></canvas>
             </div>
@@ -179,6 +179,29 @@
             </div>
             <ul id="all-transactions"></ul>
         </section>
+
+        <!-- Навигация -->
+        <nav class="bottom-nav">
+            <button onclick="show('home')" class="nav-btn">
+                <img src="home-icon.png" alt="Главная" class="nav-icon">
+                <span>Главная</span>
+            </button>
+            <button onclick="show('plan')" class="nav-btn">
+                <img src="plan-icon.png" alt="План" class="nav-icon">
+                <span>План</span>
+            </button>
+            <button onclick="show('add')" class="nav-btn add-btn">
+                <img src="add-icon.png" alt="Добавить" class="nav-icon add-icon">
+            </button>
+            <button onclick="show('analytics')" class="nav-btn">
+                <img src="analytics-icon.png" alt="Отчет" class="nav-icon">
+                <span>Отчет</span>
+            </button>
+            <button onclick="show('list')" class="nav-btn">
+                <img src="list-icon.png" alt="История" class="nav-icon">
+                <span>История</span>
+            </button>
+        </nav>
     </div>
 
     <!-- Подключаем основной скрипт -->
