@@ -513,17 +513,24 @@ document.getElementById('login-form').addEventListener('submit', e => {
 });
 
 // === 25. Прослушка аутентификации
-auth.onAuthStateChanged(user => {
-    if (user) {
-        document.getElementById('auth-screen').style.display = 'none';
-        document.getElementById('app').style.display = 'block';
-        loadFromFirebase();
-        loadGoalFromFirebase();
-        document.getElementById('date').valueAsDate = new Date();
-    } else {
-        document.getElementById('app').style.display = 'none';
-        document.getElementById('auth-screen').style.display = 'block';
-    }
+document.addEventListener('DOMContentLoaded', () => {
+    auth.onAuthStateChanged(user => {
+        if (user) {
+            console.log('🟢 Пользователь авторизован:', user.email);
+            document.getElementById('auth-screen').style.display = 'none';
+            document.getElementById('app').style.display = 'block';
+            loadFromFirebase();
+            loadGoalFromFirebase();
+            if (typeof populateMonthSelect === 'function') {
+                populateMonthSelect();
+            }
+            document.getElementById('date').valueAsDate = new Date();
+        } else {
+            console.log('🔴 Пользователь не авторизован');
+            document.getElementById('app').style.display = 'none';
+            document.getElementById('auth-screen').style.display = 'block';
+        }
+    });
 });
 
 // === 26. Выход
