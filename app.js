@@ -110,17 +110,42 @@ function loadFromFirebase() {
 
 // === 7. Обновление главной
 function updateHome() {
-    const income = transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
-    const expense = transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
-    const savings = income - expense;
-    const progress = savingsGoal > 0 ? Math.min(100, (savings / savingsGoal) * 100) : 0;
+    // Получаем текущий месяц в формате YYYY-MM
+    const now = new Date();
+    const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    
+    // Доходы и расходы за текущий месяц
+    const monthIncome = transactions
+        .filter(t => t.type === 'income' && t.date.startsWith(currentMonth))
+        .reduce((sum, t) => sum + t.amount, 0);
+        
+    const monthExpense = transactions
+        .filter(t => t.type === 'expense' && t.date.startsWith(currentMonth))
+        .reduce((sum, t) => sum + t.amount, 0);
+    
+    // Общие доходы и расходы за все время
+    const totalIncome = transactions
+        .filter(t => t.type === 'income')
+        .reduce((sum, t) => sum + t.amount, 0);
+        
+    const totalExpense = transactions
+        .filter(t => t.type === 'expense')
+        .reduce((sum, t) => sum + t.amount, 0);
+    
+    // Общие накопления (разница между всеми доходами и расходами)
+    const totalSavings = totalIncome - totalExpense;
+    
+    // Прогресс к цели
+    const progress = savingsGoal > 0 ? Math.min(100, (totalSavings / savingsGoal) * 100) : 0;
 
-    document.getElementById('total-savings').textContent = formatNumber(savings) + ' ₽';
+    // Обновляем отображение
+    document.getElementById('total-savings').textContent = formatNumber(totalSavings) + ' ₽';
+    document.getElementById('monthly-income').textContent = formatNumber(monthIncome) + ' ₽';
+    document.getElementById('monthly-expense').textContent = formatNumber(monthExpense) + ' ₽';
+    
     document.getElementById('progress-fill').style.width = progress + '%';
-    document.getElementById('progress-text').textContent = `${Math.round(progress)}% от цели (${formatNumber(savings)} / ${formatNumber(savingsGoal)} ₽)`;
-    document.getElementById('progress-fill').style.background = savings >= savingsGoal ? '#34c759' : '#007AFF';
-    document.getElementById('total-income').textContent = formatNumber(income) + ' ₽';
-    document.getElementById('total-expense').textContent = formatNumber(expense) + ' ₽';
+    document.getElementById('progress-text').textContent = `${Math.round(progress)}% от цели (${formatNumber(totalSavings)} / ${formatNumber(savingsGoal)} ₽)`;
+    document.getElementById('progress-fill').style.background = totalSavings >= savingsGoal ? '#34c759' : '#007AFF';
 }
 
 // === 8. Последние 10 операций
@@ -522,7 +547,7 @@ function updateBI() {
     const end = document.getElementById('bi-end-date').value;
     if (!start || !end) return;
     if (new Date(start) > new Date(end)) {
-        alert('Дата начала не может быть больше даты окончания');
+        alert('Дата начала не может быть больше дата окончания');
         return;
     }
 
