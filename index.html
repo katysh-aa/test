@@ -1,30 +1,38 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <title>💰 Семейный бюджет</title>
-    <link rel="stylesheet" href="style.css" />
-    <!-- Иконка приложения -->
-    <link rel="apple-touch-icon" href="icon-192x192.png">
-    <link rel="icon" type="image/png" sizes="192x192" href="icon-192x192.png">
-    <link rel="manifest" href="manifest.json">
-    <!-- Firebase SDK -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Семейный бюджет</title>
+    <link rel="stylesheet" href="style.css">
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-    <!-- XLSX для импорта -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
+    <!-- Загрузчик обновления -->
+    <div id="refresh-indicator" class="refresh-indicator"></div>
+
+    <!-- Экран входа -->
+    <section id="auth-screen" class="auth-screen">
+        <h2>🔐 Вход в Семейный бюджет</h2>
+        <p>Введите email и пароль</p>
+        <form id="login-form">
+            <input type="email" id="login-email" placeholder="Email" required />
+            <input type="password" id="login-password" placeholder="Пароль" required />
+            <button type="submit" class="btn">Войти</button>
+            <p id="auth-error" style="color: red; margin-top: 10px;"></p>
+        </form>
+    </section>
+
     <!-- Основное приложение -->
     <div id="app" style="display: none;">
         <!-- Заголовок с кнопками -->
         <header class="app-header">
-            <button onclick="toggleTheme()" class="btn theme-toggle" title="Переключить тему">
-                <img src="theme-icon.png" alt="Переключить тему" class="header-icon" id="theme-icon-img">
+            <button onclick="toggleTheme()" class="btn theme-toggle" title="Тёмная тема">
+                <img src="theme-icon.png" alt="Переключить тему" class="header-icon">
             </button>
             <h1 id="current-section-title">Главная</h1>
             <button onclick="logout()" class="btn logout-btn" title="Выйти из аккаунта">
@@ -32,59 +40,30 @@
             </button>
         </header>
 
-        <!-- Навигация -->
-        <nav class="bottom-nav">
-            <button onclick="show('home')" class="nav-btn">
-                <span class="nav-icon-wrapper"><img src="home-icon.png" alt="Главная" class="nav-icon"></span>
-                <span class="nav-label">Главная</span>
-            </button>
-            <button onclick="show('plan')" class="nav-btn">
-                <span class="nav-icon-wrapper"><img src="plan-icon.png" alt="План" class="nav-icon"></span>
-                <span class="nav-label">План</span>
-            </button>
-            <button onclick="show('add')" class="nav-btn add-btn">
-                <div class="add-btn-wrapper">
-                    <img src="add-icon.png" alt="Добавить" class="add-icon">
-                </div>
-            </button>
-            <button onclick="show('analytics')" class="nav-btn">
-                <span class="nav-icon-wrapper"><img src="analytics-icon.png" alt="Отчет" class="nav-icon"></span>
-                <span class="nav-label">Отчет</span>
-            </button>
-            <button onclick="show('list')" class="nav-btn">
-                <span class="nav-icon-wrapper"><img src="list-icon.png" alt="История" class="nav-icon"></span>
-                <span class="nav-label">История</span>
-            </button>
-        </nav>
-
         <!-- Главная -->
         <section id="home">
             <h2>🎯 Цель накоплений</h2>
             <div class="goal-section">
                 <label><strong>Установите цель:</strong></label>
-                <div class="input-group full-width-group">
-                    <input type="number" id="savings-goal" value="500000" placeholder="500000" class="full-width-input" />
-                    <button onclick="saveGoal()" class="btn logout-btn small">💾 Сохранить</button>
+                <div class="input-group">
+                    <input type="number" id="savings-goal" value="500000" placeholder="500000" />
+                    <button onclick="saveGoal()" class="btn small">💾 Сохранить</button>
                 </div>
             </div>
-            <div class="savings-card">
-                <p class="total-savings" id="total-savings">0 ₽</p>
-                <p class="progress-text" id="progress-text">0% от цели</p>
-                <div class="progress-bar">
-                    <div id="progress-fill" class="progress-fill"></div>
+            
+            <h2>📊 Общий прогресс</h2>
+            <div class="stats-grid">
+                <div class="stat-card main-card">
+                    <h3>Всего накоплено</h3>
+                    <p class="value" id="total-savings">0 ₽</p>
                 </div>
-            </div>
-            <div class="card">
-                <h3>📊 Общий прогресс</h3>
-                <div class="stats-grid">
-                    <div class="stat-card income">
-                        <p><strong>Доход</strong></p>
-                        <p class="value" id="total-income">0 ₽</p>
-                    </div>
-                    <div class="stat-card expense">
-                        <p><strong>Расход</strong></p>
-                        <p class="value" id="total-expense">0 ₽</p>
-                    </div>
+                <div class="stat-card">
+                    <h3>Доход за месяц</h3>
+                    <p class="value" id="monthly-income">0 ₽</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Расход за месяц</h3>
+                    <p class="value" id="monthly-expense">0 ₽</p>
                 </div>
             </div>
         </section>
@@ -126,7 +105,7 @@
         <!-- Финансовый план -->
         <section id="plan" style="display: none;">
             <h2>📊 Финансовый план</h2>
-            <p>Запланируйте доходы и расходы по месяцам. Данные синхронизируются на всех устройствах.</p>
+            <p>Запланируйте доходы и расходы по месяцам. Данные синхронизируются на всех устройства.</p>
             <div class="card">
                 <h3>➕ Ввести вручную</h3>
                 <form id="plan-form">
@@ -182,7 +161,7 @@
                 <h3>📉 Расходы по категориям</h3>
                 <canvas id="expensePieChart"></canvas>
             </div>
-            <div class="chart-container">
+            <div class="chart-container fixed-height">
                 <h3>📈 Рост накоплений по неделям</h3>
                 <canvas id="savingsWeeklyChart"></canvas>
             </div>
@@ -200,19 +179,30 @@
             </div>
             <ul id="all-transactions"></ul>
         </section>
-    </div>
 
-    <!-- Экран входа -->
-    <section id="auth-screen" class="auth-screen">
-        <h2>🔐 Вход в Семейный бюджет</h2>
-        <p>Введите email и пароль</p>
-        <form id="login-form" class="auth-form">
-            <input type="email" id="login-email" placeholder="Email" required />
-            <input type="password" id="login-password" placeholder="Пароль" required />
-            <button type="submit" class="btn">Войти</button>
-        </form>
-        <p id="auth-error" class="auth-error"></p>
-    </section>
+        <!-- Навигация -->
+        <nav class="bottom-nav">
+            <button onclick="show('home')" class="nav-btn">
+                <img src="home-icon.png" alt="Главная" class="nav-icon">
+                <span>Главная</span>
+            </button>
+            <button onclick="show('plan')" class="nav-btn">
+                <img src="plan-icon.png" alt="План" class="nav-icon">
+                <span>План</span>
+            </button>
+            <button onclick="show('add')" class="nav-btn add-btn">
+                <img src="add-icon.png" alt="Добавить" class="nav-icon add-icon">
+            </button>
+            <button onclick="show('analytics')" class="nav-btn">
+                <img src="analytics-icon.png" alt="Отчет" class="nav-icon">
+                <span>Отчет</span>
+            </button>
+            <button onclick="show('list')" class="nav-btn">
+                <img src="list-icon.png" alt="История" class="nav-icon">
+                <span>История</span>
+            </button>
+        </nav>
+    </div>
 
     <!-- Подключаем основной скрипт -->
     <script src="app.js"></script>
