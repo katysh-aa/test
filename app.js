@@ -593,7 +593,7 @@ function updateSavingsWeeklyChart(weeklyData) {
         labels: weekLabels,
         datasets: [{
             label: 'Накопления (₽)',
-            data: weeklyData.map(w => w.savings),
+             weeklyData.map(w => w.savings),
             borderColor: '#34c759',
             backgroundColor: 'rgba(52, 199, 89, 0.2)',
             fill: true
@@ -677,7 +677,6 @@ function logout() {
 function toggleTheme() {
     const body = document.body;
     const isDark = body.classList.toggle('dark-theme');
-    const themeIconImg = document.getElementById('theme-icon-img');
     localStorage.setItem('dark-theme', isDark);
     updateThemeButton(isDark);
 }
@@ -685,7 +684,7 @@ function toggleTheme() {
 function updateThemeButton(isDark) {
     const themeIconImg = document.getElementById('theme-icon-img');
     if (themeIconImg) {
-        // Используем один и тот же файл, но инвертируем в тёмной теме
+        // Инвертируем иконку темы в тёмной теме
         themeIconImg.style.filter = isDark ? 'invert(1)' : 'invert(0)';
     }
 }
@@ -772,7 +771,7 @@ function renderAllList() {
     const list = document.getElementById('all-transactions');
     if (!list) return;
     list.innerHTML = '';
-    const filtered = transactions; // Можно добавить фильтрацию
+    const filtered = transactions;
     if (filtered.length === 0) {
         const li = document.createElement('li');
         li.style.color = '#999';
