@@ -33,6 +33,7 @@ body.dark-theme {
     z-index: 1000;
     height: 60px;
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
 }
 
 body.dark-theme .app-header {
@@ -121,9 +122,11 @@ body.dark-theme .bottom-nav {
 
 body.dark-theme .nav-btn {
     color: #0a84ff;
+    filter: invert(1);
 }
 
-.nav-btn.active, .nav-btn:hover {
+.nav-btn.active,
+.nav-btn:hover {
     opacity: 1;
     font-weight: bold;
 }
@@ -143,24 +146,30 @@ body.dark-theme .nav-btn {
     object-fit: contain;
 }
 
-/* === Круглая кнопка "Добавить" === */
+/* === Круглая кнопка "Добавить операцию" на подложке === */
 .add-btn {
     width: 56px;
     height: 56px;
-    background: #007AFF;
-    color: white;
-    border-radius: 50%;
-    font-size: 28px;
     display: flex;
     align-items: center;
     justify-content: center;
     margin-top: -22px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
     z-index: 2000;
-    border: none;
 }
 
-body.dark-theme .add-btn {
+.add-btn-wrapper {
+    width: 48px;
+    height: 48px;
+    background: #007AFF;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    transition: background 0.3s;
+}
+
+body.dark-theme .add-btn-wrapper {
     background: #0a84ff;
 }
 
@@ -182,6 +191,25 @@ body.dark-theme .add-btn {
 body.dark-theme .card {
     background: #2a2a2a;
     box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+}
+
+/* === Заливка карточек на главной вместо рамки === */
+.stat-card.income {
+    background: #e6f7e6;
+    border-left: none;
+}
+
+.stat-card.expense {
+    background: #ffe6e6;
+    border-left: none;
+}
+
+body.dark-theme .stat-card.income {
+    background: #1e4c1e;
+}
+
+body.dark-theme .stat-card.expense {
+    background: #4c1e1e;
 }
 
 /* === Прогресс-бар === */
@@ -236,6 +264,26 @@ body.dark-theme select:focus {
     border-color: #0a84ff;
 }
 
+/* === Поле "цель" и кнопка "сохранить" === */
+.full-width-group {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.full-width-group .full-width-input {
+    flex: 1;
+    margin-right: 8px;
+}
+
+.full-width-group .btn {
+    min-width: 100px;
+    padding: 10px 8px;
+    font-size: 14px;
+    height: 40px;
+}
+
+/* === Кнопки === */
 .btn {
     background: #007AFF;
     color: white;
@@ -445,23 +493,10 @@ body.dark-theme #edit-form {
 }
 
 .stat-card {
-    background: white;
     padding: 15px;
     border-radius: 10px;
     text-align: center;
     box-shadow: 0 1px 4px rgba(0,0,0,0.1);
-}
-
-body.dark-theme .stat-card {
-    background: #2a2a2a;
-}
-
-.stat-card.income {
-    border-left: 5px solid #34c759;
-}
-
-.stat-card.expense {
-    border-left: 5px solid #ff3b30;
 }
 
 .stat-card p {
