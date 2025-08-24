@@ -1,17 +1,49 @@
-/* === Глобальные стили === */
+/* === Объединенные стили === */
+
 * {
     box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 20px;
+    padding: 0 20px;
+}
+
+.header h1 {
+    margin: 0;
+    text-align: center;
+    flex: 1;
+    color: #007AFF;
+    font-size: 24px;
+}
+
+.header .btn {
+    background: transparent;
+    color: #007AFF;
+    font-size: 14px;
+    padding: 8px 12px;
+    border: 1px solid #007AFF;
+    border-radius: 8px;
+    width: auto;
+    min-width: 50px;
 }
 
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    margin: 0;
-    padding: 0;
-    background: #f5f5f5;
+    padding: 20px;
+    background: #f9f9f9;
     color: #333;
-    transition: background-color 0.3s, color 0.3s;
+    max-width: 600px;
+    margin: 0 auto;
     min-height: 100vh;
-    padding-bottom: 70px;
+    padding-bottom: 80px;
+    position: relative;
+    transition: background-color 0.3s, color 0.3s;
 }
 
 body.dark-theme {
@@ -19,7 +51,286 @@ body.dark-theme {
     color: #e0e0e0;
 }
 
-/* === Кнопки переключения темы и выхода === */
+h1 {
+    text-align: center;
+    color: #007AFF;
+    margin-bottom: 20px;
+}
+
+body.dark-theme h1 {
+    color: #0a84ff;
+}
+
+h2 {
+    border-bottom: 1px solid #eee;
+    padding-bottom: 8px;
+    margin-top: 30px;
+    text-align: center;
+    color: #333;
+    margin: 15px 15px 10px;
+}
+
+body.dark-theme h2 {
+    color: #e0e0e0;
+    border-color: #333;
+}
+
+h3 {
+    text-align: center;
+    color: #333;
+    margin: 15px 15px 10px;
+}
+
+body.dark-theme h3 {
+    color: #e0e0e0;
+}
+
+.btn {
+    background: #007AFF;
+    color: white;
+    border: none;
+    padding: 12px 16px;
+    border-radius: 10px;
+    font-size: 16px;
+    cursor: pointer;
+    display: block;
+    width: 100%;
+    margin: 10px 0;
+    transition: background 0.3s;
+}
+
+.btn.small {
+    width: auto;
+    padding: 8px 12px;
+    font-size: 14px;
+}
+
+.btn.danger {
+    background: #ff3b30;
+}
+
+.btn.success {
+    background: #34c759;
+}
+
+.btn.secondary {
+    background: #8e8e93;
+}
+
+body.dark-theme .btn {
+    background: #0a84ff;
+}
+
+body.dark-theme .btn.danger {
+    background: #ff453a;
+}
+
+body.dark-theme .btn.success {
+    background: #30d158;
+}
+
+body.dark-theme .btn.secondary {
+    background: #636366;
+}
+
+form {
+    display: grid;
+    gap: 12px;
+    background: white;
+    padding: 15px;
+    border-radius: 12px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+    transition: background-color 0.3s;
+}
+
+body.dark-theme form {
+    background: #2a2a2a;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+
+input,
+select {
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 16px;
+    transition: border-color 0.3s, background-color 0.3s, color 0.3s;
+}
+
+input:focus,
+select:focus {
+    outline: none;
+    border-color: #007AFF;
+}
+
+body.dark-theme input,
+body.dark-theme select {
+    background: #333;
+    color: #e0e0e0;
+    border-color: #555;
+}
+
+body.dark-theme input:focus,
+body.dark-theme select:focus {
+    border-color: #0a84ff;
+}
+
+ul {
+    list-style: none;
+    padding: 0 15px;
+}
+
+li {
+    background: white;
+    padding: 12px 15px;
+    border-radius: 10px;
+    margin: 8px 0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 16px;
+    border-bottom: 1px solid #eee;
+    transition: background-color 0.3s, border-color 0.3s;
+}
+
+li:last-child {
+    border-bottom: none;
+}
+
+body.dark-theme li {
+    background: #2a2a2a;
+    border-color: #333;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.info {
+    font-size: 14px;
+    color: #666;
+    transition: color 0.3s;
+}
+
+body.dark-theme .info {
+    color: #aaa;
+}
+
+.actions {
+    display: flex;
+    gap: 6px;
+}
+
+.actions button {
+    font-size: 14px;
+    padding: 6px 10px;
+    margin-left: 5px;
+}
+
+.edit-mode {
+    background: #fff8e1;
+    padding: 15px;
+    border-radius: 12px;
+    margin: 10px 0;
+    border: 1px solid #ffd600;
+    transition: background-color 0.3s;
+}
+
+body.dark-theme .edit-mode {
+    background: #2c2c3a;
+    border-color: #555;
+}
+
+.bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: white;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 15px 0;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    border-top: 1px solid #ddd;
+    height: 60px;
+    transition: background-color 0.3s, border-color 0.3s;
+}
+
+body.dark-theme .bottom-nav {
+    background: #2a2a2a;
+    border-color: #444;
+}
+
+.bottom-nav button {
+    background: none;
+    border: none;
+    color: #007AFF;
+    font-size: 14px;
+    opacity: 0.7;
+    padding: 0;
+    text-align: center;
+    line-height: 1.2;
+    transition: opacity 0.3s, color 0.3s;
+}
+
+.bottom-nav button.active {
+    opacity: 1;
+    font-weight: bold;
+}
+
+body.dark-theme .bottom-nav button {
+    color: #0a84ff;
+}
+
+.bottom-nav .nav-btn {
+    background: none;
+    border: none;
+    color: #007AFF;
+    opacity: 0.7;
+    font-size: 12px;
+    text-align: center;
+    line-height: 1.3;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    transition: opacity 0.3s, color 0.3s;
+}
+
+.bottom-nav .nav-btn.active {
+    opacity: 1;
+    font-weight: bold;
+}
+
+body.dark-theme .bottom-nav .nav-btn {
+    color: #0a84ff;
+}
+
+.bottom-nav .add-btn {
+    width: 56px;
+    height: 56px;
+    background: #007AFF;
+    color: white;
+    border-radius: 50%;
+    font-size: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: -22px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    opacity: 1;
+    z-index: 2000;
+    transition: background 0.3s;
+}
+
+.bottom-nav .add-btn.active {
+    opacity: 1;
+}
+
+body.dark-theme .bottom-nav .add-btn {
+    background: #0a84ff;
+}
+
 .theme-toggle, .logout-btn {
     position: fixed;
     top: 15px;
@@ -55,7 +366,6 @@ body.dark-theme .logout-btn {
     color: #fff;
 }
 
-/* === Экран входа === */
 .auth-screen {
     text-align: center;
     padding: 40px 20px;
@@ -65,6 +375,7 @@ body.dark-theme .logout-btn {
     justify-content: center;
     align-items: center;
     background: #f5f5f5;
+    transition: background-color 0.3s;
 }
 
 body.dark-theme .auth-screen {
@@ -90,6 +401,7 @@ body.dark-theme .auth-screen h2 {
     font-size: 16px;
     background: white;
     color: #333;
+    transition: border-color 0.3s, background-color 0.3s, color 0.3s;
 }
 
 body.dark-theme .auth-screen input {
@@ -102,54 +414,13 @@ body.dark-theme .auth-screen input {
     margin-top: 15px;
 }
 
-/* === Навигация (подвал) === */
-.bottom-nav {
-    position: fixed;
-    bottom: 0;
-    width: 100%;
-    display: flex;
-    background: #fff;
-    border-top: 1px solid #ddd;
-    padding: 10px 0;
-    box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
-    z-index: 1000;
-    height: 60px;
-}
-
-.bottom-nav button {
-    flex: 1;
-    font-size: 14px;
-    padding: 0;
-    border: none;
-    background: none;
-    color: #007AFF;
-    opacity: 0.7;
-    transition: opacity 0.3s;
-    line-height: 1.2;
-}
-
-.bottom-nav button.active {
-    opacity: 1;
-    font-weight: bold;
-}
-
-body.dark-theme .bottom-nav {
-    background: #2a2a2a;
-    border-color: #444;
-}
-
-body.dark-theme .bottom-nav button {
-    color: #0a84ff;
-}
-
-/* === Карточки === */
 .card {
     background: white;
     padding: 15px;
     border-radius: 10px;
     margin: 15px;
     box-shadow: 0 1px 4px rgba(0,0,0,0.1);
-    transition: background-color 0.3s;
+    transition: background-color 0.3s, box-shadow 0.3s;
 }
 
 body.dark-theme .card {
@@ -157,7 +428,6 @@ body.dark-theme .card {
     box-shadow: 0 1px 4px rgba(0,0,0,0.3);
 }
 
-/* === Прогресс-бар === */
 .progress-bar {
     height: 10px;
     background: #eee;
@@ -182,134 +452,6 @@ body.dark-theme .progress-fill {
     background: #0a84ff;
 }
 
-/* === Поля ввода и кнопки === */
-input, select, button {
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    font-size: 16px;
-    width: 100%;
-    transition: border-color 0.3s;
-}
-
-input:focus, select:focus {
-    outline: none;
-    border-color: #007AFF;
-}
-
-body.dark-theme input,
-body.dark-theme select {
-    background: #333;
-    color: #e0e0e0;
-    border-color: #555;
-}
-
-body.dark-theme input:focus,
-body.dark-theme select:focus {
-    border-color: #0a84ff;
-}
-
-.btn {
-    background: #007AFF;
-    color: white;
-    border: none;
-    padding: 10px 15px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 14px;
-    transition: background 0.3s;
-}
-
-.btn.small {
-    padding: 8px 12px;
-    font-size: 12px;
-}
-
-.btn.secondary {
-    background: #8e8e93;
-}
-
-.btn.danger {
-    background: #ff3b30;
-}
-
-.btn.success {
-    background: #34c759;
-}
-
-body.dark-theme .btn {
-    background: #0a84ff;
-}
-
-body.dark-theme .btn.secondary {
-    background: #636366;
-}
-
-body.dark-theme .btn.danger {
-    background: #ff453a;
-}
-
-body.dark-theme .btn.success {
-    background: #30d158;
-}
-
-/* === Списки === */
-ul {
-    list-style: none;
-    padding: 0 15px;
-}
-
-li {
-    padding: 12px;
-    border-bottom: 1px solid #eee;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    transition: background-color 0.2s;
-}
-
-li:last-child {
-    border-bottom: none;
-}
-
-body.dark-theme li {
-    border-color: #333;
-}
-
-/* === Действия в списках === */
-.actions button {
-    font-size: 14px;
-    padding: 6px 10px;
-    margin-left: 5px;
-}
-
-/* === Заголовки и текст === */
-h2, h3 {
-    margin: 15px 15px 10px;
-    color: #333;
-}
-
-body.dark-theme h2,
-body.dark-theme h3 {
-    color: #e0e0e0;
-}
-
-/* === Графики === */
-.chart-container {
-    background: white;
-    padding: 15px;
-    border-radius: 10px;
-    margin: 15px;
-    text-align: center;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
-}
-
-body.dark-theme .chart-container {
-    background: #2a2a2a;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.3);
-}
-
-/* === Фильтры и формы === */
 .filter-section {
     display: flex;
     gap: 10px;
@@ -321,7 +463,6 @@ body.dark-theme .chart-container {
     max-width: 120px;
 }
 
-/* === Секции формы === */
 .input-group {
     display: flex;
     gap: 8px;
@@ -332,7 +473,6 @@ body.dark-theme .chart-container {
     flex: 1;
 }
 
-/* === Секция цели === */
 .goal-section {
     padding: 15px;
 }
@@ -343,7 +483,6 @@ body.dark-theme .chart-container {
     font-weight: 500;
 }
 
-/* === Карточка накоплений === */
 .savings-card {
     background: white;
     padding: 20px 15px;
@@ -351,6 +490,7 @@ body.dark-theme .chart-container {
     border-radius: 10px;
     text-align: center;
     box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    transition: background-color 0.3s;
 }
 
 body.dark-theme .savings-card {
@@ -367,13 +507,13 @@ body.dark-theme .savings-card {
     color: #666;
     font-size: 14px;
     margin: 5px 0;
+    transition: color 0.3s;
 }
 
 body.dark-theme .progress-text {
     color: #aaa;
 }
 
-/* === Поле импорта Excel === */
 .file-input {
     max-width: 100%;
     padding: 0;
@@ -384,19 +524,20 @@ body.dark-theme .progress-text {
     font-size: 12px;
     color: #666;
     margin: 5px 15px 10px;
+    transition: color 0.3s;
 }
 
 body.dark-theme .excel-hint {
     color: #aaa;
 }
 
-/* === Секция редактирования === */
 #edit-form {
     padding: 15px;
     background: #f0f8ff;
     margin: 15px;
     border-radius: 10px;
     display: none;
+    transition: background-color 0.3s;
 }
 
 body.dark-theme #edit-form {
@@ -409,7 +550,6 @@ body.dark-theme #edit-form {
     margin-top: 10px;
 }
 
-/* === Статистика на главной === */
 .stats-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -423,6 +563,7 @@ body.dark-theme #edit-form {
     border-radius: 10px;
     text-align: center;
     box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    transition: background-color 0.3s;
 }
 
 body.dark-theme .stat-card {
@@ -446,17 +587,21 @@ body.dark-theme .stat-card {
     font-weight: bold;
 }
 
-/* === Комментарии к операциям === */
-.info {
-    font-size: 12px;
-    color: #666;
+.chart-container {
+    background: white;
+    padding: 15px;
+    border-radius: 10px;
+    margin: 15px;
+    text-align: center;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    transition: background-color 0.3s;
 }
 
-body.dark-theme .info {
-    color: #aaa;
+body.dark-theme .chart-container {
+    background: #2a2a2a;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.3);
 }
 
-/* === Индикатор обновления === */
 .refresh-indicator {
     position: fixed;
     top: 0;
