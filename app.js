@@ -512,26 +512,44 @@ document.getElementById('login-form').addEventListener('submit', e => {
         .catch(err => document.getElementById('auth-error').textContent = err.message);
 });
 
-// === 25. Прослушка аутентификации
-document.addEventListener('DOMContentLoaded', () => {
-    auth.onAuthStateChanged(user => {
-        if (user) {
-            console.log('🟢 Пользователь авторизован:', user.email);
-            document.getElementById('auth-screen').style.display = 'none';
-            document.getElementById('app').style.display = 'block';
+// === 25. Прослушка состояния аутентификации
+auth.onAuthStateChanged(user => {
+    // Ждём, пока DOM будет готов
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+            handleAuthState(user);
+        });
+    } else {
+        handleAuthState(user);
+    }
+});
+
+function handleAuthState(user) {
+    if (user) {
+        console.log('🟢 Пользователь авторизован:', user.email);
+        const authScreen = document.getElementById('auth-screen');
+        const app = document.getElementById('app');
+        if (authScreen && app) {
+            authScreen.style.display = 'none';
+            app.style.display = 'block';
             loadFromFirebase();
             loadGoalFromFirebase();
             if (typeof populateMonthSelect === 'function') {
                 populateMonthSelect();
             }
-            document.getElementById('date').valueAsDate = new Date();
-        } else {
-            console.log('🔴 Пользователь не авторизован');
-            document.getElementById('app').style.display = 'none';
-            document.getElementById('auth-screen').style.display = 'block';
+            const dateInput = document.getElementById('date');
+            if (dateInput) dateInput.valueAsDate = new Date();
         }
-    });
-});
+    } else {
+        console.log('🔴 Пользователь не авторизован');
+        const authScreen = document.getElementById('auth-screen');
+        const app = document.getElementById('app');
+        if (authScreen && app) {
+            app.style.display = 'none';
+            authScreen.style.display = 'block';
+        }
+    }
+}
 
 // === 26. Выход
 function logout() {
