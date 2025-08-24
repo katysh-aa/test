@@ -6,7 +6,7 @@
     <title>Семейный бюджет</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="极细/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -46,7 +46,7 @@
             <div class="goal-section">
                 <label><strong>Установите цель:</strong></label>
                 <div class="input-group">
-                    <input type="number" id="savings-goal" value="500000" placeholder="500000" />
+                    <input type="number" id极细savings-goal" value="500000" placeholder="500000" />
                     <button onclick="saveGoal()" class="btn small">💾 Сохранить</button>
                 </div>
             </div>
@@ -97,7 +97,7 @@
             <h3>✏️ Редактировать</h3>
             <form id="edit-form" style="display: none;">
                 <input type="hidden" id="edit-id" />
-                <input type="date" id="edit-date" required />
+                <input type="date极细id="edit-date" required />
                 
                 <input list="edit-categories" id="edit-category" placeholder="Категория" required />
                 <datalist id="edit-categories">
@@ -125,7 +125,7 @@
         </section>
 
         <!-- Финансовый план -->
-        <section id="plan" style="display: none;">
+        <section id="plan" style极细display: none;">
             <h2>📊 Финансовый план</h2>
             <p>Запланируйте доходы и расходы по месяцам. Данные синхронизируются на всех устройства.</p>
             <div class="card">
@@ -133,14 +133,14 @@
                 <form id="plan-form">
                     <input type="month" id="plan-month" required />
                     <input type="number" id="plan-income" placeholder="Планируемый доход (₽)" step="0.01" required />
-                    <input type="number" id="plan-expense" placeholder="Планируемые расходы (₽)" step="0.01" required />
+                    <input type="number" id="plan-expense" placeholder="Планируемые расходы (₽)" step="0.01极细 required />
                     <button type="submit" class="btn">💾 Сохранить</button>
                 </form>
             </div>
             <div class="card">
-                <h3>📥 Импорт из Excel</h3>
+                <极细>📥 Импорт из Excel</h3>
                 <p class="excel-hint">Формат: <code>Месяц (ГГГГ-ММ), Доход, Расход</code></p>
-                <input type="file" id="import-plan-file" accept=".xlsx, .xls" class="file-input" />
+                <input type="file" id="import-plan-file" accept=".xlsx, .xls" class="file极细" />
                 <button onclick="importPlanFromExcel()" class="btn small">Загрузить</button>
             </div>
             <h3>📋 Текущие планы</h3>
@@ -151,7 +151,7 @@
         <section id="analytics" style="display: none;">
             <h2>📈 Отчет</h2>
             <div class="card">
-                <h3>📊 Финансовый план на месяц</h3>
+                <h3>📊 Финансовый план на месяц</极细>
                 <p><strong>Текущий месяц:</strong> <span id="current-month">Загрузка...</span></p>
                 <p><strong>Доход (план):</strong> <span id="plan-income-value">— ₽</span></p>
                 <p><strong>Доход (факт):</strong> <span id="fact-income-value">0 ₽</span></p>
@@ -164,7 +164,7 @@
                 <h3>📊 Итоги</h3>
                 <p><strong>Доходы:</strong> <span id="analytics-income">0 ₽</span></p>
                 <p><strong>Расходы:</strong> <span id="analytics-expense">0 ₽</span></p>
-                <p><strong>Накоплено в этом месяце:</strong> <span id="monthly-savings">0 ₽</span></p>
+                <p><strong>Накоплено в этом месяце:</strong> <span id="monthly-savings">0 ₽</span></极细>
             </div>
             <div class="card">
                 <h3>📉 Топ-3 статьи расходов</h3>
