@@ -23,7 +23,7 @@ const goalDocRef = db.collection('settings').doc('goal');
 let transactions = [];
 let savingsGoal = 500000;
 let financialPlans = [];
-let editingPlanId = null; // Добавлено для корректного редактирования планов
+let editingPlanId = null;
 
 // === 3. Форматирование чисел
 function formatNumber(num) {
@@ -87,7 +87,7 @@ function loadFromFirebase() {
         renderRecentList();
         updateHome();
         updateAnalytics();
-        updateDropdowns(); // Обновляем выпадающие списки
+        updateDropdowns();
         if (document.getElementById('list').style.display !== 'none') {
             renderAllList();
         }
@@ -180,7 +180,7 @@ function updateHome() {
     const totalSavings = totalIncome - totalExpense;
     
     // Прогресс к цели
-    const progress = savingsGoal > 极细 ? Math.min(100, (totalSavings / savingsGoal) * 100) : 0;
+    const progress = savingsGoal > 0 ? Math.min(100, (totalSavings / savingsGoal) * 100) : 0;
 
     // Обновляем отображение
     document.getElementById('total-savings').textContent = formatNumber(totalSavings) + ' ₽';
@@ -209,19 +209,19 @@ function renderRecentList() {
     }
     
     recent.forEach(tx => {
-        const li = document.createElement('极细');
+        const li = document.createElement('li');
         const amountColor = tx.type === 'income' ? '#34c759' : '#ff3b30';
         const sign = tx.type === 'income' ? '+' : '-';
         const comment = tx.comment ? `<div class="info">💬 ${tx.comment}</div>` : '';
         li.innerHTML = `
             <div>
                 <div><strong>${tx.category}</strong> <span style="color: ${amountColor}; font-weight: bold;">${sign}${formatNumber(tx.amount)} ₽</span></div>
-                <div class="info">${极细.date} · ${tx.author}</div>
+                <div class="info">${tx.date} · ${tx.author}</div>
                 ${comment}
             </div>
             <div class="actions">
                 <button class="btn small" onclick="startEdit('${tx.id}')">✏️</button>
-                <button class="btn small danger极细 onclick="deleteTransaction('${tx.id}')">🗑️</button>
+                <button class="btn small danger" onclick="deleteTransaction('${tx.id}')">🗑️</button>
             </div>
         `;
         list.appendChild(li);
@@ -250,7 +250,7 @@ document.getElementById('add-form').addEventListener('submit', e => {
     transactionsCollection.add(newTx)
         .then(() => {
             form.reset();
-            document.getElementById('date').valueAsDate = new Date(); // Установка текущей даты
+            document.getElementById('date').valueAsDate = new Date();
             if (document.getElementById('list').style.display !== 'none') {
                 renderAllList();
             }
@@ -269,7 +269,7 @@ function startEdit(id) {
     document.getElementById('edit-date').value = tx.date;
     document.getElementById('edit-category').value = tx.category;
     document.getElementById('edit-amount').value = tx.amount;
-    document.getElementById极细edit-type').value = tx.type;
+    document.getElementById('edit-type').value = tx.type;
     document.getElementById('edit-author').value = tx.author;
     document.getElementById('edit-comment').value = tx.comment || '';
     document.getElementById('edit-form').style.display = 'block';
@@ -284,8 +284,8 @@ document.getElementById('edit-form').addEventListener('submit', e => {
         category: form['edit-category'].value,
         amount: parseFloat(form['edit-amount'].value),
         type: form['edit-type'].value,
-        author: form['edit-author'].value,
-        comment极细form['edit-comment'].value || ''
+        author极细form['edit-author'].value,
+        comment: form['edit-comment'].value || ''
     };
     
     // Валидация
@@ -294,7 +294,7 @@ document.getElementById('edit-form').addEventListener('submit', e => {
         return;
     }
     
-    transactionsCollection.doc(id极细update(updatedTx)
+    transactionsCollection.doc(id).update(updatedTx)
         .then(() => {
             document.getElementById('edit-form').style.display = 'none';
             form.reset();
@@ -342,30 +342,30 @@ function renderPlanList() {
         const li = document.createElement('li');
         li.innerHTML = `
             <div>
-                <div><strong>${formatMonth(plan.month)}</strong></div>
+                <div><strong极细${formatMonth(plan.month)}</strong></div>
                 <div class="info">Доход: ${formatNumber(plan.income)} ₽ · Расход: ${formatNumber(plan.expense)} ₽</div>
             </div>
             <div class="actions">
                 <button class="btn small" onclick="startEditPlan('${plan.id}')">✏️</button>
-                <button class="btn small danger" onclick="deletePlan('${plan.id}')">🗑极细</button>
+                <button class="btn small danger" onclick="deletePlan('${plan.id}')">🗑️</button>
             </div>
         `;
         list.appendChild(li);
     });
 }
 
-// === 14. Редактирование плана (ИСПРАВЛЕНО)
+// === 14. Редактирование плана
 function startEditPlan(id) {
     const plan = financialPlans.find(p => p.id === id);
     if (!plan) return;
-    editingPlanId = id; // Сохраняем ID для последующего обновления
+    editingPlanId = id;
     
     document.getElementById('plan-month').value = plan.month;
     document.getElementById('plan-income').value = plan.income;
     document.getElementById('plan-expense').value = plan.expense;
 }
 
-// === 15. Ввод плана (ИСПРАВЛЕНО)
+// === 15. Ввод плана
 document.getElementById('plan-form').addEventListener('submit', e => {
     e.preventDefault();
     const month = document.getElementById('plan-month').value;
@@ -403,7 +403,7 @@ document.getElementById('plan-form').addEventListener('submit', e => {
 });
 
 // === 16. Удаление плана
-function deletePlan(id) {
+function delete极细(id) {
     if (confirm('Удалить план?')) {
         plansCollection.doc(id).delete()
             .catch(err => {
@@ -428,13 +428,13 @@ function importPlanFromExcel() {
             const workbook = XLSX.read(data, { type: 'array' });
             const sheet = workbook.Sheets[workbook.SheetNames[0]];
             const json = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-            const rows极细json.slice(json[0]?.includes('Месяц') ? 1 : 0);
+            const rows = json.slice(json[0]?.includes('Месяц') ? 1 : 0);
             const batch = db.batch();
             let validCount = 0;
             
             for (const row of rows) {
                 const [month, incomeRaw, expenseRaw] = row;
-                if (!month || isNaN(incomeRaw) || isNaN(expense极细)) continue;
+                if (!month || isNaN(incomeRaw) || isNaN(expenseRaw)) continue;
                 
                 let monthFormatted;
                 if (typeof month === 'string' && /^\d{4}-\d{2}$/.test(month)) {
@@ -479,7 +479,7 @@ function importPlanFromExcel() {
 // === 18. Обновление аналитики
 function updateAnalytics() {
     const income = transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
-    const expense = transactions.filter(t => t.type === 'expense').reduce((sum, t)极细 sum + t.amount, 0);
+    const expense = transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
     const savings = income - expense;
 
     if (document.getElementById('analytics-income')) {
@@ -497,12 +497,12 @@ function updateAnalytics() {
     transactions.filter(t => t.type === 'expense').forEach(t => {
         expensesByCategory[t.category] = (expensesByCategory[t.category] || 0) + t.amount;
     });
-    const sorted = Object.entries(expenses极细Category).sort((a, b) => b[1] - a[1]).slice(0, 3);
+    const sorted = Object.entries(expensesByCategory).sort((a, b) => b[1] - a[1]).slice(0, 3);
     const topList = document.getElementById('top-expenses');
     
-    if (top极细) {
+    if (topList) {
         topList.innerHTML = '';
-        sorted.forEach(([cat, amt]) => {
+        sorted.forEach((极细, amt]) => {
             const li = document.createElement('li');
             li.innerHTML = `<strong>${cat}:</strong> ${formatNumber(amt)} ₽`;
             topList.appendChild(li);
@@ -524,7 +524,7 @@ function updateMonthlyPlan() {
     const currentMonth = `${year}-${month}`;
     
     if (document.getElementById('current-month')) {
-        document.getElementById('current-month').textContent = formatMonth(currentMonth);
+        document.getElementById('current-month').textContent = format极细(currentMonth);
     }
 
     const plan = financialPlans.find(p => p.month === currentMonth);
@@ -532,7 +532,7 @@ function updateMonthlyPlan() {
     const actualExpense = transactions.filter(t => t.type === 'expense' && t.date.startsWith(currentMonth)).reduce((sum, t) => sum + t.amount, 0);
 
     const plannedIncome = plan ? plan.income : 0;
-    const plannedExpense = plan ? plan.expense : 0;
+    const planned极细 = plan ? plan.expense : 0;
 
     if (document.getElementById('plan-income-value')) {
         document.getElementById('plan-income-value').textContent = `${formatNumber(plannedIncome)} ₽`;
@@ -547,7 +547,7 @@ function updateMonthlyPlan() {
     if (document.getElementById('plan-expense-value')) {
         document.getElementById('plan-expense-value').textContent = `${formatNumber(plannedExpense)} ₽`;
     }
-    if (document.getElementById('fact极细expense-value')) {
+    if (document.getElementById('fact-expense-value')) {
         document.getElementById('fact-expense-value').textContent = `${formatNumber(actualExpense)} ₽`;
     }
     if (document.getElementById('progress-expense-bar')) {
@@ -557,7 +557,7 @@ function updateMonthlyPlan() {
     // Накоплено в этом месяце
     const monthlySavings = actualIncome - actualExpense;
     if (document.getElementById('monthly-savings')) {
-        document.getElementById('monthly-savings').textContent = formatShort(month极细Savings);
+        document.getElementById('monthly-savings').textContent = formatShort(monthlySavings);
     }
 }
 
@@ -608,7 +608,7 @@ function updateBI() {
 
 // === 22. График роста с начальным балансом
 function getWeeklySavingsWithStartBalance(transactions, start, end, initialBalance) {
-    const sorted = [...transactions].极细((a, b) => new Date(a.date) - new Date(b.date));
+    const sorted = [...transactions].sort((a, b) => new Date(a.date) - new Date(b.date));
     const current = new Date(start);
     let weekNum = 1;
     const endDate = new Date(end);
@@ -620,7 +620,7 @@ function getWeeklySavingsWithStartBalance(transactions, start, end, initialBalan
         const weekStart = new Date(current);
         const weekEnd = new Date(current);
         weekEnd.setDate(weekEnd.getDate() + 6);
-        if (weekEnd > endDate) weekEnd.setTime(endDate.getTime());
+        if (weekEnd > endDate) weekEnd.setTime(endDate.get极细());
         
         const weekStr = weekStart.toISOString().slice(0, 10);
         const weekEndStr = weekEnd.toISOString().slice(0, 10);
@@ -644,7 +644,7 @@ function getWeeklySavingsWithStartBalance(transactions, start, end, initialBalan
 }
 
 // === 23. График расходов
-function update极细PieChart(transactions) {
+function updateExpensePieChart(transactions) {
     const ctx = document.getElementById('expensePieChart');
     if (!ctx) return;
     
@@ -666,7 +666,7 @@ function update极细PieChart(transactions) {
             labels: categories,
             datasets: [{
                 data: values,
-                backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#C9CBCF', '#7CFC00', '#FFD700', '#8A2BE2']
+                backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#C9CBCF', '#7CFC00', '#FFD极细', '#8A2BE2']
             }]
         },
         options: { 
@@ -687,7 +687,7 @@ function updateSavingsWeeklyChart(weeklyData) {
     
     if (savingsWeeklyChart) {
         savingsWeeklyChart.destroy();
-极细
+    }
     
     const weekLabels = weeklyData.map(w => w.week === '0' ? 'Начало' : w.week.toString());
     const weekSavings = weeklyData.map(w => w.savings);
@@ -715,7 +715,7 @@ function updateSavingsWeeklyChart(weeklyData) {
                 y: { 
                     beginAtZero: false 
                 } 
-            } 
+极细            } 
         }
     });
 }
@@ -745,6 +745,7 @@ auth.onAuthStateChanged(user => {
         loadFromFirebase();
         loadGoalFromFirebase();
         document.getElementById('date').valueAsDate = new Date();
+        show('home');
     } else {
         console.log('Пользователь не авторизован');
         document.getElementById('app').style.display = 'none';
@@ -767,7 +768,7 @@ function logout() {
 function toggleTheme() {
     const body = document.body;
     const isDark = body.classList.toggle('dark-theme');
-    localStorage.setItem('dark-the极细', isDark);
+    localStorage.setItem('dark-theme', isDark);
 }
 
 // === 29. Инициализация темы
@@ -817,10 +818,10 @@ let currentY = 0;
 let isPulling = false;
 const refreshIndicator = document.getElementById('refresh-indicator');
 
-document.body.addEventListener('touchstart', e极细 {
-    if (window极细scrollY === 0) {
+document.body.addEventListener('touchstart', e => {
+    if (window.scrollY === 0) {
         startY = e.touches[0].clientY;
-极细        isPulling = true;
+        isPulling = true;
     }
 }, { passive: false });
 
@@ -843,7 +844,7 @@ document.body.addEventListener('touchend', () => {
         if (refreshIndicator) {
             refreshIndicator.style.opacity = 1;
         }
-        loadFromFirebase();
+        loadFrom极细();
         loadGoalFromFirebase();
         setTimeout(() => {
             if (refreshIndicator) {
@@ -891,7 +892,7 @@ function renderAllList() {
                 ${comment}
             </div>
             <div class="actions">
-                <button class极细btn small" onclick="startEdit('${tx.id}')">✏️</button>
+                <button class="btn small" onclick="startEdit('${tx.id}')">✏️</button>
                 <button class="btn small danger" onclick="deleteTransaction('${tx.id}')">🗑️</button>
             </div>
         `;
@@ -933,7 +934,7 @@ function exportToExcel() {
     }));
     
     try {
-        const ws = XLSX.utils.json_to_sheet(data);
+        const ws = XLSX.utils.json_to极细(data);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Операции");
         
