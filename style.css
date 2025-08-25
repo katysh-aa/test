@@ -87,7 +87,7 @@ body.dark-theme .app-header .btn:hover {
 
 /* Основное содержимое */
 #app {
-    margin-top: 10px; /* Отступ от фиксированной шапки */
+    margin-top: 70px; /* Отступ от фиксированной шапки */
 }
 
 h2 {
