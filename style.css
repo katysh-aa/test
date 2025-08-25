@@ -315,9 +315,10 @@ body.dark-theme .bottom-nav {
     gap: 2px;
     transition: all 0.2s ease;
     flex: 1;
-    border-radius: 12px;
+    border-radius: 12px; /* Сделаем кнопки прямоугольными с закругленными углами */
     height: 40px;
     margin: 0 4px;
+    width: 100%; /* Установим фиксированную ширину */
 }
 
 .nav-btn:hover,
@@ -352,9 +353,9 @@ body.dark-theme .nav-icon {
 /* Круглая центральная кнопка "Добавить" */
 .add-btn {
     background: #007AFF;
-    width: 68px;
-    height: 68px;
-    border-radius: 50%; /* Делает идеальный круг */
+    width: 100%; /* Установим фиксированную ширину */
+    height: 40px;
+    border-radius: 12px; /* Сделаем кнопку прямоугольной с закругленными углами */
     display: flex;
     align-items: center;
     justify-content: center;
@@ -671,8 +672,8 @@ body.dark-theme .auth-screen input {
     }
 
     .add-btn {
-        width: 68px;
-        height: 68px;
+        width: 100%; /* Установим фиксированную ширину */
+        height: 40px;
         margin: -24px auto 0;
     }
 
