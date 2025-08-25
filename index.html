@@ -6,16 +6,14 @@
     <title>Семейный бюджет</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="极细/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-    <!-- Загрузчик обновления -->
     <div id="refresh-indicator" class="refresh-indicator"></div>
 
-    <!-- Экран входа -->
     <section id="auth-screen" class="auth-screen">
         <h2>🔐 Вход в Семейный бюджет</h2>
         <p>Введите email и пароль</p>
@@ -27,9 +25,7 @@
         </form>
     </section>
 
-    <!-- Основное приложение -->
     <div id="app" style="display: none;">
-        <!-- Заголовок с кнопками -->
         <header class="app-header">
             <button onclick="toggleTheme()" class="btn theme-toggle" title="Тёмная тема">
                 <img src="theme-icon.png" alt="Переключить тему" class="header-icon">
@@ -40,17 +36,15 @@
             </button>
         </header>
 
-        <!-- Главная -->
         <section id="home">
             <h2>🎯 Цель накоплений</h2>
             <div class="goal-section">
                 <label><strong>Установите цель:</strong></label>
                 <div class="input-group">
-                    <input type="number" id极细savings-goal" value="500000" placeholder="500000" />
+                    <input type="number" id="savings-goal" value="500000" placeholder="500000" />
                     <button onclick="saveGoal()" class="btn small">💾 Сохранить</button>
                 </div>
             </div>
-            
             <h2>📊 Общий прогресс</h2>
             <div class="stats-grid">
                 <div class="stat-card main-card">
@@ -68,54 +62,35 @@
             </div>
         </section>
 
-        <!-- Добавить операцию -->
         <section id="add" style="display: none;">
             <h2>➕ Добавить операцию</h2>
             <form id="add-form">
                 <input type="date" id="date" required />
-                
                 <input list="categories" id="category" placeholder="Категория (еда, транспорт и т.д.)" required />
-                <datalist id="categories">
-                    <!-- Категории будут заполнены динамически -->
-                </datalist>
-                
+                <datalist id="categories"></datalist>
                 <input type="number" id="amount" placeholder="Сумма" step="0.01" required />
-                
                 <select id="type" required>
                     <option value="income">Доход</option>
                     <option value="expense">Расход</option>
                 </select>
-                
                 <input list="authors" id="author" placeholder="Автор" required />
-                <datalist id="authors">
-                    <!-- Авторы будут заполнены динамически -->
-                </datalist>
-                
+                <datalist id="authors"></datalist>
                 <input type="text" id="comment" placeholder="Комментарий (необязательно)" />
                 <button type="submit" class="btn">Добавить</button>
             </form>
             <h3>✏️ Редактировать</h3>
             <form id="edit-form" style="display: none;">
                 <input type="hidden" id="edit-id" />
-                <input type="date极细id="edit-date" required />
-                
+                <input type="date" id="edit-date" required />
                 <input list="edit-categories" id="edit-category" placeholder="Категория" required />
-                <datalist id="edit-categories">
-                    <!-- Категории будут заполнены динамически -->
-                </datalist>
-                
+                <datalist id="edit-categories"></datalist>
                 <input type="number" id="edit-amount" placeholder="Сумма" step="0.01" required />
-                
                 <select id="edit-type" required>
                     <option value="income">Доход</option>
                     <option value="expense">Расход</option>
                 </select>
-                
                 <input list="edit-authors" id="edit-author" placeholder="Автор" required />
-                <datalist id="edit-authors">
-                    <!-- Авторы будут заполнены динамически -->
-                </datalist>
-                
+                <datalist id="edit-authors"></datalist>
                 <input type="text" id="edit-comment" placeholder="Комментарий" />
                 <button type="submit" class="btn">Сохранить</button>
                 <button type="button" onclick="cancelEdit()" class="btn secondary">Отмена</button>
@@ -124,34 +99,32 @@
             <ul id="recent-transactions"></ul>
         </section>
 
-        <!-- Финансовый план -->
-        <section id="plan" style极细display: none;">
+        <section id="plan" style="display: none;">
             <h2>📊 Финансовый план</h2>
-            <p>Запланируйте доходы и расходы по месяцам. Данные синхронизируются на всех устройства.</p>
+            <p>Запланируйте доходы и расходы по месяцам. Данные синхронизируются на всех устройствах.</p>
             <div class="card">
                 <h3>➕ Ввести вручную</h3>
                 <form id="plan-form">
                     <input type="month" id="plan-month" required />
                     <input type="number" id="plan-income" placeholder="Планируемый доход (₽)" step="0.01" required />
-                    <input type="number" id="plan-expense" placeholder="Планируемые расходы (₽)" step="0.01极细 required />
+                    <input type="number" id="plan-expense" placeholder="Планируемые расходы (₽)" step="0.01" required />
                     <button type="submit" class="btn">💾 Сохранить</button>
                 </form>
             </div>
             <div class="card">
-                <极细>📥 Импорт из Excel</h3>
+                <h3>📥 Импорт из Excel</h3>
                 <p class="excel-hint">Формат: <code>Месяц (ГГГГ-ММ), Доход, Расход</code></p>
-                <input type="file" id="import-plan-file" accept=".xlsx, .xls" class="file极细" />
+                <input type="file" id="import-plan-file" accept=".xlsx, .xls" class="file-input" />
                 <button onclick="importPlanFromExcel()" class="btn small">Загрузить</button>
             </div>
             <h3>📋 Текущие планы</h3>
             <ul id="plan-list"></ul>
         </section>
 
-        <!-- Отчет -->
         <section id="analytics" style="display: none;">
             <h2>📈 Отчет</h2>
             <div class="card">
-                <h3>📊 Финансовый план на месяц</极细>
+                <h3>📊 Финансовый план на месяц</h3>
                 <p><strong>Текущий месяц:</strong> <span id="current-month">Загрузка...</span></p>
                 <p><strong>Доход (план):</strong> <span id="plan-income-value">— ₽</span></p>
                 <p><strong>Доход (факт):</strong> <span id="fact-income-value">0 ₽</span></p>
@@ -164,7 +137,7 @@
                 <h3>📊 Итоги</h3>
                 <p><strong>Доходы:</strong> <span id="analytics-income">0 ₽</span></p>
                 <p><strong>Расходы:</strong> <span id="analytics-expense">0 ₽</span></p>
-                <p><strong>Накоплено в этом месяце:</strong> <span id="monthly-savings">0 ₽</span></极细>
+                <p><strong>Накоплено в этом месяце:</strong> <span id="monthly-savings">0 ₽</span></p>
             </div>
             <div class="card">
                 <h3>📉 Топ-3 статьи расходов</h3>
@@ -189,7 +162,6 @@
             </div>
         </section>
 
-        <!-- История -->
         <section id="list" style="display: none;">
             <h2>📋 История операций</h2>
             <div class="filter-section">
@@ -202,7 +174,6 @@
             <ul id="all-transactions"></ul>
         </section>
 
-        <!-- Навигация -->
         <nav class="bottom-nav">
             <button onclick="show('home')" class="nav-btn">
                 <img src="home-icon.png" alt="Главная" class="nav-icon">
@@ -226,7 +197,6 @@
         </nav>
     </div>
 
-    <!-- Подключаем основной скрипт -->
     <script src="app.js"></script>
 </body>
 </html>
