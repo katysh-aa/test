@@ -1,4 +1,4 @@
-// === app.js — Исправленная версия
+// === app.js — Полностью исправленная версия
 // === 1. Firebase Config
 const firebaseConfig = {
     apiKey: "AIzaSyCw3MkLyY_3wL5lPFZP3RN3pNNL_5MXfCQ",
@@ -30,7 +30,6 @@ function formatNumber(num) {
     return num.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
 }
 
-// Форматирование в тыс. р.
 function formatShort(num) {
     if (isNaN(num) || num === null) return "0";
     return (num / 1000).toFixed(1).replace(/\.0$/, "") + " тыс. р.";
@@ -77,7 +76,6 @@ function saveGoal() {
 
 // === 6. Загрузка данных
 function loadFromFirebase() {
-    // Обработка ошибок для транзакций
     transactionsCollection.orderBy('date', 'desc').onSnapshot(snapshot => {
         transactions = [];
         snapshot.forEach(doc => {
@@ -95,7 +93,6 @@ function loadFromFirebase() {
         alert("Ошибка загрузки данных. Проверьте подключение к интернету.");
     });
 
-    // Обработка ошибок для планов
     plansCollection.onSnapshot(snapshot => {
         financialPlans = [];
         snapshot.forEach(doc => {
@@ -110,7 +107,6 @@ function loadFromFirebase() {
 
 // === 7. Обновление выпадающих списков
 function updateDropdowns() {
-    // Получаем уникальные категории
     const categories = [...new Set(transactions.map(t => t.category))].sort();
     const categoriesList = document.getElementById('categories');
     const editCategoriesList = document.getElementById('edit-categories');
@@ -131,7 +127,6 @@ function updateDropdowns() {
         }
     });
 
-    // Получаем уникальных авторов
     const authors = [...new Set(transactions.map(t => t.author))].sort();
     const authorsList = document.getElementById('authors');
     const editAuthorsList = document.getElementById('edit-authors');
@@ -177,18 +172,24 @@ function updateHome() {
     const totalSavings = totalIncome - totalExpense;
     const progress = savingsGoal > 0 ? Math.min(100, (totalSavings / savingsGoal) * 100) : 0;
 
-    const totalSavingsEl = document.getElementById('total-savings');
-    const monthlyIncomeEl = document.getElementById('monthly-income');
-    const monthlyExpenseEl = document.getElementById('monthly-expense');
-    const progressFillEl = document.getElementById('progress-fill');
-    const progressTextEl = document.getElementById('progress-text');
-
-    if (totalSavingsEl) totalSavingsEl.textContent = formatNumber(totalSavings) + ' ₽';
-    if (monthlyIncomeEl) monthlyIncomeEl.textContent = formatNumber(monthIncome) + ' ₽';
-    if (monthlyExpenseEl) monthlyExpenseEl.textContent = formatNumber(monthExpense) + ' ₽';
-    if (progressFillEl) progressFillEl.style.width = progress + '%';
-    if (progressTextEl) progressTextEl.textContent = `${Math.round(progress)}% от цели (${formatNumber(totalSavings)} / ${formatNumber(savingsGoal)} ₽)`;
-    if (progressFillEl) progressFillEl.style.background = totalSavings >= savingsGoal ? '#34c759' : '#007AFF';
+    if (document.getElementById('total-savings')) {
+        document.getElementById('total-savings').textContent = formatNumber(totalSavings) + ' ₽';
+    }
+    if (document.getElementById('monthly-income')) {
+        document.getElementById('monthly-income').textContent = formatNumber(monthIncome) + ' ₽';
+    }
+    if (document.getElementById('monthly-expense')) {
+        document.getElementById('monthly-expense').textContent = formatNumber(monthExpense) + ' ₽';
+    }
+    if (document.getElementById('progress-fill')) {
+        document.getElementById('progress-fill').style.width = progress + '%';
+    }
+    if (document.getElementById('progress-text')) {
+        document.getElementById('progress-text').textContent = `${Math.round(progress)}% от цели (${formatNumber(totalSavings)} / ${formatNumber(savingsGoal)} ₽)`;
+    }
+    if (document.getElementById('progress-fill')) {
+        document.getElementById('progress-fill').style.background = totalSavings >= savingsGoal ? '#34c759' : '#007AFF';
+    }
 }
 
 // === 9. Последние 10 операций
@@ -323,7 +324,7 @@ function deleteTransaction(id) {
     }
 }
 
-// === 13. Финансовый план: отображение
+// === 13. Финансовый план
 function renderPlanList() {
     const list = document.getElementById('plan-list');
     if (!list) return;
@@ -411,7 +412,7 @@ function deletePlan(id) {
     }
 }
 
-// === 17. Импорт плана
+// === 17. Импорт
 function importPlanFromExcel() {
     const fileInput = document.getElementById('import-plan-file');
     const file = fileInput.files[0];
@@ -421,7 +422,7 @@ function importPlanFromExcel() {
     }
 
     const reader = new FileReader();
-    reader.onload = function (e) {
+    reader.onload = function(e) {
         try {
             const data = new Uint8Array(e.target.result);
             const workbook = XLSX.read(data, { type: 'array' });
@@ -489,7 +490,6 @@ function updateAnalytics() {
         document.getElementById('analytics-savings').textContent = formatNumber(savings) + ' ₽';
     }
 
-    // Топ-3 расходов
     const expensesByCategory = {};
     transactions.filter(t => t.type === 'expense').forEach(t => {
         expensesByCategory[t.category] = (expensesByCategory[t.category] || 0) + t.amount;
@@ -506,10 +506,7 @@ function updateAnalytics() {
         });
     }
 
-    // План на месяц
     updateMonthlyPlan();
-
-    // BI
     initBI();
 }
 
@@ -599,7 +596,6 @@ function updateBI() {
     updateSavingsWeeklyChart(weeklyData);
 }
 
-// === 22. График роста с начальным балансом
 function getWeeklySavingsWithStartBalance(transactions, start, end, initialBalance) {
     const sorted = [...transactions].sort((a, b) => new Date(a.date) - new Date(b.date));
     const current = new Date(start);
@@ -637,7 +633,6 @@ function getWeeklySavingsWithStartBalance(transactions, start, end, initialBalan
     return result;
 }
 
-// === 23. График расходов
 function updateExpensePieChart(transactions) {
     const ctx = document.getElementById('expensePieChart');
     if (!ctx) return;
@@ -674,7 +669,6 @@ function updateExpensePieChart(transactions) {
     });
 }
 
-// === 24. График роста
 function updateSavingsWeeklyChart(weeklyData) {
     const ctx = document.getElementById('savingsWeeklyChart');
     if (!ctx) return;
@@ -752,11 +746,10 @@ auth.onAuthStateChanged(user => {
 // === 27. Выход
 function logout() {
     if (confirm('Вы уверены, что хотите выйти?')) {
-        auth.signOut()
-            .catch(err => {
-                console.error('Ошибка выхода:', err);
-                alert('Не удалось выйти из системы');
-            });
+        auth.signOut().catch(err => {
+            console.error('Ошибка выхода:', err);
+            alert('Не удалось выйти из системы');
+        });
     }
 }
 
