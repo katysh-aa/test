@@ -350,38 +350,6 @@ body.dark-theme .nav-icon {
     filter: invert(1) brightness(2);
 }
 
-/* Круглая центральная кнопка "Добавить" */
-.add-btn {
-    background: #007AFF;
-    width: 100%; /* Установим фиксированную ширину */
-    height: 40px;
-    border-radius: 12px; /* Сделаем кнопку прямоугольной с закругленными углами */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    margin: -24px auto 0; /* Выпирает над подвалом */
-    box-shadow: 0 4px 16px rgba(0, 122, 255, 0.3);
-    z-index: 2000;
-    transition: all 0.3s ease;
-    border: 4px solid white; /* Белая кайма */
-}
-
-.add-btn:hover {
-    transform: scale(1.08);
-    box-shadow: 0 6px 20px rgba(0, 122, 255, 0.4);
-}
-
-.add-btn:active {
-    transform: scale(1.04);
-}
-
-.add-btn .nav-icon {
-    filter: brightness(0) invert(1);
-    width: 28px;
-    height: 28px;
-}
-
 body.dark-theme .add-btn {
     background: #0a84ff;
     border-color: #1a1a1a;
