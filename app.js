@@ -319,18 +319,32 @@ function closeModal() {
     document.getElementById('add-form').reset();
 }
 
-// === 15. Авторизация
-document.getElementById('login-form')?.addEventListener('submit', e => {
-    e.preventDefault();
-    const email = document.getElementById('login-email').value;
-    const password = document.getElementById('login-password').value;
+// === 15. Автоматическая авторизация
+function autoSignIn() {
+    const email = "budget-user@yourapp.com"; // ← Твой email
+    const password = "MySecurePass123!";     // ← Твой пароль
+
     signInWithEmailAndPassword(auth, email, password)
-        .then(() => {
-            document.getElementById('auth-error').textContent = '';
+        .then((userCredential) => {
+            console.log("✅ Вход выполнен автоматически:", userCredential.user.email);
         })
-        .catch(err => {
-            document.getElementById('auth-error').textContent = err.message;
+        .catch((error) => {
+            const errorCode = error.code;
+            const errorMessage = error.message;
+            console.error("❌ Ошибка входа:", errorCode, errorMessage);
+            if (errorCode === 'auth/wrong-password') {
+                alert("Неверный пароль. Обратитесь к администратору.");
+            } else if (errorCode === 'auth/user-not-found') {
+                alert("Пользователь не найден. Проверьте настройки.");
+            } else {
+                alert("Ошибка входа: " + errorMessage);
+            }
         });
+}
+
+// Выполняем автоматический вход при загрузке
+document.addEventListener('DOMContentLoaded', () => {
+    autoSignIn();
 });
 
 // === 16. Прослушка аутентификации
