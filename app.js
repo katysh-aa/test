@@ -44,6 +44,7 @@ const DOM = {
     
     // Форма добавления
     addForm: document.getElementById('add-form'),
+    addTitle: document.getElementById('add-title'),
     type: document.getElementById('type'),
     date: document.getElementById('date'),
     expenseCategory: document.getElementById('expense-category'),
@@ -52,6 +53,7 @@ const DOM = {
     comment: document.getElementById('comment'),
     expenseField: document.getElementById('expense-field'),
     incomeField: document.getElementById('income-field'),
+    deleteBtn: document.getElementById('delete-btn'),
     recentTransactions: document.getElementById('recent-transactions'),
     
     // Бюджеты
@@ -143,9 +145,7 @@ function getCurrentBudgetPeriodAndNextPayday() {
 
     let nextPayday, prevPayday;
 
-    // Проверяем, в каком периоде мы находимся
     if (today <= actualPayday20) {
-        // Период: после предыдущей выплаты до 20.х
         nextPayday = actualPayday20;
         // Определяем предыдущую выплату (до 5.х)
         const prev5 = new Date(year, currentMonth, 5);
@@ -154,7 +154,6 @@ function getCurrentBudgetPeriodAndNextPayday() {
             : prev5;
         prevPayday = actualPrev5 < actualPayday20 ? actualPrev5 : getLastWorkdayBefore(5, (currentMonth - 1 + 12) % 12, currentMonth === 0 ? year - 1 : year);
     } else {
-        // Период: после 20.х до 5.х+1
         nextPayday = actualPayday5;
         prevPayday = actualPayday20;
     }
@@ -187,12 +186,9 @@ function updateHome() {
     const dailyBudget = balance / daysUntil;
 
     if (DOM.currentBalance) DOM.currentBalance.textContent = formatNumber(balance) + ' ₽';
-    if (DOM.totalIncome) DOM.totalIncome.textContent = formatNumber(income) + ' ₽';
-    if (DOM.totalExpense) DOM.totalExpense.textContent = formatNumber(expense) + ' ₽';
-    if (DOM.daysUntilPayday) DOM.daysUntilPayday.textContent = daysUntil + ' дней';
     if (DOM.dailyBudget) DOM.dailyBudget.textContent = formatNumber(dailyBudget) + ' ₽';
+    if (DOM.daysUntilPayday) DOM.daysUntilPayday.textContent = daysUntil + ' дней';
     if (DOM.nextPayday) DOM.nextPayday.textContent = nextPayday.toLocaleDateString('ru-RU');
-    if (DOM.progressText) DOM.progressText.textContent = `Остаток: ${formatNumber(balance)} ₽`;
 }
 
 // === 10. Отображение истории
@@ -280,6 +276,18 @@ function updateAnalytics() {
     const startStr = periodStart.toISOString().split('T')[0];
     const todayStr = new Date().toISOString().split('T')[0];
     const currentPeriodTransactions = transactions.filter(t => t.date >= startStr && t.date <= todayStr);
+
+    // Доход и расход за период
+    const totalIncome = currentPeriodTransactions
+        .filter(t => t.type === 'income')
+        .reduce((sum, t) => sum + t.amount, 0);
+
+    const totalExpense = currentPeriodTransactions
+        .filter(t => t.type === 'expense')
+        .reduce((sum, t) => sum + t.amount, 0);
+
+    if (DOM.totalIncome) DOM.totalIncome.textContent = formatNumber(totalIncome) + ' ₽';
+    if (DOM.totalExpense) DOM.totalExpense.textContent = formatNumber(totalExpense) + ' ₽';
 
     // Расходы по категориям
     const expensesByCategory = {};
@@ -408,7 +416,7 @@ DOM.addForm?.addEventListener('submit', e => {
     saveOperation
         .then(() => {
             resetAddForm();
-            show('home');
+            // НЕ переходим на главную — остаёмся на странице
         })
         .catch(err => {
             console.error('Ошибка сохранения:', err);
@@ -425,6 +433,8 @@ function resetAddForm() {
     DOM.addForm?.reset();
     editingTransactionId = null;
     if (DOM.date) DOM.date.valueAsDate = new Date();
+    DOM.addTitle.textContent = '➕ Новая транзакция';
+    DOM.deleteBtn.classList.add('hidden');
     toggleCategoryFields();
 }
 
@@ -435,6 +445,9 @@ function editTransaction(id) {
 
     editingTransactionId = id;
     show('add');
+
+    DOM.addTitle.textContent = '✏️ Редактировать транзакцию';
+    DOM.deleteBtn.classList.remove('hidden');
 
     DOM.date.value = tx.date;
     DOM.amount.value = tx.amount;
@@ -454,6 +467,9 @@ function editTransaction(id) {
 function deleteTransaction(id) {
     if (confirm('Удалить операцию?')) {
         userTransactions().doc(id).delete()
+            .then(() => {
+                show('history'); // или можно остаться на add
+            })
             .catch(err => {
                 console.error('Ошибка удаления:', err);
                 alert('Не удалось удалить');
