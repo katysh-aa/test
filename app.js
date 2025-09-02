@@ -52,10 +52,20 @@ function updateHome() {
     const nextPayday = getNextPayday();
     const daysUntil = Math.max(1, Math.ceil((nextPayday - new Date()) / (1000 * 60 * 60 * 24)));
     const dailyBudget = balance / daysUntil;
-    document.getElementById('current-balance').textContent = formatNumber(balance) + ' ₽';
-    document.getElementById('days-until-payday').textContent = daysUntil + ' дней';
-    document.getElementById('daily-budget').textContent = formatNumber(dailyBudget) + ' ₽';
-    document.getElementById('next-payday').textContent = nextPayday.toLocaleDateString('ru-RU');
+
+    // Проверяем наличие элементов перед записью
+    if (document.getElementById('current-balance')) {
+        document.getElementById('current-balance').textContent = formatNumber(balance) + ' ₽';
+    }
+    if (document.getElementById('days-until-payday')) {
+        document.getElementById('days-until-payday').textContent = daysUntil + ' дней';
+    }
+    if (document.getElementById('daily-budget')) {
+        document.getElementById('daily-budget').textContent = formatNumber(dailyBudget) + ' ₽';
+    }
+    if (document.getElementById('next-payday')) {
+        document.getElementById('next-payday').textContent = nextPayday.toLocaleDateString('ru-RU');
+    }
 }
 
 // === 6. Баланс
