@@ -1,4 +1,4 @@
-// === 1. Firebase Config (оставляем compat для простоты, но можно перейти на modular)
+// === 1. Firebase Config
 const firebaseConfig = {
     apiKey: "AIzaSyDnyp4wQDFgr3OFylpZhnyn2j1Pu4i8bLs",
     authDomain: "bank-916f4.firebaseapp.com",
@@ -7,7 +7,7 @@ const firebaseConfig = {
     storageBucket: "bank-916f4.firebasestorage.app",
     messagingSenderId: "394968475663",
     appId: "1:394968475663:web:1c01d44fbf408fbaf6db7a",
-    measurementId: "G-GW6MMP2L21"
+    measurementId: "G-GW6MMP2L2L21"
 };
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
@@ -18,7 +18,6 @@ let transactions = [];
 let budgets = [];
 let expensePieChart = null;
 let incomePieChart = null;
-let budgetChart = null;
 let editingTransactionId = null;
 let filterTimeout = null;
 
@@ -85,14 +84,12 @@ function userBudgets() {
 function loadFromFirebase() {
     if (!auth.currentUser) return;
 
-    // Транзакции
     const q = userTransactions().orderBy('date', 'desc');
     q.onSnapshot((snapshot) => {
         transactions = [];
         snapshot.forEach(doc => {
             transactions.push({ id: doc.id, ...doc.data() });
         });
-        // Обновляем все разделы автоматически
         updateHome();
         updateAnalytics();
         if (!DOM.allTransactions?.closest('.hidden')) {
@@ -104,7 +101,6 @@ function loadFromFirebase() {
         console.error("Ошибка загрузки транзакций:", error);
     });
 
-    // Бюджеты
     const b = userBudgets();
     b.onSnapshot((snapshot) => {
         budgets = [];
@@ -117,22 +113,76 @@ function loadFromFirebase() {
     });
 }
 
-// === 7. Обновление главной
+// === 7. Вспомогательная: последний рабочий день перед датой
+function getLastWorkdayBefore(day, month, year) {
+    const date = new Date(year, month, day);
+    while (date.getDay() === 0 || date.getDay() === 6) {
+        date.setDate(date.getDate() - 1);
+    }
+    return new Date(date);
+}
+
+// === 8. Определение периода и следующей зарплаты
+function getCurrentBudgetPeriodAndNextPayday() {
+    const today = new Date();
+    const currentMonth = today.getMonth();
+    const nextMonth = (currentMonth + 1) % 12;
+    const year = today.getFullYear();
+    const nextYear = currentMonth + 1 > 11 ? year + 1 : year;
+
+    // Возможные даты выплат
+    const payday20 = new Date(year, currentMonth, 20);
+    const actualPayday20 = payday20.getDay() === 0 || payday20.getDay() === 6
+        ? getLastWorkdayBefore(20, currentMonth, year)
+        : payday20;
+
+    const payday5 = new Date(nextYear, nextMonth, 5);
+    const actualPayday5 = payday5.getDay() === 0 || payday5.getDay() === 6
+        ? getLastWorkdayBefore(5, nextMonth, nextYear)
+        : payday5;
+
+    let nextPayday, prevPayday;
+
+    if (today <= actualPayday20) {
+        nextPayday = actualPayday20;
+        // Определяем предыдущую выплату (до 5.х)
+        const prev5 = new Date(year, currentMonth, 5);
+        const actualPrev5 = prev5.getDay() === 0 || prev5.getDay() === 6
+            ? getLastWorkdayBefore(5, currentMonth, year)
+            : prev5;
+        prevPayday = actualPrev5 < actualPayday20 ? actualPrev5 : getLastWorkdayBefore(5, (currentMonth - 1 + 12) % 12, currentMonth === 0 ? year - 1 : year);
+    } else {
+        nextPayday = actualPayday5;
+        prevPayday = actualPayday20;
+    }
+
+    // Период начинается на следующий календарный день после предыдущей выплаты
+    const periodStart = new Date(prevPayday);
+    periodStart.setDate(periodStart.getDate() + 1);
+
+    return { nextPayday, periodStart };
+}
+
+// === 9. Обновление главной
 function updateHome() {
-    const income = transactions
+    const { nextPayday, periodStart } = getCurrentBudgetPeriodAndNextPayday();
+
+    const startStr = periodStart.toISOString().split('T')[0];
+    const todayStr = new Date().toISOString().split('T')[0];
+    const currentPeriodTransactions = transactions.filter(t => t.date >= startStr && t.date <= todayStr);
+
+    const income = currentPeriodTransactions
         .filter(t => t.type === 'income')
         .reduce((sum, t) => sum + t.amount, 0);
 
-    const expense = transactions
+    const expense = currentPeriodTransactions
         .filter(t => t.type === 'expense')
         .reduce((sum, t) => sum + t.amount, 0);
 
     const balance = income - expense;
-    const nextPayday = getNextPayday();
     const daysUntil = Math.max(1, Math.ceil((nextPayday - new Date()) / (1000 * 60 * 60 * 24)));
     const dailyBudget = balance / daysUntil;
 
-    // Обновляем элементы
     if (DOM.currentBalance) DOM.currentBalance.textContent = formatNumber(balance) + ' ₽';
     if (DOM.totalIncome) DOM.totalIncome.textContent = formatNumber(income) + ' ₽';
     if (DOM.totalExpense) DOM.totalExpense.textContent = formatNumber(expense) + ' ₽';
@@ -142,28 +192,7 @@ function updateHome() {
     if (DOM.progressText) DOM.progressText.textContent = `Остаток: ${formatNumber(balance)} ₽`;
 }
 
-// === 8. Логика "следующей зарплаты"
-function getNextPayday() {
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = today.getMonth();
-    let targetMonth = new Date(year, month, 20);
-    while (targetMonth > today && targetMonth.getDate() > 20) {
-        targetMonth.setDate(targetMonth.getDate() - 1);
-    }
-    while (targetMonth.getDay() === 0 || targetMonth.getDay() === 6) {
-        targetMonth.setDate(targetMonth.getDate() - 1);
-    }
-    if (targetMonth < today) {
-        targetMonth = new Date(year, month + 1, 5);
-        while (targetMonth.getDay() === 0 || targetMonth.getDay() === 6) {
-            targetMonth.setDate(targetMonth.getDate() - 1);
-        }
-    }
-    return targetMonth;
-}
-
-// === 9. Отображение истории
+// === 10. Отображение истории
 function renderAllList() {
     if (!DOM.allTransactions) return;
     DOM.allTransactions.innerHTML = '';
@@ -187,14 +216,24 @@ function renderAllList() {
         const li = document.createElement('li');
         const amountColor = tx.type === 'income' ? '#34c759' : '#ff3b30';
         const sign = tx.type === 'income' ? '+' : '-';
-        const comment = tx.comment ? `<div class="info">💬 ${tx.comment}</div>` : '';
+        const comment = tx.comment ? `
+            <div class="info">
+                <img src="comment.png" class="info-icon"> ${tx.comment}
+            </div>` : '';
         const detail = tx.type === 'income' && tx.incomeCategory
-            ? `<div class="info">💼 ${tx.incomeCategory}</div>`
-            : (tx.expenseCategory ? `<div class="info">🏷️ ${tx.expenseCategory}</div>` : '');
+            ? `<div class="info"><img src="category.png" class="info-icon"> ${tx.incomeCategory}</div>`
+            : (tx.expenseCategory 
+                ? `<div class="info"><img src="category.png" class="info-icon"> ${tx.expenseCategory}</div>` 
+                : '');
+
+        const typeIcon = tx.type === 'income'
+            ? '<img src="income.png" class="type-icon">'
+            : '<img src="expense.png" class="type-icon">';
 
         li.innerHTML = `
             <div>
-                <div><strong>${tx.type === 'income' ? tx.incomeCategory : tx.expenseCategory}</strong> 
+                <div>
+                    ${typeIcon} <strong>${tx.type === 'income' ? tx.incomeCategory : tx.expenseCategory}</strong> 
                     <span style="color: ${amountColor}; font-weight: bold;">${sign}${formatNumber(tx.amount)} ₽</span>
                 </div>
                 <div class="info">${tx.date}</div>
@@ -202,15 +241,25 @@ function renderAllList() {
                 ${comment}
             </div>
             <div class="actions">
-                <button class="btn small" onclick="editTransaction('${tx.id}')">✏️</button>
-                <button class="btn small danger" onclick="deleteTransaction('${tx.id}')">🗑️</button>
+                <button class="btn small" onclick="editTransaction('${tx.id}')">
+                    <img src="edit.png" class="action-icon">
+                </button>
+                <button class="btn small danger" onclick="deleteTransaction('${tx.id}')">
+                    <img src="delete.png" class="action-icon">
+                </button>
             </div>
         `;
+        li.style.cursor = 'pointer';
+        li.onclick = (e) => {
+            if (!e.target.closest('button')) {
+                editTransaction(tx.id);
+            }
+        };
         DOM.allTransactions.appendChild(li);
     });
 }
 
-// === 10. Фильтры с дебаунсом
+// === 11. Фильтры с дебаунсом
 function filterByDate() {
     clearTimeout(filterTimeout);
     filterTimeout = setTimeout(renderAllList, 300);
@@ -222,11 +271,16 @@ function clearFilter() {
     renderAllList();
 }
 
-// === 11. Анализ: диаграммы и отчёт
+// === 12. Анализ: диаграммы и отчёт
 function updateAnalytics() {
+    const { periodStart } = getCurrentBudgetPeriodAndNextPayday();
+    const startStr = periodStart.toISOString().split('T')[0];
+    const todayStr = new Date().toISOString().split('T')[0];
+    const currentPeriodTransactions = transactions.filter(t => t.date >= startStr && t.date <= todayStr);
+
     // Расходы по категориям
     const expensesByCategory = {};
-    transactions
+    currentPeriodTransactions
         .filter(t => t.type === 'expense')
         .forEach(t => {
             expensesByCategory[t.expenseCategory] = (expensesByCategory[t.expenseCategory] || 0) + t.amount;
@@ -265,7 +319,7 @@ function updateAnalytics() {
 
     // Доходы по статьям
     const incomesByCategory = {};
-    transactions
+    currentPeriodTransactions
         .filter(t => t.type === 'income')
         .forEach(t => {
             incomesByCategory[t.incomeCategory] = (incomesByCategory[t.incomeCategory] || 0) + t.amount;
@@ -290,14 +344,13 @@ function updateAnalytics() {
     }
 }
 
-// === 12. Форма добавления: переключение полей
+// === 13. Форма добавления: переключение полей
 function setupAddForm() {
     if (!DOM.addForm) return;
 
     DOM.type?.addEventListener('change', toggleCategoryFields);
     toggleCategoryFields();
 
-    // Устанавливаем сегодняшнюю дату
     if (DOM.date && !DOM.date.value) {
         DOM.date.valueAsDate = new Date();
     }
@@ -309,7 +362,7 @@ function toggleCategoryFields() {
     DOM.incomeField?.classList.toggle('hidden', !isIncome);
 }
 
-// === 13. Добавление/редактирование транзакции
+// === 14. Добавление/редактирование транзакции
 DOM.addForm?.addEventListener('submit', e => {
     e.preventDefault();
     const type = DOM.type.value;
@@ -364,7 +417,7 @@ DOM.addForm?.addEventListener('submit', e => {
         });
 });
 
-// === 14. Сброс формы
+// === 15. Сброс формы
 function resetAddForm() {
     DOM.addForm?.reset();
     editingTransactionId = null;
@@ -372,7 +425,7 @@ function resetAddForm() {
     toggleCategoryFields();
 }
 
-// === 15. Редактирование
+// === 16. Редактирование
 function editTransaction(id) {
     const tx = transactions.find(t => t.id === id);
     if (!tx) return;
@@ -394,7 +447,7 @@ function editTransaction(id) {
     toggleCategoryFields();
 }
 
-// === 16. Удаление
+// === 17. Удаление
 function deleteTransaction(id) {
     if (confirm('Удалить операцию?')) {
         userTransactions().doc(id).delete()
@@ -405,7 +458,7 @@ function deleteTransaction(id) {
     }
 }
 
-// === 17. Datalists
+// === 18. Datalists
 function updateDatalists() {
     const expenseCategories = [...new Set(transactions
         .filter(t => t.type === 'expense')
@@ -438,18 +491,22 @@ function updateDatalists() {
     }
 }
 
-// === 18. Последние 10 транзакций
+// === 19. Последние 10 транзакций
 function renderRecentTransactions() {
     if (!DOM.recentTransactions) return;
     DOM.recentTransactions.innerHTML = '';
     const recent = transactions.slice(0, 10);
     recent.forEach(tx => {
         const li = document.createElement('li');
-        const type = tx.type === 'income' ? '📥 Доход' : '📤 Расход';
+        const typeIcon = tx.type === 'income'
+            ? '<img src="income.png" class="type-icon">'
+            : '<img src="expense.png" class="type-icon">';
         const category = tx.type === 'income' ? tx.incomeCategory : tx.expenseCategory;
         li.innerHTML = `
-            <div><strong>${category}</strong> — ${formatNumber(tx.amount)} ₽</div>
-            <div class="info">${tx.date} · ${type}</div>
+            <div>
+                ${typeIcon} <strong>${category}</strong> — ${formatNumber(tx.amount)} ₽
+            </div>
+            <div class="info">${tx.date}</div>
         `;
         li.style.cursor = 'pointer';
         li.onclick = () => {
@@ -459,7 +516,7 @@ function renderRecentTransactions() {
     });
 }
 
-// === 19. Бюджеты
+// === 20. Бюджеты
 function renderBudgets() {
     if (!DOM.budgetsList) return;
     DOM.budgetsList.innerHTML = '';
@@ -470,7 +527,9 @@ function renderBudgets() {
                 <div><strong>${budget.category}</strong>: ${formatNumber(budget.limit)} ₽</div>
             </div>
             <div class="actions">
-                <button class="btn small danger" onclick="deleteBudget('${budget.id}')">🗑️</button>
+                <button class="btn small danger" onclick="deleteBudget('${budget.id}')">
+                    <img src="delete.png" class="action-icon">
+                </button>
             </div>
         `;
         DOM.budgetsList.appendChild(li);
@@ -495,7 +554,7 @@ function deleteBudget(id) {
     }
 }
 
-// === 20. Навигация
+// === 21. Навигация
 function show(sectionId) {
     document.querySelectorAll('section').forEach(s => s.classList.add('hidden'));
     document.getElementById(sectionId).classList.remove('hidden');
@@ -509,13 +568,13 @@ function show(sectionId) {
     if (sectionId === 'budgets') renderBudgets();
 }
 
-// === 21. Тема
+// === 22. Тема
 function toggleTheme() {
     document.body.classList.toggle('dark-theme');
     localStorage.setItem('dark-theme', document.body.classList.contains('dark-theme'));
 }
 
-// === 22. Аутентификация
+// === 23. Аутентификация
 auth.onAuthStateChanged((user) => {
     if (user) {
         document.getElementById('auth-screen').classList.add('hidden');
@@ -528,7 +587,7 @@ auth.onAuthStateChanged((user) => {
     }
 });
 
-// === 23. Вход
+// === 24. Вход
 document.getElementById('login-form')?.addEventListener('submit', (e) => {
     e.preventDefault();
     const email = document.getElementById('login-email').value.trim();
@@ -556,7 +615,7 @@ document.getElementById('login-form')?.addEventListener('submit', (e) => {
         });
 });
 
-// === 24. Выход
+// === 25. Выход
 function logout() {
     if (confirm('Выйти?')) {
         auth.signOut().catch(err => {
@@ -566,7 +625,7 @@ function logout() {
     }
 }
 
-// === 25. Инициализация
+// === 26. Инициализация
 document.addEventListener('DOMContentLoaded', () => {
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     const savedDark = localStorage.getItem('dark-theme');
