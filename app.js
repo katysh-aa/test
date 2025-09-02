@@ -9,7 +9,6 @@ const firebaseConfig = {
     appId: "1:394968475663:web:1c01d44fbf408fbaf6db7a",
     measurementId: "G-GW6MMP2L21"
 };
-
 // Инициализация Firebase
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
@@ -22,6 +21,7 @@ const userTransactions = () => db.collection('users').doc(auth.currentUser.uid).
 let transactions = [];
 let expensePieChart = null;
 let incomePieChart = null;
+let editingTransactionId = null; // ← ID редактируемой транзакции
 
 // === 3. Форматирование чисел
 function formatNumber(num) {
@@ -130,14 +130,49 @@ function renderAllList() {
                 ${comment}
             </div>
             <div class="actions">
+                <button class="btn small" onclick="editTransaction('${tx.id}')">✏️</button>
                 <button class="btn small danger" onclick="deleteTransaction('${tx.id}')">🗑️</button>
             </div>
         `;
+        li.style.cursor = 'pointer';
+        li.onclick = (e) => {
+            if (!e.target.closest('button')) {
+                editTransaction(tx.id);
+            }
+        };
         list.appendChild(li);
     });
 }
 
-// === 9. Добавление транзакции
+// === 9. Редактирование транзакции
+function editTransaction(id) {
+    const tx = transactions.find(t => t.id === id);
+    if (!tx) return;
+
+    editingTransactionId = id;
+    showAddModal();
+
+    const form = document.getElementById('add-form');
+    form.date.value = tx.date;
+    form.category.value = tx.category;
+    form.amount.value = tx.amount;
+    form.comment.value = tx.comment || '';
+    form.type.value = tx.type;
+
+    const incomeTypeField = document.getElementById('income-type-field');
+    if (tx.type === 'income') {
+        form['income-type'].value = tx.incomeType || 'Без названия';
+        incomeTypeField.classList.remove('hidden');
+    } else {
+        incomeTypeField.classList.add('hidden');
+    }
+
+    // Обновляем заголовок модального окна
+    const modalTitle = document.querySelector('#add-modal h3');
+    if (modalTitle) modalTitle.textContent = '✏️ Редактировать транзакцию';
+}
+
+// === 10. Добавление/редактирование транзакции
 document.getElementById('add-form')?.addEventListener('submit', e => {
     e.preventDefault();
     const form = e.target;
@@ -159,20 +194,30 @@ document.getElementById('add-form')?.addEventListener('submit', e => {
         return;
     }
 
-    userTransactions().add(newTx)
+    const saveBtn = form.querySelector('button[type="submit"]');
+    const originalText = saveBtn.textContent;
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Сохранение...';
+
+    const saveOperation = editingTransactionId
+        ? userTransactions().doc(editingTransactionId).update(newTx)
+        : userTransactions().add(newTx);
+
+    saveOperation
         .then(() => {
-            form.reset();
-            document.getElementById('date').valueAsDate = new Date();
-            document.getElementById('income-type-field').classList.add('hidden');
             closeModal();
         })
         .catch(err => {
-            console.error('Ошибка добавления:', err);
+            console.error('Ошибка сохранения:', err);
             alert('Ошибка: ' + err.message);
+        })
+        .finally(() => {
+            saveBtn.disabled = false;
+            saveBtn.textContent = originalText;
         });
 });
 
-// === 10. Удаление транзакции
+// === 11. Удаление транзакции
 function deleteTransaction(id) {
     if (confirm('Удалить операцию?')) {
         userTransactions().doc(id).delete()
@@ -183,7 +228,7 @@ function deleteTransaction(id) {
     }
 }
 
-// === 11. Статистика: диаграммы и отчёт
+// === 12. Статистика: диаграммы и отчёт
 function updateAnalytics() {
     // Расходы по категориям
     const expensesByCategory = {};
@@ -266,7 +311,7 @@ function updateAnalytics() {
     }
 }
 
-// === 12. Фильтры
+// === 13. Фильтры
 function filterByDate() {
     renderAllList();
 }
@@ -277,7 +322,7 @@ function clearFilter() {
     renderAllList();
 }
 
-// === 13. Экспорт в Excel
+// === 14. Экспорт в Excel
 function exportToExcel() {
     const start = document.getElementById('filter-start')?.value;
     const end = document.getElementById('filter-end')?.value;
@@ -309,12 +354,17 @@ function exportToExcel() {
     }
 }
 
-// === 14. Модальное окно
+// === 15. Модальное окно
 function showAddModal() {
     document.getElementById('add-modal').classList.remove('hidden');
     document.getElementById('date').valueAsDate = new Date();
     const typeSelect = document.getElementById('type');
     const incomeTypeField = document.getElementById('income-type-field');
+
+    // Скрываем поле "Вид дохода" по умолчанию
+    incomeTypeField.classList.add('hidden');
+
+    // При изменении типа
     typeSelect.onchange = () => {
         if (typeSelect.value === 'income') {
             incomeTypeField.classList.remove('hidden');
@@ -322,6 +372,8 @@ function showAddModal() {
             incomeTypeField.classList.add('hidden');
         }
     };
+
+    // Применяем текущее значение
     if (typeSelect.value === 'income') {
         incomeTypeField.classList.remove('hidden');
     }
@@ -329,10 +381,16 @@ function showAddModal() {
 
 function closeModal() {
     document.getElementById('add-modal').classList.add('hidden');
-    document.getElementById('add-form').reset();
+    const form = document.getElementById('add-form');
+    form.reset();
+    form.querySelector('button[type="submit"]').textContent = 'Добавить';
+    editingTransactionId = null;
+    const modalTitle = document.querySelector('#add-modal h3');
+    if (modalTitle) modalTitle.textContent = '➕ Новая транзакция';
+    document.getElementById('income-type-field').classList.add('hidden');
 }
 
-// === 15. Datalist
+// === 16. Datalist
 function updateCategoryDatalist() {
     const categories = [...new Set(transactions.map(t => t.category))];
     const datalist = document.getElementById('categories');
@@ -355,7 +413,7 @@ function updateIncomeTypeDatalist() {
     });
 }
 
-// === 16. Форма входа
+// === 17. Форма входа
 document.getElementById('login-form')?.addEventListener('submit', (e) => {
     e.preventDefault();
     const email = document.getElementById('login-email').value.trim();
@@ -379,26 +437,25 @@ document.getElementById('login-form')?.addEventListener('submit', (e) => {
     }
 
     auth.signInWithEmailAndPassword(email, password)
-    .then((userCredential) => {
-        const user = userCredential.user;
-        console.log("✅ Вход выполнен:", user.email);
-        // Убрана проверка emailVerified
-    })
-    .catch((error) => {
-        const errorCode = error.code;
-        if (errorCode === 'auth/wrong-password') {
-            errorElement.textContent = 'Неверный пароль.';
-        } else if (errorCode === 'auth/user-not-found') {
-            errorElement.textContent = 'Пользователь не найден.';
-        } else if (errorCode === 'auth/invalid-email') {
-            errorElement.textContent = 'Неверный email.';
-        } else {
-            errorElement.textContent = 'Ошибка: ' + error.message;
-        }
-    });
+        .then((userCredential) => {
+            const user = userCredential.user;
+            console.log("✅ Вход выполнен:", user.email);
+        })
+        .catch((error) => {
+            const errorCode = error.code;
+            if (errorCode === 'auth/wrong-password') {
+                errorElement.textContent = 'Неверный пароль.';
+            } else if (errorCode === 'auth/user-not-found') {
+                errorElement.textContent = 'Пользователь не найден.';
+            } else if (errorCode === 'auth/invalid-email') {
+                errorElement.textContent = 'Неверный email.';
+            } else {
+                errorElement.textContent = 'Ошибка: ' + error.message;
+            }
+        });
 });
 
-// === 17. Аутентификация
+// === 18. Аутентификация
 auth.onAuthStateChanged((user) => {
     if (user) {
         console.log('✅ Вошёл:', user.email);
@@ -416,7 +473,7 @@ auth.onAuthStateChanged((user) => {
     }
 });
 
-// === 18. Выход
+// === 19. Выход
 function logout() {
     if (confirm('Выйти?')) {
         auth.signOut().then(() => {
@@ -428,7 +485,7 @@ function logout() {
     }
 }
 
-// === 19. Навигация
+// === 20. Навигация
 function show(sectionId) {
     document.querySelectorAll('section').forEach(s => s.classList.add('hidden'));
     document.getElementById(sectionId).classList.remove('hidden');
@@ -438,13 +495,13 @@ function show(sectionId) {
     if (sectionId === 'analytics') updateAnalytics();
 }
 
-// === 20. Тема
+// === 21. Тема
 function toggleTheme() {
     document.body.classList.toggle('dark-theme');
     localStorage.setItem('dark-theme', document.body.classList.contains('dark-theme'));
 }
 
-// === 21. Инициализация
+// === 22. Инициализация
 document.addEventListener('DOMContentLoaded', () => {
     const isDark = localStorage.getItem('dark-theme') === 'true';
     if (isDark) document.body.classList.add('dark-theme');
@@ -453,7 +510,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// === 22. Pull-to-refresh
+// === 23. Pull-to-refresh
 let startY = 0, currentY = 0;
 const refreshIndicator = document.getElementById('refresh-indicator');
 document.body.addEventListener('touchstart', e => {
@@ -478,7 +535,7 @@ document.body.addEventListener('touchend', () => {
     }
 });
 
-// === 23. Утилиты
+// === 24. Утилиты
 function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
