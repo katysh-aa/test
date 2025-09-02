@@ -3,6 +3,7 @@
 const firebaseConfig = {
     apiKey: "AIzaSyDnyp4wQDFgr3OFylpZhnyn2j1Pu4i8bLs",
     authDomain: "bank-916f4.firebaseapp.com",
+    databaseURL: "https://bank-916f4-default-rtdb.firebaseio.com",
     projectId: "bank-916f4",
     storageBucket: "bank-916f4.firebasestorage.app",
     messagingSenderId: "394968475663",
@@ -12,6 +13,7 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
+const analytics = firebase.analytics();
 const userTransactions = () => db.collection('users').doc(auth.currentUser.uid).collection('transactions');
 
 // === 2. Глобальные переменные
