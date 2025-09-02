@@ -4,20 +4,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Бюджет до зарплаты</title>
+    <title>Семейный бюджет</title>
     <link rel="stylesheet" href="style.css">
+
+    <!-- Firebase через CDN -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+    <!-- Дополнительные библиотеки -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
 <body>
     <div id="refresh-indicator" class="refresh-indicator"></div>
+
     <!-- Экран авторизации -->
     <section id="auth-screen" class="auth-screen">
-        <h2>🔐 Вход в приложение</h2>
+        <h2>🔐 Вход в Семейный бюджет</h2>
         <p>Введите email и пароль</p>
         <form id="login-form">
             <input type="email" id="login-email" placeholder="Email" required />
@@ -26,6 +31,7 @@
             <p id="auth-error" class="error-text"></p>
         </form>
     </section>
+
     <!-- Основное приложение -->
     <div id="app" class="hidden">
         <!-- Фиксированная шапка -->
@@ -38,28 +44,27 @@
                 <img src="logout-icon.png" alt="Выйти" class="header-icon">
             </button>
         </header>
-        <!-- Главная: остаток до зарплаты -->
+
+        <!-- Главная -->
         <section id="home">
-            <h2>💰 Остаток средств</h2>
+            <h2>💰 Цель накоплений</h2>
             <div class="stats-grid">
                 <div class="stat-card main-card">
-                    <h3>Общий остаток</h3>
+                    <h3>Общий прогресс</h3>
                     <p class="value" id="current-balance">0 ₽</p>
+                    <p id="progress-text">0% от цели</p>
                 </div>
                 <div class="stat-card">
-                    <h3>До зарплаты</h3>
-                    <p class="value" id="days-until-payday">— дней</p>
+                    <h3>Доход</h3>
+                    <p class="value" id="total-income">0 ₽</p>
                 </div>
                 <div class="stat-card">
-                    <h3>На день</h3>
-                    <p class="value" id="daily-budget">0 ₽</p>
-                </div>
-                <div class="stat-card">
-                    <h3>Дата зарплаты</h3>
-                    <p class="value" id="next-payday">—</p>
+                    <h3>Расход</h3>
+                    <p class="value" id="total-expense">0 ₽</p>
                 </div>
             </div>
         </section>
+
         <!-- История операций -->
         <section id="list" class="hidden">
             <h2>📋 История операций</h2>
@@ -72,9 +77,17 @@
             </div>
             <ul id="all-transactions"></ul>
         </section>
-        <!-- Статистика -->
+
+        <!-- Отчет -->
+        <section id="report" class="hidden">
+            <h2>📈 Отчет</h2>
+            <h3>Топ-3 статьи расходов</h3>
+            <ul id="top-expenses"></ul>
+        </section>
+
+        <!-- Анализ -->
         <section id="analytics" class="hidden">
-            <h2>📈 Статистика</h2>
+            <h2>🔍 Анализ</h2>
             <div class="card">
                 <h3>📊 Расходы по категориям</h3>
                 <div class="chart-container">
@@ -87,12 +100,9 @@
                     <canvas id="incomePieChart"></canvas>
                 </div>
             </div>
-            <div class="card">
-                <h3>📋 Топ-3 категории расходов</h3>
-                <ul id="top-expenses"></ul>
-            </div>
         </section>
-        <!-- Модальное окно: добавить транзакцию -->
+
+        <!-- Модальное окно -->
         <div id="add-modal" class="modal hidden">
             <div class="modal-content">
                 <h3>➕ Новая транзакция</h3>
@@ -101,7 +111,7 @@
                     <input list="categories" id="category" placeholder="Категория" required />
                     <datalist id="categories"></datalist>
 
-                    <!-- Поле "Вид дохода" — показываем только если тип = income -->
+                    <!-- Поле "Вид дохода" — показывается только если тип = income -->
                     <div id="income-type-field" class="hidden">
                         <input list="income-types" id="income-type" placeholder="Вид дохода" />
                         <datalist id="income-types"></datalist>
@@ -120,10 +130,10 @@
                 </form>
             </div>
         </div>
-        <!-- Плавающая кнопка "Добавить" -->
-        <button id="fab-add" class="btn fab" onclick="showAddModal()">
-            ➕
-        </button>
+
+        <!-- Плавающая кнопка -->
+        <button id="fab-add" class="btn fab" onclick="showAddModal()">➕</button>
+
         <!-- Нижняя навигация -->
         <nav class="bottom-nav">
             <button onclick="show('home')" class="nav-btn active">
@@ -135,11 +145,12 @@
                 <span>История</span>
             </button>
             <button onclick="show('analytics')" class="nav-btn">
-                <img src="analytics-icon.png" alt="Статистика" class="nav-icon">
-                <span>Статистика</span>
+                <img src="analytics-icon.png" alt="Анализ" class="nav-icon">
+                <span>Анализ</span>
             </button>
         </nav>
     </div>
+
     <script src="app.js"></script>
 </body>
 
