@@ -1,5 +1,4 @@
-// === 1. Firebase Config — ⚠️ УДАЛИТЬ ПОЗЖЕ ИЛИ ПЕРЕМЕСТИТЬ В .ENV
-// ⚠️ СРОЧНО: Пересоздайте apiKey в Firebase Console после публикации
+// === 1. Firebase Config
 const firebaseConfig = {
     apiKey: "AIzaSyDnyp4wQDFgr3OFylpZhnyn2j1Pu4i8bLs",
     authDomain: "bank-916f4.firebaseapp.com",
@@ -10,10 +9,13 @@ const firebaseConfig = {
     appId: "1:394968475663:web:1c01d44fbf408fbaf6db7a",
     measurementId: "G-GW6MMP2L21"
 };
+
+// Инициализация Firebase
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
-const analytics = firebase.analytics();
+
+// Коллекции
 const userTransactions = () => db.collection('users').doc(auth.currentUser.uid).collection('transactions');
 
 // === 2. Глобальные переменные
