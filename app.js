@@ -1,5 +1,5 @@
-// === 1. Firebase Config — УДАЛИТЬ ИЛИ ЗАМЕНИТЬ НА ПЕРЕМЕННЫЕ ОКРУЖЕНИЯ
-// ⚠️ ВАЖНО: Пересоздайте apiKey в Firebase Console и не храните его в коде!
+// === 1. Firebase Config — ⚠️ УДАЛИТЬ ПОЗЖЕ ИЛИ ПЕРЕМЕСТИТЬ В .ENV
+// ⚠️ СРОЧНО: Пересоздайте apiKey в Firebase Console после публикации
 const firebaseConfig = {
     apiKey: "AIzaSyDnyp4wQDFgr3OFylpZhnyn2j1Pu4i8bLs",
     authDomain: "bank-916f4.firebaseapp.com",
@@ -36,7 +36,6 @@ function loadFromFirebase() {
         });
         updateHome();
         updateAnalytics();
-        renderRecentList();
         renderAllList();
         updateCategoryDatalist();
         updateIncomeTypeDatalist();
@@ -53,19 +52,17 @@ function updateHome() {
     const daysUntil = Math.max(1, Math.ceil((nextPayday - new Date()) / (1000 * 60 * 60 * 24)));
     const dailyBudget = balance / daysUntil;
 
-    // Проверяем наличие элементов перед записью
-    if (document.getElementById('current-balance')) {
-        document.getElementById('current-balance').textContent = formatNumber(balance) + ' ₽';
-    }
-    if (document.getElementById('days-until-payday')) {
-        document.getElementById('days-until-payday').textContent = daysUntil + ' дней';
-    }
-    if (document.getElementById('daily-budget')) {
-        document.getElementById('daily-budget').textContent = formatNumber(dailyBudget) + ' ₽';
-    }
-    if (document.getElementById('next-payday')) {
-        document.getElementById('next-payday').textContent = nextPayday.toLocaleDateString('ru-RU');
-    }
+    const currentBalance = document.getElementById('current-balance');
+    if (currentBalance) currentBalance.textContent = formatNumber(balance) + ' ₽';
+
+    const daysUntilPayday = document.getElementById('days-until-payday');
+    if (daysUntilPayday) daysUntilPayday.textContent = daysUntil + ' дней';
+
+    const dailyBudgetEl = document.getElementById('daily-budget');
+    if (dailyBudgetEl) dailyBudgetEl.textContent = formatNumber(dailyBudget) + ' ₽';
+
+    const nextPaydayEl = document.getElementById('next-payday');
+    if (nextPaydayEl) nextPaydayEl.textContent = nextPayday.toLocaleDateString('ru-RU');
 }
 
 // === 6. Баланс
@@ -96,20 +93,26 @@ function getNextPayday() {
     return targetMonth;
 }
 
-// === 8. Последние 10 транзакций
-function renderRecentList() {
-    const list = document.getElementById('recent-transactions');
+// === 8. Отображение всех операций
+function renderAllList() {
+    const list = document.getElementById('all-transactions');
     if (!list) return;
     list.innerHTML = '';
-    const recent = transactions.slice(0, 10);
-    if (recent.length === 0) {
+    const start = document.getElementById('filter-start')?.value;
+    const end = document.getElementById('filter-end')?.value;
+    let filtered = [...transactions];
+    if (start) filtered = filtered.filter(t => t.date >= start);
+    if (end) filtered = filtered.filter(t => t.date <= end);
+
+    if (filtered.length === 0) {
         const li = document.createElement('li');
-        li.textContent = 'Нет операций';
+        li.textContent = 'Нет операций за период';
         li.style.color = '#999';
         list.appendChild(li);
         return;
     }
-    recent.forEach(tx => {
+
+    filtered.forEach(tx => {
         const li = document.createElement('li');
         const amountColor = tx.type === 'income' ? '#34c759' : '#ff3b30';
         const sign = tx.type === 'income' ? '+' : '-';
@@ -134,14 +137,6 @@ function renderRecentList() {
 document.getElementById('add-form')?.addEventListener('submit', e => {
     e.preventDefault();
     const form = e.target;
-    const email = document.getElementById('login-email')?.value;
-    const password = document.getElementById('login-password')?.value;
-
-    if (!email || !password) {
-        alert('Email и пароль обязательны');
-        return;
-    }
-
     const type = form.type.value;
     const newTx = {
         date: form.date.value,
@@ -184,8 +179,9 @@ function deleteTransaction(id) {
     }
 }
 
-// === 11. Статистика: диаграммы
+// === 11. Статистика: диаграммы и отчёт
 function updateAnalytics() {
+    // Расходы по категориям
     const expensesByCategory = {};
     transactions
         .filter(t => t.type === 'expense')
@@ -196,6 +192,7 @@ function updateAnalytics() {
     const expCategories = Object.keys(expensesByCategory);
     const expValues = Object.values(expensesByCategory);
 
+    // Топ-3 расхода
     const topList = document.getElementById('top-expenses');
     if (topList) {
         topList.innerHTML = '';
@@ -209,6 +206,7 @@ function updateAnalytics() {
             });
     }
 
+    // Диаграмма расходов
     const expCtx = document.getElementById('expensePieChart');
     if (expCtx) {
         if (expensePieChart) expensePieChart.destroy();
@@ -230,6 +228,7 @@ function updateAnalytics() {
         });
     }
 
+    // Доходы по видам
     const incomesByType = {};
     transactions
         .filter(t => t.type === 'income')
@@ -240,6 +239,7 @@ function updateAnalytics() {
     const incTypes = Object.keys(incomesByType);
     const incValues = Object.values(incomesByType);
 
+    // Диаграмма доходов
     const incCtx = document.getElementById('incomePieChart');
     if (incCtx) {
         if (incomePieChart) incomePieChart.destroy();
@@ -262,46 +262,7 @@ function updateAnalytics() {
     }
 }
 
-// === 12. История операций
-function renderAllList() {
-    const list = document.getElementById('all-transactions');
-    if (!list) return;
-    list.innerHTML = '';
-    const start = document.getElementById('filter-start')?.value;
-    const end = document.getElementById('filter-end')?.value;
-    let filtered = transactions;
-    if (start) filtered = filtered.filter(t => t.date >= start);
-    if (end) filtered = filtered.filter(t => t.date <= end);
-
-    if (filtered.length === 0) {
-        const li = document.createElement('li');
-        li.textContent = 'Нет операций за период';
-        li.style.color = '#999';
-        list.appendChild(li);
-        return;
-    }
-
-    filtered.forEach(tx => {
-        const li = document.createElement('li');
-        const amountColor = tx.type === 'income' ? '#34c759' : '#ff3b30';
-        const sign = tx.type === 'income' ? '+' : '-';
-        const comment = tx.comment ? `<div class="info">💬 ${escapeHtml(tx.comment)}</div>` : '';
-        const incomeType = tx.type === 'income' && tx.incomeType ? `<div class="info">💼 ${escapeHtml(tx.incomeType)}</div>` : '';
-        li.innerHTML = `
-            <div>
-                <div><strong>${escapeHtml(tx.category)}</strong> <span style="color: ${amountColor}; font-weight: bold;">${sign}${formatNumber(tx.amount)} ₽</span></div>
-                <div class="info">${tx.date}</div>
-                ${incomeType}
-                ${comment}
-            </div>
-            <div class="actions">
-                <button class="btn small danger" onclick="deleteTransaction('${tx.id}')">🗑️</button>
-            </div>
-        `;
-        list.appendChild(li);
-    });
-}
-
+// === 12. Фильтры
 function filterByDate() {
     renderAllList();
 }
@@ -390,7 +351,7 @@ function updateIncomeTypeDatalist() {
     });
 }
 
-// === 16. Вход
+// === 16. Форма входа
 document.getElementById('login-form')?.addEventListener('submit', (e) => {
     e.preventDefault();
     const email = document.getElementById('login-email').value.trim();
@@ -517,7 +478,7 @@ document.body.addEventListener('touchend', () => {
     }
 });
 
-// === Утилиты
+// === 23. Утилиты
 function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
