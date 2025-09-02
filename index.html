@@ -2,13 +2,13 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Семейный бюджет</title>
     <link rel="stylesheet" href="style.css">
-    <!-- Firebase Modular SDK -->
-    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+    <!-- Firebase через CDN -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     <!-- Дополнительные библиотеки -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -70,8 +70,8 @@
             </div>
         </section>
 
-        <!-- История -->
-        <section id="history" class="hidden">
+        <!-- История операций -->
+        <section id="list" class="hidden">
             <h2>📋 История операций</h2>
             <div class="list-controls">
                 <div class="filter-section">
@@ -87,7 +87,7 @@
             <ul id="all-transactions"></ul>
         </section>
 
-        <!-- Анализ -->
+        <!-- Анализ (объединённый отчёт и диаграммы) -->
         <section id="analytics" class="hidden">
             <h2>🔍 Анализ</h2>
             <h3>Топ-3 статьи расходов</h3>
@@ -116,12 +116,12 @@
                     <option value="income">Доход</option>
                 </select>
                 <div id="expense-field">
-                    <input list="expense-categories" id="expense-category" placeholder="Статья расходов" />
-                    <datalist id="expense-categories"></datalist>
+                    <input list="categories" id="category" placeholder="Статья расходов" required />
+                    <datalist id="categories"></datalist>
                 </div>
                 <div id="income-field" class="hidden">
-                    <input list="income-categories" id="income-category" placeholder="Статья доходов" required />
-                    <datalist id="income-categories"></datalist>
+                    <input list="income-types" id="income-type" placeholder="Статья доходов" />
+                    <datalist id="income-types"></datalist>
                 </div>
                 <input type="number" id="amount" placeholder="Сумма" step="0.01" required />
                 <input type="text" id="comment" placeholder="Комментарий" />
@@ -134,29 +134,13 @@
             <ul id="recent-transactions"></ul>
         </section>
 
-        <!-- Бюджеты -->
-        <section id="budgets" class="hidden">
-            <h2>🎯 Бюджеты</h2>
-            <p>Установите лимиты по категориям расходов</p>
-            <form id="budget-form">
-                <input list="expense-categories" id="budget-category" placeholder="Категория" required />
-                <input type="number" id="budget-amount" placeholder="Лимит (₽)" required />
-                <button type="submit" class="btn small">Добавить</button>
-            </form>
-            <ul id="budgets-list"></ul>
-        </section>
-
-        <!-- Модальное окно (удалено — теперь форма в разделе #add) -->
-        <!-- Плавающая кнопка -->
-        <button id="fab-add" class="btn fab" onclick="show('add')">➕</button>
-
         <!-- Нижняя навигация -->
         <nav class="bottom-nav">
             <button onclick="show('home')" class="nav-btn active">
                 <img src="home-icon.png" alt="Главная" class="nav-icon">
                 <span>Главная</span>
             </button>
-            <button onclick="show('history')" class="nav-btn">
+            <button onclick="show('list')" class="nav-btn">
                 <img src="list-icon.png" alt="История" class="nav-icon">
                 <span>История</span>
             </button>
@@ -167,10 +151,6 @@
             <button onclick="show('analytics')" class="nav-btn">
                 <img src="analytics-icon.png" alt="Анализ" class="nav-icon">
                 <span>Анализ</span>
-            </button>
-            <button onclick="show('budgets')" class="nav-btn">
-                <img src="budget-icon.png" alt="Бюджеты" class="nav-icon">
-                <span>Бюджеты</span>
             </button>
         </nav>
     </div>
