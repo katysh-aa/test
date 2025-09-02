@@ -1,6 +1,4 @@
 // === 1. Firebase Config
-// Подключаемся к Firebase через CDN (используем -compat версии)
-// Это позволяет работать без import и сборщиков
 const firebaseConfig = {
     apiKey: "AIzaSyDnyp4wQDFgr3OFylpZhnyn2j1Pu4i8bLs",
     authDomain: "bank-916f4.firebaseapp.com",
@@ -12,7 +10,7 @@ const firebaseConfig = {
     measurementId: "G-GW6MMP2L21"
 };
 
-// Инициализация Firebase
+// Инициализация Firebase через CDN
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
@@ -63,15 +61,10 @@ function updateHome() {
     const daysUntil = Math.max(1, Math.ceil((nextPayday - new Date()) / (1000 * 60 * 60 * 24)));
     const dailyBudget = balance / daysUntil;
 
-    const balanceEl = document.getElementById('current-balance');
-    const daysEl = document.getElementById('days-until-payday');
-    const budgetEl = document.getElementById('daily-budget');
-    const paydayEl = document.getElementById('next-payday');
-
-    if (balanceEl) balanceEl.textContent = formatNumber(balance) + ' ₽';
-    if (daysEl) daysEl.textContent = daysUntil + ' дней';
-    if (budgetEl) budgetEl.textContent = formatNumber(dailyBudget) + ' ₽';
-    if (paydayEl) paydayEl.textContent = nextPayday.toLocaleDateString('ru-RU');
+    document.getElementById('current-balance').textContent = formatNumber(balance) + ' ₽';
+    document.getElementById('days-until-payday').textContent = daysUntil + ' дней';
+    document.getElementById('daily-budget').textContent = formatNumber(dailyBudget) + ' ₽';
+    document.getElementById('next-payday').textContent = nextPayday.toLocaleDateString('ru-RU');
 }
 
 // === 6. Баланс
@@ -81,7 +74,7 @@ function getBalance() {
     }, 0);
 }
 
-// === 7. Следующая зарплата
+// === 7. Логика "следующей зарплаты"
 function getNextPayday() {
     const today = new Date();
     const year = today.getFullYear();
@@ -104,7 +97,7 @@ function getNextPayday() {
     return targetMonth;
 }
 
-// === 8. Последние 10 операций
+// === 8. Последние 10 транзакций
 function renderRecentList() {
     const list = document.getElementById('recent-transactions');
     if (!list) return;
@@ -176,7 +169,7 @@ document.getElementById('add-form')?.addEventListener('submit', e => {
         });
 });
 
-// === 10. Удаление
+// === 10. Удаление транзакции
 function deleteTransaction(id) {
     if (confirm('Удалить операцию?')) {
         userTransactions().doc(id).delete()
@@ -187,9 +180,9 @@ function deleteTransaction(id) {
     }
 }
 
-// === 11. Статистика
+// === 11. Статистика: диаграммы
 function updateAnalytics() {
-    // Расходы
+    // Расходы по категориям
     const expensesByCategory = {};
     transactions
         .filter(t => t.type === 'expense')
@@ -200,7 +193,7 @@ function updateAnalytics() {
     const expCategories = Object.keys(expensesByCategory);
     const expValues = Object.values(expensesByCategory);
 
-    // Топ-3
+    // Топ-3 расхода
     const sorted = Object.entries(expensesByCategory).sort((a, b) => b[1] - a[1]).slice(0, 3);
     const topList = document.getElementById('top-expenses');
     if (topList) {
@@ -221,7 +214,7 @@ function updateAnalytics() {
             data: {
                 labels: expCategories,
                 datasets: [{
-                    data: expValues,
+                    expValues,
                     backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#C9CBCF', '#7CFC00']
                 }]
             },
@@ -234,7 +227,7 @@ function updateAnalytics() {
         });
     }
 
-    // Доходы
+    // Доходы по видам
     const incomesByType = {};
     transactions
         .filter(t => t.type === 'income')
@@ -251,24 +244,24 @@ function updateAnalytics() {
         if (incomePieChart) incomePieChart.destroy();
         incomePieChart = new Chart(incCtx, {
             type: 'doughnut',
-            data: {
+             {
                 labels: incTypes,
                 datasets: [{
-                    data: incValues,
+                    incValues,
                     backgroundColor: ['#34C759', '#4CD964', '#30D158', '#64D2FF', '#FFD700', '#FF9500', '#FF2D55', '#5856D6']
                 }]
             },
             options: {
-                responsive: true,
-                plugins: {
-                    legend: { position: 'bottom' }
-                }
+            responsive: true,
+            plugins: {
+                legend: { position: 'bottom' }
             }
+        }
         });
-    }
+}
 }
 
-// === 12. История
+// === 12. История операций
 function renderAllList() {
     const list = document.getElementById('all-transactions');
     if (!list) return;
@@ -309,14 +302,17 @@ function renderAllList() {
     });
 }
 
-function filterByDate() { renderAllList(); }
+function filterByDate() {
+    renderAllList();
+}
+
 function clearFilter() {
     document.getElementById('filter-start').value = '';
     document.getElementById('filter-end').value = '';
     renderAllList();
 }
 
-// === 13. Экспорт
+// === 13. Экспорт в Excel
 function exportToExcel() {
     const start = document.getElementById('filter-start')?.value;
     const end = document.getElementById('filter-end')?.value;
@@ -375,7 +371,7 @@ function closeModal() {
     document.getElementById('add-form').reset();
 }
 
-// === 15. Datalist
+// === 15. Datalist: категории и виды доходов
 function updateCategoryDatalist() {
     const categories = [...new Set(transactions.map(t => t.category))];
     const datalist = document.getElementById('categories');
