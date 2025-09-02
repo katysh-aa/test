@@ -379,27 +379,23 @@ document.getElementById('login-form')?.addEventListener('submit', (e) => {
     }
 
     auth.signInWithEmailAndPassword(email, password)
-        .then((userCredential) => {
-            const user = userCredential.user;
-            if (!user.emailVerified) {
-                alert('Подтвердите email, прежде чем входить.');
-                auth.signOut();
-                return;
-            }
-            console.log("✅ Вход выполнен:", user.email);
-        })
-        .catch((error) => {
-            const errorCode = error.code;
-            if (errorCode === 'auth/wrong-password') {
-                errorElement.textContent = 'Неверный пароль.';
-            } else if (errorCode === 'auth/user-not-found') {
-                errorElement.textContent = 'Пользователь не найден.';
-            } else if (errorCode === 'auth/invalid-email') {
-                errorElement.textContent = 'Неверный email.';
-            } else {
-                errorElement.textContent = 'Ошибка: ' + error.message;
-            }
-        });
+    .then((userCredential) => {
+        const user = userCredential.user;
+        console.log("✅ Вход выполнен:", user.email);
+        // Убрана проверка emailVerified
+    })
+    .catch((error) => {
+        const errorCode = error.code;
+        if (errorCode === 'auth/wrong-password') {
+            errorElement.textContent = 'Неверный пароль.';
+        } else if (errorCode === 'auth/user-not-found') {
+            errorElement.textContent = 'Пользователь не найден.';
+        } else if (errorCode === 'auth/invalid-email') {
+            errorElement.textContent = 'Неверный email.';
+        } else {
+            errorElement.textContent = 'Ошибка: ' + error.message;
+        }
+    });
 });
 
 // === 17. Аутентификация
