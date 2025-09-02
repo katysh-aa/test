@@ -1,4 +1,4 @@
-// === 1. Firebase Config
+// === 1. Firebase Config (оставляем compat для простоты, но можно перейти на modular)
 const firebaseConfig = {
     apiKey: "AIzaSyDnyp4wQDFgr3OFylpZhnyn2j1Pu4i8bLs",
     authDomain: "bank-916f4.firebaseapp.com",
@@ -9,74 +9,140 @@ const firebaseConfig = {
     appId: "1:394968475663:web:1c01d44fbf408fbaf6db7a",
     measurementId: "G-GW6MMP2L21"
 };
-// Инициализация Firebase
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-// Коллекции
-const userTransactions = () => db.collection('users').doc(auth.currentUser.uid).collection('transactions');
-
 // === 2. Глобальные переменные
 let transactions = [];
+let budgets = [];
 let expensePieChart = null;
 let incomePieChart = null;
-let editingTransactionId = null; // ← ID редактируемой транзакции
+let budgetChart = null;
+let editingTransactionId = null;
+let filterTimeout = null;
 
-// === 3. Форматирование чисел
+// === 3. Кеширование DOM-элементов
+const DOM = {
+    // Основные
+    currentBalance: document.getElementById('current-balance'),
+    totalIncome: document.getElementById('total-income'),
+    totalExpense: document.getElementById('total-expense'),
+    daysUntilPayday: document.getElementById('days-until-payday'),
+    dailyBudget: document.getElementById('daily-budget'),
+    nextPayday: document.getElementById('next-payday'),
+    progressText: document.getElementById('progress-text'),
+    
+    // История
+    allTransactions: document.getElementById('all-transactions'),
+    filterStart: document.getElementById('filter-start'),
+    filterEnd: document.getElementById('filter-end'),
+    
+    // Анализ
+    topExpenses: document.getElementById('top-expenses'),
+    expensePieChart: document.getElementById('expensePieChart'),
+    incomePieChart: document.getElementById('incomePieChart'),
+    
+    // Форма добавления
+    addForm: document.getElementById('add-form'),
+    type: document.getElementById('type'),
+    date: document.getElementById('date'),
+    expenseCategory: document.getElementById('expense-category'),
+    incomeCategory: document.getElementById('income-category'),
+    amount: document.getElementById('amount'),
+    comment: document.getElementById('comment'),
+    expenseField: document.getElementById('expense-field'),
+    incomeField: document.getElementById('income-field'),
+    recentTransactions: document.getElementById('recent-transactions'),
+    
+    // Бюджеты
+    budgetForm: document.getElementById('budget-form'),
+    budgetCategory: document.getElementById('budget-category'),
+    budgetAmount: document.getElementById('budget-amount'),
+    budgetsList: document.getElementById('budgets-list'),
+    
+    // Навигация
+    currentSectionTitle: document.getElementById('current-section-title'),
+    navBtns: document.querySelectorAll('.nav-btn'),
+};
+
+// === 4. Форматирование чисел
 function formatNumber(num) {
     if (isNaN(num) || num === null) return "0";
     return num.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
 }
 
-// === 4. Загрузка данных
+// === 5. Коллекции Firebase
+function userTransactions() {
+    return db.collection('users').doc(auth.currentUser?.uid).collection('transactions');
+}
+
+function userBudgets() {
+    return db.collection('users').doc(auth.currentUser?.uid).collection('budgets');
+}
+
+// === 6. Загрузка данных с реактивностью
 function loadFromFirebase() {
     if (!auth.currentUser) return;
+
+    // Транзакции
     const q = userTransactions().orderBy('date', 'desc');
     q.onSnapshot((snapshot) => {
         transactions = [];
         snapshot.forEach(doc => {
             transactions.push({ id: doc.id, ...doc.data() });
         });
+        // Обновляем все разделы автоматически
         updateHome();
         updateAnalytics();
-        renderAllList();
-        updateCategoryDatalist();
-        updateIncomeTypeDatalist();
+        if (!DOM.allTransactions?.closest('.hidden')) {
+            renderAllList();
+        }
+        updateDatalists();
+        renderRecentTransactions();
     }, error => {
         console.error("Ошибка загрузки транзакций:", error);
-        alert("Ошибка загрузки данных. Проверьте подключение.");
+    });
+
+    // Бюджеты
+    const b = userBudgets();
+    b.onSnapshot((snapshot) => {
+        budgets = [];
+        snapshot.forEach(doc => {
+            budgets.push({ id: doc.id, ...doc.data() });
+        });
+        if (!DOM.budgetsList?.closest('.hidden')) {
+            renderBudgets();
+        }
     });
 }
 
-// === 5. Обновление главной
+// === 7. Обновление главной
 function updateHome() {
-    const balance = getBalance();
+    const income = transactions
+        .filter(t => t.type === 'income')
+        .reduce((sum, t) => sum + t.amount, 0);
+
+    const expense = transactions
+        .filter(t => t.type === 'expense')
+        .reduce((sum, t) => sum + t.amount, 0);
+
+    const balance = income - expense;
     const nextPayday = getNextPayday();
     const daysUntil = Math.max(1, Math.ceil((nextPayday - new Date()) / (1000 * 60 * 60 * 24)));
     const dailyBudget = balance / daysUntil;
 
-    const currentBalance = document.getElementById('current-balance');
-    if (currentBalance) currentBalance.textContent = formatNumber(balance) + ' ₽';
-
-    const daysUntilPayday = document.getElementById('days-until-payday');
-    if (daysUntilPayday) daysUntilPayday.textContent = daysUntil + ' дней';
-
-    const dailyBudgetEl = document.getElementById('daily-budget');
-    if (dailyBudgetEl) dailyBudgetEl.textContent = formatNumber(dailyBudget) + ' ₽';
-
-    const nextPaydayEl = document.getElementById('next-payday');
-    if (nextPaydayEl) nextPaydayEl.textContent = nextPayday.toLocaleDateString('ru-RU');
+    // Обновляем элементы
+    if (DOM.currentBalance) DOM.currentBalance.textContent = formatNumber(balance) + ' ₽';
+    if (DOM.totalIncome) DOM.totalIncome.textContent = formatNumber(income) + ' ₽';
+    if (DOM.totalExpense) DOM.totalExpense.textContent = formatNumber(expense) + ' ₽';
+    if (DOM.daysUntilPayday) DOM.daysUntilPayday.textContent = daysUntil + ' дней';
+    if (DOM.dailyBudget) DOM.dailyBudget.textContent = formatNumber(dailyBudget) + ' ₽';
+    if (DOM.nextPayday) DOM.nextPayday.textContent = nextPayday.toLocaleDateString('ru-RU');
+    if (DOM.progressText) DOM.progressText.textContent = `Остаток: ${formatNumber(balance)} ₽`;
 }
 
-// === 6. Баланс
-function getBalance() {
-    return transactions.reduce((sum, t) => {
-        return t.type === 'income' ? sum + t.amount : sum - t.amount;
-    }, 0);
-}
-
-// === 7. Логика "следующей зарплаты"
+// === 8. Логика "следующей зарплаты"
 function getNextPayday() {
     const today = new Date();
     const year = today.getFullYear();
@@ -97,13 +163,14 @@ function getNextPayday() {
     return targetMonth;
 }
 
-// === 8. Отображение всех операций
+// === 9. Отображение истории
 function renderAllList() {
-    const list = document.getElementById('all-transactions');
-    if (!list) return;
-    list.innerHTML = '';
-    const start = document.getElementById('filter-start')?.value;
-    const end = document.getElementById('filter-end')?.value;
+    if (!DOM.allTransactions) return;
+    DOM.allTransactions.innerHTML = '';
+
+    const start = DOM.filterStart?.value;
+    const end = DOM.filterEnd?.value;
+
     let filtered = [...transactions];
     if (start) filtered = filtered.filter(t => t.date >= start);
     if (end) filtered = filtered.filter(t => t.date <= end);
@@ -112,7 +179,7 @@ function renderAllList() {
         const li = document.createElement('li');
         li.textContent = 'Нет операций за период';
         li.style.color = '#999';
-        list.appendChild(li);
+        DOM.allTransactions.appendChild(li);
         return;
     }
 
@@ -120,13 +187,18 @@ function renderAllList() {
         const li = document.createElement('li');
         const amountColor = tx.type === 'income' ? '#34c759' : '#ff3b30';
         const sign = tx.type === 'income' ? '+' : '-';
-        const comment = tx.comment ? `<div class="info">💬 ${escapeHtml(tx.comment)}</div>` : '';
-        const incomeType = tx.type === 'income' && tx.incomeType ? `<div class="info">💼 ${escapeHtml(tx.incomeType)}</div>` : '';
+        const comment = tx.comment ? `<div class="info">💬 ${tx.comment}</div>` : '';
+        const detail = tx.type === 'income' && tx.incomeCategory
+            ? `<div class="info">💼 ${tx.incomeCategory}</div>`
+            : (tx.expenseCategory ? `<div class="info">🏷️ ${tx.expenseCategory}</div>` : '');
+
         li.innerHTML = `
             <div>
-                <div><strong>${escapeHtml(tx.category)}</strong> <span style="color: ${amountColor}; font-weight: bold;">${sign}${formatNumber(tx.amount)} ₽</span></div>
+                <div><strong>${tx.type === 'income' ? tx.incomeCategory : tx.expenseCategory}</strong> 
+                    <span style="color: ${amountColor}; font-weight: bold;">${sign}${formatNumber(tx.amount)} ₽</span>
+                </div>
                 <div class="info">${tx.date}</div>
-                ${incomeType}
+                ${detail}
                 ${comment}
             </div>
             <div class="actions">
@@ -134,67 +206,141 @@ function renderAllList() {
                 <button class="btn small danger" onclick="deleteTransaction('${tx.id}')">🗑️</button>
             </div>
         `;
-        li.style.cursor = 'pointer';
-        li.onclick = (e) => {
-            if (!e.target.closest('button')) {
-                editTransaction(tx.id);
-            }
-        };
-        list.appendChild(li);
+        DOM.allTransactions.appendChild(li);
     });
 }
 
-// === 9. Редактирование транзакции
-function editTransaction(id) {
-    const tx = transactions.find(t => t.id === id);
-    if (!tx) return;
-
-    editingTransactionId = id;
-    showAddModal();
-
-    const form = document.getElementById('add-form');
-    form.date.value = tx.date;
-    form.category.value = tx.category;
-    form.amount.value = tx.amount;
-    form.comment.value = tx.comment || '';
-    form.type.value = tx.type;
-
-    const incomeTypeField = document.getElementById('income-type-field');
-    if (tx.type === 'income') {
-        form['income-type'].value = tx.incomeType || 'Без названия';
-        incomeTypeField.classList.remove('hidden');
-    } else {
-        incomeTypeField.classList.add('hidden');
-    }
-
-    // Обновляем заголовок модального окна
-    const modalTitle = document.querySelector('#add-modal h3');
-    if (modalTitle) modalTitle.textContent = '✏️ Редактировать транзакцию';
+// === 10. Фильтры с дебаунсом
+function filterByDate() {
+    clearTimeout(filterTimeout);
+    filterTimeout = setTimeout(renderAllList, 300);
 }
 
-// === 10. Добавление/редактирование транзакции
-document.getElementById('add-form')?.addEventListener('submit', e => {
-    e.preventDefault();
-    const form = e.target;
-    const type = form.type.value;
-    const newTx = {
-        date: form.date.value,
-        category: form.category.value.trim(),
-        amount: parseFloat(form.amount.value),
-        type: type,
-        comment: form.comment.value.trim() || ''
-    };
+function clearFilter() {
+    if (DOM.filterStart) DOM.filterStart.value = '';
+    if (DOM.filterEnd) DOM.filterEnd.value = '';
+    renderAllList();
+}
 
-    if (type === 'income') {
-        newTx.incomeType = form['income-type'].value.trim() || 'Без названия';
+// === 11. Анализ: диаграммы и отчёт
+function updateAnalytics() {
+    // Расходы по категориям
+    const expensesByCategory = {};
+    transactions
+        .filter(t => t.type === 'expense')
+        .forEach(t => {
+            expensesByCategory[t.expenseCategory] = (expensesByCategory[t.expenseCategory] || 0) + t.amount;
+        });
+
+    // Топ-3 расхода
+    if (DOM.topExpenses) {
+        DOM.topExpenses.innerHTML = '';
+        Object.entries(expensesByCategory)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 3)
+            .forEach(([cat, amt]) => {
+                const li = document.createElement('li');
+                li.textContent = `${cat}: ${formatNumber(amt)} ₽`;
+                DOM.topExpenses.appendChild(li);
+            });
     }
 
-    if (!newTx.date || !newTx.category || isNaN(newTx.amount) || newTx.amount <= 0) {
+    // Диаграмма расходов
+    if (DOM.expensePieChart) {
+        if (expensePieChart) expensePieChart.destroy();
+        const labels = Object.keys(expensesByCategory);
+        const values = Object.values(expensesByCategory);
+        expensePieChart = new Chart(DOM.expensePieChart, {
+            type: 'doughnut',
+            data: {
+                labels,
+                datasets: [{
+                    data: values,
+                    backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#C9CBCF', '#7CFC00']
+                }]
+            },
+            options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+        });
+    }
+
+    // Доходы по статьям
+    const incomesByCategory = {};
+    transactions
+        .filter(t => t.type === 'income')
+        .forEach(t => {
+            incomesByCategory[t.incomeCategory] = (incomesByCategory[t.incomeCategory] || 0) + t.amount;
+        });
+
+    // Диаграмма доходов
+    if (DOM.incomePieChart) {
+        if (incomePieChart) incomePieChart.destroy();
+        const labels = Object.keys(incomesByCategory);
+        const values = Object.values(incomesByCategory);
+        incomePieChart = new Chart(DOM.incomePieChart, {
+            type: 'doughnut',
+            data: {
+                labels,
+                datasets: [{
+                    data: values,
+                    backgroundColor: ['#34C759', '#4CD964', '#30D158', '#64D2FF', '#FFD700', '#FF9500', '#FF2D55', '#5856D6']
+                }]
+            },
+            options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+        });
+    }
+}
+
+// === 12. Форма добавления: переключение полей
+function setupAddForm() {
+    if (!DOM.addForm) return;
+
+    DOM.type?.addEventListener('change', toggleCategoryFields);
+    toggleCategoryFields();
+
+    // Устанавливаем сегодняшнюю дату
+    if (DOM.date && !DOM.date.value) {
+        DOM.date.valueAsDate = new Date();
+    }
+}
+
+function toggleCategoryFields() {
+    const isIncome = DOM.type?.value === 'income';
+    DOM.expenseField?.classList.toggle('hidden', isIncome);
+    DOM.incomeField?.classList.toggle('hidden', !isIncome);
+}
+
+// === 13. Добавление/редактирование транзакции
+DOM.addForm?.addEventListener('submit', e => {
+    e.preventDefault();
+    const type = DOM.type.value;
+    const isIncome = type === 'income';
+
+    const newTx = {
+        date: DOM.date.value,
+        amount: parseFloat(DOM.amount.value),
+        type,
+    };
+
+    if (isIncome) {
+        newTx.incomeCategory = DOM.incomeCategory.value.trim();
+        if (!newTx.incomeCategory) {
+            alert('Укажите статью доходов');
+            return;
+        }
+    } else {
+        newTx.expenseCategory = DOM.expenseCategory.value.trim();
+        if (!newTx.expenseCategory) {
+            alert('Укажите статью расходов');
+            return;
+        }
+    }
+
+    if (!newTx.date || isNaN(newTx.amount) || newTx.amount <= 0) {
         alert('Заполните все обязательные поля корректно');
         return;
     }
 
-    const saveBtn = form.querySelector('button[type="submit"]');
+    const saveBtn = DOM.addForm.querySelector('button[type="submit"]');
     const originalText = saveBtn.textContent;
     saveBtn.disabled = true;
     saveBtn.textContent = 'Сохранение...';
@@ -205,7 +351,8 @@ document.getElementById('add-form')?.addEventListener('submit', e => {
 
     saveOperation
         .then(() => {
-            closeModal();
+            resetAddForm();
+            show('home');
         })
         .catch(err => {
             console.error('Ошибка сохранения:', err);
@@ -217,7 +364,37 @@ document.getElementById('add-form')?.addEventListener('submit', e => {
         });
 });
 
-// === 11. Удаление транзакции
+// === 14. Сброс формы
+function resetAddForm() {
+    DOM.addForm?.reset();
+    editingTransactionId = null;
+    if (DOM.date) DOM.date.valueAsDate = new Date();
+    toggleCategoryFields();
+}
+
+// === 15. Редактирование
+function editTransaction(id) {
+    const tx = transactions.find(t => t.id === id);
+    if (!tx) return;
+
+    editingTransactionId = id;
+    show('add');
+
+    DOM.date.value = tx.date;
+    DOM.amount.value = tx.amount;
+    DOM.comment.value = tx.comment || '';
+    DOM.type.value = tx.type;
+
+    if (tx.type === 'income') {
+        DOM.incomeCategory.value = tx.incomeCategory || '';
+    } else {
+        DOM.expenseCategory.value = tx.expenseCategory || '';
+    }
+
+    toggleCategoryFields();
+}
+
+// === 16. Удаление
 function deleteTransaction(id) {
     if (confirm('Удалить операцию?')) {
         userTransactions().doc(id).delete()
@@ -228,192 +405,130 @@ function deleteTransaction(id) {
     }
 }
 
-// === 12. Статистика: диаграммы и отчёт
-function updateAnalytics() {
-    // Расходы по категориям
-    const expensesByCategory = {};
-    transactions
+// === 17. Datalists
+function updateDatalists() {
+    const expenseCategories = [...new Set(transactions
         .filter(t => t.type === 'expense')
-        .forEach(t => {
-            expensesByCategory[t.category] = (expensesByCategory[t.category] || 0) + t.amount;
-        });
-
-    const expCategories = Object.keys(expensesByCategory);
-    const expValues = Object.values(expensesByCategory);
-
-    // Топ-3 расхода
-    const topList = document.getElementById('top-expenses');
-    if (topList) {
-        topList.innerHTML = '';
-        Object.entries(expensesByCategory)
-            .sort((a, b) => b[1] - a[1])
-            .slice(0, 3)
-            .forEach(([cat, amt]) => {
-                const li = document.createElement('li');
-                li.textContent = `${cat}: ${formatNumber(amt)} ₽`;
-                topList.appendChild(li);
-            });
-    }
-
-    // Диаграмма расходов
-    const expCtx = document.getElementById('expensePieChart');
-    if (expCtx) {
-        if (expensePieChart) expensePieChart.destroy();
-        expensePieChart = new Chart(expCtx, {
-            type: 'doughnut',
-            data: {
-                labels: expCategories,
-                datasets: [{
-                    data: expValues,
-                    backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#C9CBCF', '#7CFC00']
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: { position: 'bottom' }
-                }
-            }
-        });
-    }
-
-    // Доходы по видам
-    const incomesByType = {};
-    transactions
+        .map(t => t.expenseCategory)
+        .filter(Boolean))];
+    const incomeCategories = [...new Set(transactions
         .filter(t => t.type === 'income')
-        .forEach(t => {
-            incomesByType[t.incomeType] = (incomesByType[t.incomeType] || 0) + t.amount;
+        .map(t => t.incomeCategory)
+        .filter(Boolean))];
+
+    const expenseDatalist = document.getElementById('expense-categories');
+    const incomeDatalist = document.getElementById('income-categories');
+
+    if (expenseDatalist) {
+        expenseDatalist.innerHTML = '';
+        expenseCategories.forEach(cat => {
+            const option = document.createElement('option');
+            option.value = cat;
+            expenseDatalist.appendChild(option);
         });
+    }
 
-    const incTypes = Object.keys(incomesByType);
-    const incValues = Object.values(incomesByType);
-
-    // Диаграмма доходов
-    const incCtx = document.getElementById('incomePieChart');
-    if (incCtx) {
-        if (incomePieChart) incomePieChart.destroy();
-        incomePieChart = new Chart(incCtx, {
-            type: 'doughnut',
-            data: {
-                labels: incTypes,
-                datasets: [{
-                    data: incValues,
-                    backgroundColor: ['#34C759', '#4CD964', '#30D158', '#64D2FF', '#FFD700', '#FF9500', '#FF2D55', '#5856D6']
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: { position: 'bottom' }
-                }
-            }
+    if (incomeDatalist) {
+        incomeDatalist.innerHTML = '';
+        incomeCategories.forEach(cat => {
+            const option = document.createElement('option');
+            option.value = cat;
+            incomeDatalist.appendChild(option);
         });
     }
 }
 
-// === 13. Фильтры
-function filterByDate() {
-    renderAllList();
+// === 18. Последние 10 транзакций
+function renderRecentTransactions() {
+    if (!DOM.recentTransactions) return;
+    DOM.recentTransactions.innerHTML = '';
+    const recent = transactions.slice(0, 10);
+    recent.forEach(tx => {
+        const li = document.createElement('li');
+        const type = tx.type === 'income' ? '📥 Доход' : '📤 Расход';
+        const category = tx.type === 'income' ? tx.incomeCategory : tx.expenseCategory;
+        li.innerHTML = `
+            <div><strong>${category}</strong> — ${formatNumber(tx.amount)} ₽</div>
+            <div class="info">${tx.date} · ${type}</div>
+        `;
+        li.style.cursor = 'pointer';
+        li.onclick = () => {
+            editTransaction(tx.id);
+        };
+        DOM.recentTransactions.appendChild(li);
+    });
 }
 
-function clearFilter() {
-    document.getElementById('filter-start').value = '';
-    document.getElementById('filter-end').value = '';
-    renderAllList();
+// === 19. Бюджеты
+function renderBudgets() {
+    if (!DOM.budgetsList) return;
+    DOM.budgetsList.innerHTML = '';
+    budgets.forEach(budget => {
+        const li = document.createElement('li');
+        li.innerHTML = `
+            <div>
+                <div><strong>${budget.category}</strong>: ${formatNumber(budget.limit)} ₽</div>
+            </div>
+            <div class="actions">
+                <button class="btn small danger" onclick="deleteBudget('${budget.id}')">🗑️</button>
+            </div>
+        `;
+        DOM.budgetsList.appendChild(li);
+    });
 }
 
-// === 14. Экспорт в Excel
-function exportToExcel() {
-    const start = document.getElementById('filter-start')?.value;
-    const end = document.getElementById('filter-end')?.value;
-    let filtered = [...transactions];
-    if (start) filtered = filtered.filter(t => t.date >= start);
-    if (end) filtered = filtered.filter(t => t.date <= end);
-    if (filtered.length === 0) {
-        alert('Нет данных для экспорта');
+DOM.budgetForm?.addEventListener('submit', e => {
+    e.preventDefault();
+    const category = DOM.budgetCategory.value.trim();
+    const limit = parseFloat(DOM.budgetAmount.value);
+    if (!category || isNaN(limit) || limit <= 0) {
+        alert('Заполните корректно');
         return;
     }
-    const data = filtered.map(tx => ({
-        "Дата": tx.date,
-        "Категория": tx.category,
-        "Сумма": tx.amount,
-        "Тип": tx.type === 'income' ? 'Доход' : 'Расход',
-        "Вид дохода": tx.type === 'income' ? tx.incomeType : '',
-        "Комментарий": tx.comment || ''
-    }));
-    try {
-        const ws = XLSX.utils.json_to_sheet(data);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Операции");
-        const period = start && end ? `${start}_до_${end}` : "все";
-        const filename = `бюджет_до_зарплаты_${period}.xlsx`;
-        XLSX.writeFile(wb, filename);
-    } catch (err) {
-        console.error('Ошибка экспорта:', err);
-        alert('Не удалось экспортировать данные в Excel');
+    userBudgets().add({ category, limit });
+    DOM.budgetForm.reset();
+});
+
+function deleteBudget(id) {
+    if (confirm('Удалить бюджет?')) {
+        userBudgets().doc(id).delete();
     }
 }
 
-// === 15. Модальное окно
-function showAddModal() {
-    document.getElementById('add-modal').classList.remove('hidden');
-    document.getElementById('date').valueAsDate = new Date();
-    const typeSelect = document.getElementById('type');
-    const incomeTypeField = document.getElementById('income-type-field');
+// === 20. Навигация
+function show(sectionId) {
+    document.querySelectorAll('section').forEach(s => s.classList.add('hidden'));
+    document.getElementById(sectionId).classList.remove('hidden');
+    DOM.navBtns.forEach(btn => btn.classList.remove('active'));
+    document.querySelector(`.nav-btn[onclick="show('${sectionId}')"]`).classList.add('active');
+    DOM.currentSectionTitle.textContent = document.querySelector(`.nav-btn[onclick="show('${sectionId}')"] span`).textContent;
 
-    // Скрываем поле "Вид дохода" по умолчанию
-    incomeTypeField.classList.add('hidden');
+    if (sectionId === 'history') renderAllList();
+    if (sectionId === 'analytics') updateAnalytics();
+    if (sectionId === 'add') setupAddForm();
+    if (sectionId === 'budgets') renderBudgets();
+}
 
-    // При изменении типа
-    typeSelect.onchange = () => {
-        if (typeSelect.value === 'income') {
-            incomeTypeField.classList.remove('hidden');
-        } else {
-            incomeTypeField.classList.add('hidden');
-        }
-    };
+// === 21. Тема
+function toggleTheme() {
+    document.body.classList.toggle('dark-theme');
+    localStorage.setItem('dark-theme', document.body.classList.contains('dark-theme'));
+}
 
-    // Применяем текущее значение
-    if (typeSelect.value === 'income') {
-        incomeTypeField.classList.remove('hidden');
+// === 22. Аутентификация
+auth.onAuthStateChanged((user) => {
+    if (user) {
+        document.getElementById('auth-screen').classList.add('hidden');
+        document.getElementById('app').classList.remove('hidden');
+        loadFromFirebase();
+        show('home');
+    } else {
+        document.getElementById('app').classList.add('hidden');
+        document.getElementById('auth-screen').classList.remove('hidden');
     }
-}
+});
 
-function closeModal() {
-    document.getElementById('add-modal').classList.add('hidden');
-    const form = document.getElementById('add-form');
-    form.reset();
-    form.querySelector('button[type="submit"]').textContent = 'Добавить';
-    editingTransactionId = null;
-    const modalTitle = document.querySelector('#add-modal h3');
-    if (modalTitle) modalTitle.textContent = '➕ Новая транзакция';
-    document.getElementById('income-type-field').classList.add('hidden');
-}
-
-// === 16. Datalist
-function updateCategoryDatalist() {
-    const categories = [...new Set(transactions.map(t => t.category))];
-    const datalist = document.getElementById('categories');
-    datalist.innerHTML = '';
-    categories.forEach(cat => {
-        const option = document.createElement('option');
-        option.value = cat;
-        datalist.appendChild(option);
-    });
-}
-
-function updateIncomeTypeDatalist() {
-    const incomeTypes = [...new Set(transactions.filter(t => t.type === 'income').map(t => t.incomeType || 'Без названия'))];
-    const datalist = document.getElementById('income-types');
-    datalist.innerHTML = '';
-    incomeTypes.forEach(type => {
-        const option = document.createElement('option');
-        option.value = type;
-        datalist.appendChild(option);
-    });
-}
-
-// === 17. Форма входа
+// === 23. Вход
 document.getElementById('login-form')?.addEventListener('submit', (e) => {
     e.preventDefault();
     const email = document.getElementById('login-email').value.trim();
@@ -426,21 +541,7 @@ document.getElementById('login-form')?.addEventListener('submit', (e) => {
         return;
     }
 
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-        errorElement.textContent = 'Неверный формат email';
-        return;
-    }
-
-    if (password.length < 6) {
-        errorElement.textContent = 'Пароль должен быть не менее 6 символов';
-        return;
-    }
-
     auth.signInWithEmailAndPassword(email, password)
-        .then((userCredential) => {
-            const user = userCredential.user;
-            console.log("✅ Вход выполнен:", user.email);
-        })
         .catch((error) => {
             const errorCode = error.code;
             if (errorCode === 'auth/wrong-password') {
@@ -455,89 +556,20 @@ document.getElementById('login-form')?.addEventListener('submit', (e) => {
         });
 });
 
-// === 18. Аутентификация
-auth.onAuthStateChanged((user) => {
-    if (user) {
-        console.log('✅ Вошёл:', user.email);
-        document.getElementById('auth-screen').classList.add('hidden');
-        document.getElementById('app').classList.remove('hidden');
-        loadFromFirebase();
-        show('home');
-        if (document.getElementById('date')) {
-            document.getElementById('date').valueAsDate = new Date();
-        }
-    } else {
-        console.log('❌ Не авторизован');
-        document.getElementById('app').classList.add('hidden');
-        document.getElementById('auth-screen').classList.remove('hidden');
-    }
-});
-
-// === 19. Выход
+// === 24. Выход
 function logout() {
     if (confirm('Выйти?')) {
-        auth.signOut().then(() => {
-            console.log("Выход выполнен");
-        }).catch(err => {
+        auth.signOut().catch(err => {
             console.error('Ошибка выхода:', err);
             alert('Не удалось выйти');
         });
     }
 }
 
-// === 20. Навигация
-function show(sectionId) {
-    document.querySelectorAll('section').forEach(s => s.classList.add('hidden'));
-    document.getElementById(sectionId).classList.remove('hidden');
-    document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
-    document.querySelector(`.nav-btn[onclick="show('${sectionId}')"]`).classList.add('active');
-    if (sectionId === 'list') renderAllList();
-    if (sectionId === 'analytics') updateAnalytics();
-}
-
-// === 21. Тема
-function toggleTheme() {
-    document.body.classList.toggle('dark-theme');
-    localStorage.setItem('dark-theme', document.body.classList.contains('dark-theme'));
-}
-
-// === 22. Инициализация
+// === 25. Инициализация
 document.addEventListener('DOMContentLoaded', () => {
-    const isDark = localStorage.getItem('dark-theme') === 'true';
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const savedDark = localStorage.getItem('dark-theme');
+    const isDark = savedDark ? savedDark === 'true' : prefersDark;
     if (isDark) document.body.classList.add('dark-theme');
-    if (document.getElementById('date')) {
-        document.getElementById('date').valueAsDate = new Date();
-    }
 });
-
-// === 23. Pull-to-refresh
-let startY = 0, currentY = 0;
-const refreshIndicator = document.getElementById('refresh-indicator');
-document.body.addEventListener('touchstart', e => {
-    if (window.scrollY === 0) {
-        startY = e.touches[0].clientY;
-    }
-}, { passive: false });
-document.body.addEventListener('touchmove', e => {
-    currentY = e.touches[0].clientY;
-    if (currentY - startY > 0) {
-        e.preventDefault();
-        refreshIndicator.style.opacity = Math.min(1, (currentY - startY) / 100);
-    }
-}, { passive: false });
-document.body.addEventListener('touchend', () => {
-    if (currentY - startY > 80) {
-        refreshIndicator.style.opacity = 1;
-        loadFromFirebase();
-        setTimeout(() => refreshIndicator.style.opacity = 0, 1500);
-    } else {
-        refreshIndicator.style.opacity = 0;
-    }
-});
-
-// === 24. Утилиты
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
