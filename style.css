@@ -315,19 +315,40 @@ body.dark-theme .stat-card.main-card {
     font-size: 32px;
 }
 
-/* Фильтры */
+/* Фильтры и кнопки на вкладке "История" */
+.list-controls {
+    max-width: 100%;
+    margin: 0 auto;
+    padding: 0 10px;
+    box-sizing: border-box;
+}
+
 .filter-section {
     display: flex;
     gap: 10px;
-    margin: 15px 0;
-    flex-wrap: wrap;
+    margin: 15px 0 8px;
+    justify-content: space-between;
 }
+
 .filter-section input {
-    max-width: 120px;
-}
-.filter-section .btn {
-    margin: 0;
     flex: 1;
+    max-width: none;
+    padding: 12px;
+    font-size: 16px;
+}
+
+.filter-actions {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 15px;
+}
+
+.filter-actions .btn {
+    flex: 1;
+    padding: 10px 8px;
+    font-size: 14px;
+    white-space: nowrap;
+    text-align: center;
 }
 
 /* Индикатор обновления */
@@ -471,9 +492,12 @@ body.dark-theme .error-text {
         height: 65px;
     }
     .filter-section {
-        flex-direction: column;
+        flex-direction: row;
+    }
+    .filter-actions {
+        flex-direction: row;
     }
     .filter-section input {
-        max-width: 100%;
+        min-width: 130px;
     }
 }
