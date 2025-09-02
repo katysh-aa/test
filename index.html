@@ -55,7 +55,7 @@
                     <h3>Расход</h3>
                     <p class="value" id="total-expense">0 ₽</p>
                 </div>
-                <!-- Новые карточки для логики "до зарплаты" -->
+                <!-- Новые карточки -->
                 <div class="stat-card">
                     <h3>До зарплаты</h3>
                     <p class="value" id="days-until-payday">0 дней</p>
@@ -70,12 +70,16 @@
         <!-- История операций -->
         <section id="list" class="hidden">
             <h2>📋 История операций</h2>
-            <div class="filter-section">
-                <input type="date" id="filter-start" placeholder="С даты" />
-                <input type="date" id="filter-end" placeholder="По дату" />
-                <button onclick="filterByDate()" class="btn small">🔍</button>
-                <button onclick="clearFilter()" class="btn secondary small">Сброс</button>
-                <button onclick="exportToExcel()" class="btn small">📤</button>
+            <div class="list-controls">
+                <div class="filter-section">
+                    <input type="date" id="filter-start" placeholder="С даты" />
+                    <input type="date" id="filter-end" placeholder="По дату" />
+                </div>
+                <div class="filter-actions">
+                    <button onclick="filterByDate()" class="btn small">🔍 Поиск</button>
+                    <button onclick="clearFilter()" class="btn secondary small">Сброс</button>
+                    <button onclick="exportToExcel()" class="btn small">📤 Экспорт</button>
+                </div>
             </div>
             <ul id="all-transactions"></ul>
         </section>
@@ -109,7 +113,6 @@
                     <input type="date" id="date" required />
                     <input list="categories" id="category" placeholder="Категория" required />
                     <datalist id="categories"></datalist>
-                    <!-- Поле "Вид дохода" — показывается только если тип = income -->
                     <div id="income-type-field" class="hidden">
                         <input list="income-types" id="income-type" placeholder="Вид дохода" />
                         <datalist id="income-types"></datalist>
