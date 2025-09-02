@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Бюджет до зарплаты</title>
+    <link rel="stylesheet" href="style(alpha).css">
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+    <div id="refresh-indicator" class="refresh-indicator"></div>
+    <!-- Экран авторизации -->
+    <section id="auth-screen" class="auth-screen">
+        <h2>🔐 Вход в приложение</h2>
+        <p>Введите email и пароль</p>
+        <form id="login-form">
+            <input type="email" id="login-email" placeholder="Email" required />
+            <input type="password" id="login-password" placeholder="Пароль" required />
+            <button type="submit" class="btn">Войти</button>
+            <p id="auth-error" class="error-text"></p>
+        </form>
+    </section>
+    <!-- Основное приложение -->
+    <div id="app" class="hidden">
+        <!-- Фиксированная шапка -->
+        <header class="app-header">
+            <button onclick="toggleTheme()" class="btn theme-toggle" title="Тёмная тема">
+                <img src="theme-icon.png" alt="Переключить тему" class="header-icon">
+            </button>
+            <h1 id="current-section-title">Главная</h1>
+            <button onclick="logout()" class="btn logout-btn" title="Выйти">
+                <img src="logout-icon.png" alt="Выйти" class="header-icon">
+            </button>
+        </header>
+        <!-- Главная: остаток до зарплаты -->
+        <section id="home">
+            <h2>💰 Остаток средств</h2>
+            <div class="stats-grid">
+                <div class="stat-card main-card">
+                    <h3>Общий остаток</h3>
+                    <p class="value" id="current-balance">0 ₽</p>
+                </div>
+                <div class="stat-card">
+                    <h3>До зарплаты</h3>
+                    <p class="value" id="days-until-payday">— дней</p>
+                </div>
+                <div class="stat-card">
+                    <h3>На день</h3>
+                    <p class="value" id="daily-budget">0 ₽</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Дата зарплаты</h3>
+                    <p class="value" id="next-payday">—</p>
+                </div>
+            </div>
+        </section>
+        <!-- История операций -->
+        <section id="list" class="hidden">
+            <h2>📋 История операций</h2>
+            <div class="filter-section">
+                <input type="date" id="filter-start" placeholder="С даты" />
+                <input type="date" id="filter-end" placeholder="По дату" />
+                <button onclick="filterByDate()" class="btn small">🔍</button>
+                <button onclick="clearFilter()" class="btn secondary small">Сброс</button>
+                <button onclick="exportToExcel()" class="btn small">📤</button>
+            </div>
+            <ul id="all-transactions"></ul>
+        </section>
+        <!-- Статистика -->
+        <section id="analytics" class="hidden">
+            <h2>📈 Статистика</h2>
+            <div class="card">
+                <h3>📊 Расходы по категориям</h3>
+                <div class="chart-container">
+                    <canvas id="expensePieChart"></canvas>
+                </div>
+            </div>
+            <div class="card">
+                <h3>📊 Доходы по видам</h3>
+                <div class="chart-container">
+                    <canvas id="incomePieChart"></canvas>
+                </div>
+            </div>
+            <div class="card">
+                <h3>📋 Топ-3 категории расходов</h3>
+                <ul id="top-expenses"></ul>
+            </div>
+        </section>
+        <!-- Модальное окно: добавить транзакцию -->
+        <div id="add-modal" class="modal hidden">
+            <div class="modal-content">
+                <h3>➕ Новая транзакция</h3>
+                <form id="add-form">
+                    <input type="date" id="date" required />
+                    <input list="categories" id="category" placeholder="Категория" required />
+                    <datalist id="categories"></datalist>
+
+                    <!-- Поле "Вид дохода" — показываем только если тип = income -->
+                    <div id="income-type-field" class="hidden">
+                        <input list="income-types" id="income-type" placeholder="Вид дохода" />
+                        <datalist id="income-types"></datalist>
+                    </div>
+
+                    <input type="number" id="amount" placeholder="Сумма" step="0.01" required />
+                    <select id="type">
+                        <option value="expense">Расход</option>
+                        <option value="income">Доход</option>
+                    </select>
+                    <input type="text" id="comment" placeholder="Комментарий" />
+                    <div class="modal-actions">
+                        <button type="button" onclick="closeModal()" class="btn secondary">Отмена</button>
+                        <button type="submit" class="btn">Добавить</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <!-- Плавающая кнопка "Добавить" -->
+        <button id="fab-add" class="btn fab" onclick="showAddModal()">
+            ➕
+        </button>
+        <!-- Нижняя навигация -->
+        <nav class="bottom-nav">
+            <button onclick="show('home')" class="nav-btn active">
+                <img src="home-icon.png" alt="Главная" class="nav-icon">
+                <span>Главная</span>
+            </button>
+            <button onclick="show('list')" class="nav-btn">
+                <img src="list-icon.png" alt="История" class="nav-icon">
+                <span>История</span>
+            </button>
+            <button onclick="show('analytics')" class="nav-btn">
+                <img src="analytics-icon.png" alt="Статистика" class="nav-icon">
+                <span>Статистика</span>
+            </button>
+        </nav>
+    </div>
+    <script src="app.js"></script>
+</body>
+
+</html>
