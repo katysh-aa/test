@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="ru">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -14,10 +13,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-
 <body>
     <div id="refresh-indicator" class="refresh-indicator"></div>
-
     <!-- Экран авторизации -->
     <section id="auth-screen" class="auth-screen">
         <h2>🔐 Вход в Семейный бюджет</h2>
@@ -29,7 +26,6 @@
             <p id="auth-error" class="error-text"></p>
         </form>
     </section>
-
     <!-- Основное приложение -->
     <div id="app" class="hidden">
         <!-- Фиксированная шапка -->
@@ -42,7 +38,6 @@
                 <img src="logout-icon.png" alt="Выйти" class="header-icon">
             </button>
         </header>
-
         <!-- Главная -->
         <section id="home">
             <h2>💰 Цель накоплений</h2>
@@ -60,9 +55,9 @@
                     <h3>Расход</h3>
                     <p class="value" id="total-expense">0 ₽</p>
                 </div>
-                <!-- Новые строки: добавляем данные по зарплате -->
+                <!-- Новые карточки -->
                 <div class="stat-card">
-                    <h3>До следующей зарплаты</h3>
+                    <h3>До зарплаты</h3>
                     <p class="value" id="days-until-payday">0 дней</p>
                     <p id="next-payday">Дата</p>
                 </div>
@@ -72,7 +67,6 @@
                 </div>
             </div>
         </section>
-
         <!-- История операций -->
         <section id="list" class="hidden">
             <h2>📋 История операций</h2>
@@ -85,14 +79,12 @@
             </div>
             <ul id="all-transactions"></ul>
         </section>
-
         <!-- Отчет -->
         <section id="report" class="hidden">
             <h2>📈 Отчет</h2>
             <h3>Топ-3 статьи расходов</h3>
             <ul id="top-expenses"></ul>
         </section>
-
         <!-- Анализ -->
         <section id="analytics" class="hidden">
             <h2>🔍 Анализ</h2>
@@ -109,7 +101,6 @@
                 </div>
             </div>
         </section>
-
         <!-- Модальное окно -->
         <div id="add-modal" class="modal hidden">
             <div class="modal-content">
@@ -118,6 +109,7 @@
                     <input type="date" id="date" required />
                     <input list="categories" id="category" placeholder="Категория" required />
                     <datalist id="categories"></datalist>
+                    <!-- Поле "Вид дохода" — показывается только если тип = income -->
                     <div id="income-type-field" class="hidden">
                         <input list="income-types" id="income-type" placeholder="Вид дохода" />
                         <datalist id="income-types"></datalist>
@@ -135,10 +127,8 @@
                 </form>
             </div>
         </div>
-
         <!-- Плавающая кнопка -->
         <button id="fab-add" class="btn fab" onclick="showAddModal()">➕</button>
-
         <!-- Нижняя навигация -->
         <nav class="bottom-nav">
             <button onclick="show('home')" class="nav-btn active">
@@ -159,8 +149,6 @@
             </button>
         </nav>
     </div>
-
     <script src="app.js"></script>
 </body>
-
 </html>
