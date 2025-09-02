@@ -211,10 +211,10 @@ function updateAnalytics() {
         if (expensePieChart) expensePieChart.destroy();
         expensePieChart = new Chart(expCtx, {
             type: 'doughnut',
-            data: {
+             {
                 labels: expCategories,
                 datasets: [{
-                    expValues,
+                     expValues,
                     backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#C9CBCF', '#7CFC00']
                 }]
             },
@@ -247,18 +247,18 @@ function updateAnalytics() {
              {
                 labels: incTypes,
                 datasets: [{
-                    incValues,
+                     incValues,
                     backgroundColor: ['#34C759', '#4CD964', '#30D158', '#64D2FF', '#FFD700', '#FF9500', '#FF2D55', '#5856D6']
                 }]
             },
             options: {
-            responsive: true,
-            plugins: {
-                legend: { position: 'bottom' }
+                responsive: true,
+                plugins: {
+                    legend: { position: 'bottom' }
+                }
             }
-        }
         });
-}
+    }
 }
 
 // === 12. История операций
