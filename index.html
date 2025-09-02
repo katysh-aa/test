@@ -43,29 +43,20 @@
 
         <!-- Главная -->
         <section id="home">
-            <h2>💰 Цель накоплений</h2>
+            <h2>💰 До следующей зарплаты</h2>
             <div class="stats-grid">
-                <div class="stat-card main-card">
-                    <h3>Общий прогресс</h3>
+                <div class="stat-card">
+                    <h3>Остаток</h3>
                     <p class="value" id="current-balance">0 ₽</p>
-                    <p id="progress-text">0% от цели</p>
                 </div>
                 <div class="stat-card">
-                    <h3>Доход</h3>
-                    <p class="value" id="total-income">0 ₽</p>
-                </div>
-                <div class="stat-card">
-                    <h3>Расход</h3>
-                    <p class="value" id="total-expense">0 ₽</p>
+                    <h3>Ежедневный бюджет</h3>
+                    <p class="value" id="daily-budget">0 ₽</p>
                 </div>
                 <div class="stat-card">
                     <h3>До зарплаты</h3>
                     <p class="value" id="days-until-payday">0 дней</p>
                     <p id="next-payday">Дата</p>
-                </div>
-                <div class="stat-card">
-                    <h3>Ежедневный бюджет</h3>
-                    <p class="value" id="daily-budget">0 ₽</p>
                 </div>
             </div>
         </section>
@@ -90,6 +81,19 @@
         <!-- Анализ -->
         <section id="analytics" class="hidden">
             <h2>🔍 Анализ</h2>
+            <div class="card">
+                <h3>📈 Доходы и расходы за период</h3>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h4>Доход</h4>
+                        <p class="value" id="total-income">0 ₽</p>
+                    </div>
+                    <div class="stat-card">
+                        <h4>Расход</h4>
+                        <p class="value" id="total-expense">0 ₽</p>
+                    </div>
+                </div>
+            </div>
             <h3>Топ-3 статьи расходов</h3>
             <ul id="top-expenses"></ul>
             <div class="card">
@@ -108,7 +112,7 @@
 
         <!-- Добавить транзакцию -->
         <section id="add" class="hidden">
-            <h2>➕ Новая транзакция</h2>
+            <h2 id="add-title">➕ Новая транзакция</h2>
             <form id="add-form">
                 <input type="date" id="date" required />
                 <select id="type">
@@ -125,9 +129,9 @@
                 </div>
                 <input type="number" id="amount" placeholder="Сумма" step="0.01" required />
                 <input type="text" id="comment" placeholder="Комментарий" />
-                <div class="modal-actions">
-                    <button type="button" onclick="resetAddForm()" class="btn secondary">Очистить</button>
-                    <button type="submit" class="btn">Добавить</button>
+                <div class="form-actions">
+                    <button type="button" id="delete-btn" class="btn danger small hidden">🗑️ Удалить</button>
+                    <button type="submit" class="btn">Сохранить</button>
                 </div>
             </form>
             <h3>Последние 10 операций</h3>
