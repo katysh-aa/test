@@ -4,7 +4,6 @@
     margin: 0;
     padding: 0;
 }
-
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     background: #f9f9f9;
@@ -16,7 +15,6 @@ body {
     transition: background-color 0.3s, color 0.3s;
     padding: 80px 20px 100px;
 }
-
 body.dark-theme {
     background: #1a1a1a;
     color: #e0e0e0;
@@ -39,11 +37,9 @@ body.dark-theme {
     margin: 0 auto;
     height: 60px;
 }
-
 body.dark-theme .app-header {
     background: #2a2a2a;
 }
-
 .app-header h1 {
     margin: 0;
     font-size: 20px;
@@ -51,11 +47,9 @@ body.dark-theme .app-header {
     text-align: center;
     flex: 1;
 }
-
 body.dark-theme .app-header h1 {
     color: #0a84ff;
 }
-
 .header-icon {
     width: 32px;
     height: 32px;
@@ -63,7 +57,6 @@ body.dark-theme .app-header h1 {
     border-radius: 6px;
     transition: background-color 0.3s;
 }
-
 .app-header .btn {
     background: none;
     border: none;
@@ -76,11 +69,9 @@ body.dark-theme .app-header h1 {
     border-radius: 8px;
     transition: background-color 0.3s;
 }
-
 .app-header .btn:hover {
     background-color: rgba(0, 0, 0, 0.1);
 }
-
 body.dark-theme .app-header .btn:hover {
     background-color: rgba(255, 255, 255, 0.1);
 }
@@ -94,7 +85,6 @@ body.dark-theme .app-header .btn:hover {
     color: #007AFF;
     background: rgba(0, 122, 255, 0.08);
 }
-
 body.dark-theme .nav-btn.active {
     color: #0a84ff;
     background: rgba(10, 132, 255, 0.15);
@@ -104,17 +94,14 @@ body.dark-theme .nav-btn.active {
     padding-top: 50px;
 }
 
-h2,
-h3 {
+h2, h3 {
     text-align: center;
     color: #333;
     border-bottom: 1px solid #eee;
     padding-bottom: 8px;
     margin-top: 20px;
 }
-
-body.dark-theme h2,
-body.dark-theme h3 {
+body.dark-theme h2, body.dark-theme h3 {
     color: #e0e0e0;
     border-color: #333;
 }
@@ -137,40 +124,19 @@ h3 {
     margin: 10px 0;
     transition: background 0.3s;
 }
-
 .btn.small {
     width: auto;
     padding: 8px 12px;
     font-size: 14px;
 }
+.btn.danger { background: #ff3b30; }
+.btn.success { background: #34c759; }
+.btn.secondary { background: #8e8e93; }
 
-.btn.danger {
-    background: #ff3b30;
-}
-
-.btn.success {
-    background: #34c759;
-}
-
-.btn.secondary {
-    background: #8e8e93;
-}
-
-body.dark-theme .btn {
-    background: #0a84ff;
-}
-
-body.dark-theme .btn.danger {
-    background: #ff453a;
-}
-
-body.dark-theme .btn.success {
-    background: #30d158;
-}
-
-body.dark-theme .btn.secondary {
-    background: #636366;
-}
+body.dark-theme .btn { background: #0a84ff; }
+body.dark-theme .btn.danger { background: #ff453a; }
+body.dark-theme .btn.success { background: #30d158; }
+body.dark-theme .btn.secondary { background: #636366; }
 
 /* Формы */
 form {
@@ -181,36 +147,28 @@ form {
     display: grid;
     gap: 12px;
 }
-
 body.dark-theme form {
     background: #2a2a2a;
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
 }
 
-input,
-select {
+input, select {
     padding: 12px;
     border: 1px solid #ddd;
     border-radius: 8px;
     font-size: 16px;
     width: 100%;
 }
-
-input:focus,
-select:focus {
+input:focus, select:focus {
     outline: none;
     border-color: #007AFF;
 }
-
-body.dark-theme input,
-body.dark-theme select {
+body.dark-theme input, body.dark-theme select {
     background: #333;
     color: #e0e0e0;
     border-color: #555;
 }
-
-body.dark-theme input:focus,
-body.dark-theme select:focus {
+body.dark-theme input:focus, body.dark-theme select:focus {
     border-color: #0a84ff;
 }
 
@@ -226,11 +184,7 @@ li {
     align-items: center;
     border-bottom: 1px solid #eee;
 }
-
-li:last-child {
-    border-bottom: none;
-}
-
+li:last-child { border-bottom: none; }
 body.dark-theme li {
     background: #2a2a2a;
     border-color: #333;
@@ -241,7 +195,6 @@ body.dark-theme li {
     font-size: 14px;
     color: #666;
 }
-
 body.dark-theme .info {
     color: #aaa;
 }
@@ -269,7 +222,6 @@ body.dark-theme .info {
     max-width: 600px;
     margin: 0 auto;
 }
-
 body.dark-theme .bottom-nav {
     background: #2a2a2a;
     border-color: #444;
@@ -288,17 +240,14 @@ body.dark-theme .bottom-nav {
     transition: all 0.2s ease;
     flex: 1;
 }
-
 body.dark-theme .nav-btn {
     color: #aaa;
 }
-
 .nav-btn:hover {
     background: rgba(0, 122, 255, 0.08);
     color: #007AFF;
     opacity: 1;
 }
-
 body.dark-theme .nav-btn:hover {
     background: rgba(10, 132, 255, 0.15);
     color: #0a84ff;
@@ -308,23 +257,19 @@ body.dark-theme .nav-btn:hover {
     width: 20px;
     height: 20px;
 }
-
 body.dark-theme .nav-icon {
     filter: invert(1) brightness(2);
 }
 
 /* Карточки */
-.card,
-.chart-container {
+.card, .chart-container {
     background: white;
     padding: 15px;
     border-radius: 10px;
     margin: 15px 0;
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
 }
-
-body.dark-theme .card,
-body.dark-theme .chart-container {
+body.dark-theme .card, body.dark-theme .chart-container {
     background: #2a2a2a;
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
 }
@@ -336,17 +281,14 @@ body.dark-theme .chart-container {
     gap: 15px;
     margin: 15px 0;
 }
-
 @media (min-width: 480px) {
     .stats-grid {
         grid-template-columns: 1fr 1fr;
     }
-
     .stats-grid .main-card {
         grid-column: span 2;
     }
 }
-
 .stat-card {
     background: white;
     padding: 20px;
@@ -354,26 +296,21 @@ body.dark-theme .chart-container {
     text-align: center;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
-
 .stat-card.main-card {
     background: linear-gradient(135deg, #007AFF, #0056b3);
     color: white;
     padding: 30px 20px;
 }
-
 body.dark-theme .stat-card {
     background: #2a2a2a;
 }
-
 body.dark-theme .stat-card.main-card {
     background: linear-gradient(135deg, #0a84ff, #0071e3);
 }
-
 .value {
     font-size: 24px;
     font-weight: bold;
 }
-
 .stat-card.main-card .value {
     font-size: 32px;
 }
@@ -385,11 +322,9 @@ body.dark-theme .stat-card.main-card {
     margin: 15px 0;
     flex-wrap: wrap;
 }
-
 .filter-section input {
     max-width: 120px;
 }
-
 .filter-section .btn {
     margin: 0;
     flex: 1;
@@ -408,7 +343,6 @@ body.dark-theme .stat-card.main-card {
     pointer-events: none;
     z-index: 1001;
 }
-
 body.dark-theme .refresh-indicator {
     background: #0a84ff;
 }
@@ -424,21 +358,17 @@ body.dark-theme .refresh-indicator {
     align-items: center;
     background: #f5f5f5;
 }
-
 body.dark-theme .auth-screen {
     background: #1a1a1a;
 }
-
 .auth-screen h2 {
     margin-bottom: 20px;
     color: #007AFF;
     border: none;
 }
-
 body.dark-theme .auth-screen h2 {
     color: #0a84ff;
 }
-
 .auth-screen input {
     width: 100%;
     max-width: 300px;
@@ -449,13 +379,11 @@ body.dark-theme .auth-screen h2 {
     background: white;
     color: #333;
 }
-
 body.dark-theme .auth-screen input {
     background: #333;
     color: #e0e0e0;
     border-color: #555;
 }
-
 .auth-screen button {
     margin-top: 15px;
 }
@@ -476,11 +404,9 @@ body.dark-theme .auth-screen input {
     border: none;
     cursor: pointer;
 }
-
 .fab:hover {
     transform: scale(1.05);
 }
-
 body.dark-theme .fab {
     background: #0a84ff;
 }
@@ -499,7 +425,6 @@ body.dark-theme .fab {
     z-index: 1000;
     padding: 20px;
 }
-
 .modal-content {
     background: white;
     padding: 20px;
@@ -509,28 +434,18 @@ body.dark-theme .fab {
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
     animation: modalFadeIn 0.3s ease-out;
 }
-
 body.dark-theme .modal-content {
     background: #2a2a2a;
 }
-
 .modal-actions {
     display: flex;
     gap: 10px;
     margin-top: 20px;
     justify-content: flex-end;
 }
-
 @keyframes modalFadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(-20px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 /* Ошибки */
@@ -539,7 +454,6 @@ body.dark-theme .modal-content {
     margin-top: 10px;
     font-size: 14px;
 }
-
 body.dark-theme .error-text {
     color: #ff453a;
 }
@@ -550,19 +464,15 @@ body.dark-theme .error-text {
         padding: 15px;
         padding-bottom: 80px;
     }
-
     .app-header {
         padding: 12px 15px;
     }
-
     .bottom-nav {
         height: 65px;
     }
-
     .filter-section {
         flex-direction: column;
     }
-
     .filter-section input {
         max-width: 100%;
     }
