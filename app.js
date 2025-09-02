@@ -7,7 +7,7 @@ const firebaseConfig = {
     storageBucket: "bank-916f4.firebasestorage.app",
     messagingSenderId: "394968475663",
     appId: "1:394968475663:web:1c01d44fbf408fbaf6db7a",
-    measurementId: "G-GW6MMP2L2L21"
+    measurementId: "G-GW6MMP2L21"
 };
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
@@ -122,7 +122,7 @@ function getLastWorkdayBefore(day, month, year) {
     return new Date(date);
 }
 
-// === 8. Определение периода и следующей зарплаты
+// === 8. Определение следующей зарплаты и периода
 function getCurrentBudgetPeriodAndNextPayday() {
     const today = new Date();
     const currentMonth = today.getMonth();
@@ -143,7 +143,9 @@ function getCurrentBudgetPeriodAndNextPayday() {
 
     let nextPayday, prevPayday;
 
+    // Проверяем, в каком периоде мы находимся
     if (today <= actualPayday20) {
+        // Период: после предыдущей выплаты до 20.х
         nextPayday = actualPayday20;
         // Определяем предыдущую выплату (до 5.х)
         const prev5 = new Date(year, currentMonth, 5);
@@ -152,6 +154,7 @@ function getCurrentBudgetPeriodAndNextPayday() {
             : prev5;
         prevPayday = actualPrev5 < actualPayday20 ? actualPrev5 : getLastWorkdayBefore(5, (currentMonth - 1 + 12) % 12, currentMonth === 0 ? year - 1 : year);
     } else {
+        // Период: после 20.х до 5.х+1
         nextPayday = actualPayday5;
         prevPayday = actualPayday20;
     }
