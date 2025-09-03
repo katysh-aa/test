@@ -145,15 +145,22 @@ function getCurrentBudgetPeriodAndNextPayday() {
 
     let nextPayday, prevPayday;
 
-    if (today <= actualPayday20) {
+    // Проверяем, в каком периоде мы находимся
+    const prev5 = new Date(year, currentMonth, 5);
+    const actualPrev5 = prev5.getDay() === 0 || prev5.getDay() === 6
+        ? getLastWorkdayBefore(5, currentMonth, year)
+        : prev5;
+
+    if (today <= actualPrev5) {
+        // Период: после 20.х-1 до 5.х
+        nextPayday = actualPrev5;
+        prevPayday = getLastWorkdayBefore(20, (currentMonth - 1 + 12) % 12, currentMonth === 0 ? year - 1 : year);
+    } else if (today <= actualPayday20) {
+        // Период: после 5.х до 20.х
         nextPayday = actualPayday20;
-        // Определяем предыдущую выплату (до 5.х)
-        const prev5 = new Date(year, currentMonth, 5);
-        const actualPrev5 = prev5.getDay() === 0 || prev5.getDay() === 6
-            ? getLastWorkdayBefore(5, currentMonth, year)
-            : prev5;
-        prevPayday = actualPrev5 < actualPayday20 ? actualPrev5 : getLastWorkdayBefore(5, (currentMonth - 1 + 12) % 12, currentMonth === 0 ? year - 1 : year);
+        prevPayday = actualPrev5;
     } else {
+        // Период: после 20.х до 5.х+1
         nextPayday = actualPayday5;
         prevPayday = actualPayday20;
     }
@@ -468,7 +475,7 @@ function deleteTransaction(id) {
     if (confirm('Удалить операцию?')) {
         userTransactions().doc(id).delete()
             .then(() => {
-                show('history'); // или можно остаться на add
+                show('history');
             })
             .catch(err => {
                 console.error('Ошибка удаления:', err);
