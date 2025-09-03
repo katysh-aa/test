@@ -20,52 +20,50 @@ let expensePieChart = null;
 let incomePieChart = null;
 let editingTransactionId = null;
 let filterTimeout = null;
+let DOM = {}; // Будет заполнен позже
 
-// === 3. Кеширование DOM-элементов
-const DOM = {
-    // Основные
-    currentBalance: document.getElementById('current-balance'),
-    totalIncome: document.getElementById('total-income'),
-    totalExpense: document.getElementById('total-expense'),
-    daysUntilPayday: document.getElementById('days-until-payday'),
-    dailyBudget: document.getElementById('daily-budget'),
-    nextPayday: document.getElementById('next-payday'),
-    progressText: document.getElementById('progress-text'),
-    
-    // История
-    allTransactions: document.getElementById('all-transactions'),
-    filterStart: document.getElementById('filter-start'),
-    filterEnd: document.getElementById('filter-end'),
-    
-    // Анализ
-    topExpenses: document.getElementById('top-expenses'),
-    expensePieChart: document.getElementById('expensePieChart'),
-    incomePieChart: document.getElementById('incomePieChart'),
-    
-    // Форма добавления
-    addForm: document.getElementById('add-form'),
-    addTitle: document.getElementById('add-title'),
-    type: document.getElementById('type'),
-    date: document.getElementById('date'),
-    expenseCategory: document.getElementById('expense-category'),
-    incomeCategory: document.getElementById('income-category'),
-    amount: document.getElementById('amount'),
-    comment: document.getElementById('comment'),
-    expenseField: document.getElementById('expense-field'),
-    incomeField: document.getElementById('income-field'),
-    deleteBtn: document.getElementById('delete-btn'),
-    recentTransactions: document.getElementById('recent-transactions'),
-    
-    // Бюджеты
-    budgetForm: document.getElementById('budget-form'),
-    budgetCategory: document.getElementById('budget-category'),
-    budgetAmount: document.getElementById('budget-amount'),
-    budgetsList: document.getElementById('budgets-list'),
-    
-    // Навигация
-    currentSectionTitle: document.getElementById('current-section-title'),
-    navBtns: document.querySelectorAll('.nav-btn'),
-};
+// === 3. Кеширование DOM-элементов (выполняется после загрузки)
+function cacheDOM() {
+    DOM = {
+        // Основные
+        currentBalance: document.getElementById('current-balance'),
+        totalIncome: document.getElementById('total-income'),
+        totalExpense: document.getElementById('total-expense'),
+        daysUntilPayday: document.getElementById('days-until-payday'),
+        dailyBudget: document.getElementById('daily-budget'),
+        nextPayday: document.getElementById('next-payday'),
+        progressText: document.getElementById('progress-text'),
+        // История
+        allTransactions: document.getElementById('all-transactions'),
+        filterStart: document.getElementById('filter-start'),
+        filterEnd: document.getElementById('filter-end'),
+        // Анализ
+        topExpenses: document.getElementById('top-expenses'),
+        expensePieChart: document.getElementById('expensePieChart'),
+        incomePieChart: document.getElementById('incomePieChart'),
+        // Форма добавления
+        addForm: document.getElementById('add-form'),
+        addTitle: document.getElementById('add-title'),
+        type: document.getElementById('type'),
+        date: document.getElementById('date'),
+        expenseCategory: document.getElementById('expense-category'),
+        incomeCategory: document.getElementById('income-category'),
+        amount: document.getElementById('amount'),
+        comment: document.getElementById('comment'),
+        expenseField: document.getElementById('expense-field'),
+        incomeField: document.getElementById('income-field'),
+        deleteBtn: document.getElementById('delete-btn'),
+        recentTransactions: document.getElementById('recent-transactions'),
+        // Бюджеты
+        budgetForm: document.getElementById('budget-form'),
+        budgetCategory: document.getElementById('budget-category'),
+        budgetAmount: document.getElementById('budget-amount'),
+        budgetsList: document.getElementById('budgets-list'),
+        // Навигация
+        currentSectionTitle: document.getElementById('current-section-title'),
+        navBtns: document.querySelectorAll('.nav-btn'),
+    };
+}
 
 // === 4. Форматирование чисел
 function formatNumber(num) {
@@ -77,7 +75,6 @@ function formatNumber(num) {
 function userTransactions() {
     return db.collection('users').doc(auth.currentUser?.uid).collection('transactions');
 }
-
 function userBudgets() {
     return db.collection('users').doc(auth.currentUser?.uid).collection('budgets');
 }
@@ -85,7 +82,6 @@ function userBudgets() {
 // === 6. Загрузка данных с реактивностью
 function loadFromFirebase() {
     if (!auth.currentUser) return;
-
     const q = userTransactions().orderBy('date', 'desc');
     q.onSnapshot((snapshot) => {
         transactions = [];
@@ -94,7 +90,7 @@ function loadFromFirebase() {
         });
         updateHome();
         updateAnalytics();
-        if (!DOM.allTransactions?.closest('.hidden')) {
+        if (DOM.allTransactions && !DOM.allTransactions.closest('.hidden')) {
             renderAllList();
         }
         updateDatalists();
@@ -109,7 +105,7 @@ function loadFromFirebase() {
         snapshot.forEach(doc => {
             budgets.push({ id: doc.id, ...doc.data() });
         });
-        if (!DOM.budgetsList?.closest('.hidden')) {
+        if (DOM.budgetsList && !DOM.budgetsList.closest('.hidden')) {
             renderBudgets();
         }
     });
@@ -132,7 +128,6 @@ function getCurrentBudgetPeriodAndNextPayday() {
     const year = today.getFullYear();
     const nextYear = currentMonth + 1 > 11 ? year + 1 : year;
 
-    // Возможные даты выплат
     const payday20 = new Date(year, currentMonth, 20);
     const actualPayday20 = payday20.getDay() === 0 || payday20.getDay() === 6
         ? getLastWorkdayBefore(20, currentMonth, year)
@@ -145,49 +140,39 @@ function getCurrentBudgetPeriodAndNextPayday() {
 
     let nextPayday, prevPayday;
 
-    // Проверяем, в каком периоде мы находимся
     const prev5 = new Date(year, currentMonth, 5);
     const actualPrev5 = prev5.getDay() === 0 || prev5.getDay() === 6
         ? getLastWorkdayBefore(5, currentMonth, year)
         : prev5;
 
     if (today <= actualPrev5) {
-        // Период: после 20.х-1 до 5.х
         nextPayday = actualPrev5;
         prevPayday = getLastWorkdayBefore(20, (currentMonth - 1 + 12) % 12, currentMonth === 0 ? year - 1 : year);
     } else if (today <= actualPayday20) {
-        // Период: после 5.х до 20.х
         nextPayday = actualPayday20;
         prevPayday = actualPrev5;
     } else {
-        // Период: после 20.х до 5.х+1
         nextPayday = actualPayday5;
         prevPayday = actualPayday20;
     }
 
-    // Период начинается на следующий календарный день после предыдущей выплаты
     const periodStart = new Date(prevPayday);
     periodStart.setDate(periodStart.getDate() + 1);
-
     return { nextPayday, periodStart };
 }
 
 // === 9. Обновление главной
 function updateHome() {
     const { nextPayday, periodStart } = getCurrentBudgetPeriodAndNextPayday();
-
     const startStr = periodStart.toISOString().split('T')[0];
     const todayStr = new Date().toISOString().split('T')[0];
     const currentPeriodTransactions = transactions.filter(t => t.date >= startStr && t.date <= todayStr);
-
     const income = currentPeriodTransactions
         .filter(t => t.type === 'income')
         .reduce((sum, t) => sum + t.amount, 0);
-
     const expense = currentPeriodTransactions
         .filter(t => t.type === 'expense')
         .reduce((sum, t) => sum + t.amount, 0);
-
     const balance = income - expense;
     const daysUntil = Math.max(1, Math.ceil((nextPayday - new Date()) / (1000 * 60 * 60 * 24)));
     const dailyBudget = balance / daysUntil;
@@ -202,10 +187,8 @@ function updateHome() {
 function renderAllList() {
     if (!DOM.allTransactions) return;
     DOM.allTransactions.innerHTML = '';
-
     const start = DOM.filterStart?.value;
     const end = DOM.filterEnd?.value;
-
     let filtered = [...transactions];
     if (start) filtered = filtered.filter(t => t.date >= start);
     if (end) filtered = filtered.filter(t => t.date <= end);
@@ -228,18 +211,18 @@ function renderAllList() {
             </div>` : '';
         const detail = tx.type === 'income' && tx.incomeCategory
             ? `<div class="info"><img src="category.png" class="info-icon"> ${tx.incomeCategory}</div>`
-            : (tx.expenseCategory 
-                ? `<div class="info"><img src="category.png" class="info-icon"> ${tx.expenseCategory}</div>` 
+            : (tx.expenseCategory
+                ? `<div class="info"><img src="category.png" class="info-icon"> ${tx.expenseCategory}</div>`
                 : '');
-
         const typeIcon = tx.type === 'income'
             ? '<img src="income.png" class="type-icon">'
             : '<img src="expense.png" class="type-icon">';
+        const category = tx.type === 'income' ? tx.incomeCategory : tx.expenseCategory;
 
         li.innerHTML = `
             <div>
                 <div>
-                    ${typeIcon} <strong>${tx.type === 'income' ? tx.incomeCategory : tx.expenseCategory}</strong> 
+                    ${typeIcon} <strong>${category}</strong> 
                     <span style="color: ${amountColor}; font-weight: bold;">${sign}${formatNumber(tx.amount)} ₽</span>
                 </div>
                 <div class="info">${tx.date}</div>
@@ -255,18 +238,19 @@ function renderAllList() {
                 </button>
             </div>
         `;
-        li.style.cursor = 'pointer';
-        li.onclick = (e) => {
-            if (!e.target.closest('button')) {
-                editTransaction(tx.id);
-            }
-        };
+        li.style.cursor = 'default';
         DOM.allTransactions.appendChild(li);
     });
 }
 
 // === 11. Фильтры с дебаунсом
 function filterByDate() {
+    const start = DOM.filterStart?.value;
+    const end = DOM.filterEnd?.value;
+    if (start && end && start > end) {
+        alert('Дата начала не может быть позже даты окончания');
+        return;
+    }
     clearTimeout(filterTimeout);
     filterTimeout = setTimeout(renderAllList, 300);
 }
@@ -284,11 +268,9 @@ function updateAnalytics() {
     const todayStr = new Date().toISOString().split('T')[0];
     const currentPeriodTransactions = transactions.filter(t => t.date >= startStr && t.date <= todayStr);
 
-    // Доход и расход за период
     const totalIncome = currentPeriodTransactions
         .filter(t => t.type === 'income')
         .reduce((sum, t) => sum + t.amount, 0);
-
     const totalExpense = currentPeriodTransactions
         .filter(t => t.type === 'expense')
         .reduce((sum, t) => sum + t.amount, 0);
@@ -365,12 +347,13 @@ function updateAnalytics() {
 // === 13. Форма добавления: переключение полей
 function setupAddForm() {
     if (!DOM.addForm) return;
-
     DOM.type?.addEventListener('change', toggleCategoryFields);
     toggleCategoryFields();
 
-    if (DOM.date && !DOM.date.value) {
+    // Установка максимальной даты
+    if (DOM.date) {
         DOM.date.valueAsDate = new Date();
+        DOM.date.max = new Date().toISOString().split('T')[0];
     }
 }
 
@@ -381,11 +364,10 @@ function toggleCategoryFields() {
 }
 
 // === 14. Добавление/редактирование транзакции
-DOM.addForm?.addEventListener('submit', e => {
+function handleAddFormSubmit(e) {
     e.preventDefault();
     const type = DOM.type.value;
     const isIncome = type === 'income';
-
     const newTx = {
         date: DOM.date.value,
         amount: parseFloat(DOM.amount.value),
@@ -423,7 +405,6 @@ DOM.addForm?.addEventListener('submit', e => {
     saveOperation
         .then(() => {
             resetAddForm();
-            // НЕ переходим на главную — остаёмся на странице
         })
         .catch(err => {
             console.error('Ошибка сохранения:', err);
@@ -433,15 +414,19 @@ DOM.addForm?.addEventListener('submit', e => {
             saveBtn.disabled = false;
             saveBtn.textContent = originalText;
         });
-});
+}
+
+if (DOM.addForm) {
+    DOM.addForm.addEventListener('submit', handleAddFormSubmit);
+}
 
 // === 15. Сброс формы
 function resetAddForm() {
     DOM.addForm?.reset();
     editingTransactionId = null;
     if (DOM.date) DOM.date.valueAsDate = new Date();
-    DOM.addTitle.textContent = '➕ Новая транзакция';
-    DOM.deleteBtn.classList.add('hidden');
+    if (DOM.addTitle) DOM.addTitle.textContent = '➕ Новая транзакция';
+    if (DOM.deleteBtn) DOM.deleteBtn.classList.add('hidden');
     toggleCategoryFields();
 }
 
@@ -449,24 +434,19 @@ function resetAddForm() {
 function editTransaction(id) {
     const tx = transactions.find(t => t.id === id);
     if (!tx) return;
-
     editingTransactionId = id;
     show('add');
-
-    DOM.addTitle.textContent = '✏️ Редактировать транзакцию';
-    DOM.deleteBtn.classList.remove('hidden');
-
+    if (DOM.addTitle) DOM.addTitle.textContent = '✏️ Редактировать транзакцию';
+    if (DOM.deleteBtn) DOM.deleteBtn.classList.remove('hidden');
     DOM.date.value = tx.date;
     DOM.amount.value = tx.amount;
     DOM.comment.value = tx.comment || '';
     DOM.type.value = tx.type;
-
     if (tx.type === 'income') {
         DOM.incomeCategory.value = tx.incomeCategory || '';
     } else {
         DOM.expenseCategory.value = tx.expenseCategory || '';
     }
-
     toggleCategoryFields();
 }
 
@@ -517,27 +497,39 @@ function updateDatalists() {
     }
 }
 
-// === 19. Последние 10 транзакций
+// === 19. Последние 10 транзакций (с кнопками редактирования и удаления)
 function renderRecentTransactions() {
     if (!DOM.recentTransactions) return;
     DOM.recentTransactions.innerHTML = '';
     const recent = transactions.slice(0, 10);
+
     recent.forEach(tx => {
         const li = document.createElement('li');
         const typeIcon = tx.type === 'income'
             ? '<img src="income.png" class="type-icon">'
             : '<img src="expense.png" class="type-icon">';
         const category = tx.type === 'income' ? tx.incomeCategory : tx.expenseCategory;
+        const amountColor = tx.type === 'income' ? 'var(--btn-success)' : 'var(--btn-danger)';
+        const sign = tx.type === 'income' ? '+' : '-';
+
         li.innerHTML = `
             <div>
-                ${typeIcon} <strong>${category}</strong> — ${formatNumber(tx.amount)} ₽
+                <div>
+                    ${typeIcon} <strong>${category}</strong>
+                    <span style="color: ${amountColor}; font-weight: bold;">${sign}${formatNumber(tx.amount)} ₽</span>
+                </div>
+                <div class="info">${tx.date}</div>
             </div>
-            <div class="info">${tx.date}</div>
+            <div class="actions">
+                <button class="btn small" onclick="editTransaction('${tx.id}')">
+                    <img src="edit.png" class="action-icon">
+                </button>
+                <button class="btn small danger" onclick="deleteTransaction('${tx.id}')">
+                    <img src="delete.png" class="action-icon">
+                </button>
+            </div>
         `;
-        li.style.cursor = 'pointer';
-        li.onclick = () => {
-            editTransaction(tx.id);
-        };
+        li.style.cursor = 'default';
         DOM.recentTransactions.appendChild(li);
     });
 }
@@ -562,17 +554,19 @@ function renderBudgets() {
     });
 }
 
-DOM.budgetForm?.addEventListener('submit', e => {
-    e.preventDefault();
-    const category = DOM.budgetCategory.value.trim();
-    const limit = parseFloat(DOM.budgetAmount.value);
-    if (!category || isNaN(limit) || limit <= 0) {
-        alert('Заполните корректно');
-        return;
-    }
-    userBudgets().add({ category, limit });
-    DOM.budgetForm.reset();
-});
+if (DOM.budgetForm) {
+    DOM.budgetForm.addEventListener('submit', e => {
+        e.preventDefault();
+        const category = DOM.budgetCategory.value.trim();
+        const limit = parseFloat(DOM.budgetAmount.value);
+        if (!category || isNaN(limit) || limit <= 0) {
+            alert('Заполните корректно');
+            return;
+        }
+        userBudgets().add({ category, limit });
+        DOM.budgetForm.reset();
+    });
+}
 
 function deleteBudget(id) {
     if (confirm('Удалить бюджет?')) {
@@ -583,10 +577,17 @@ function deleteBudget(id) {
 // === 21. Навигация
 function show(sectionId) {
     document.querySelectorAll('section').forEach(s => s.classList.add('hidden'));
-    document.getElementById(sectionId).classList.remove('hidden');
+    const section = document.getElementById(sectionId);
+    if (section) section.classList.remove('hidden');
+
     DOM.navBtns.forEach(btn => btn.classList.remove('active'));
-    document.querySelector(`.nav-btn[onclick="show('${sectionId}')"]`).classList.add('active');
-    DOM.currentSectionTitle.textContent = document.querySelector(`.nav-btn[onclick="show('${sectionId}')"] span`).textContent;
+    const activeBtn = document.querySelector(`.nav-btn[onclick="show('${sectionId}')"]`);
+    if (activeBtn) activeBtn.classList.add('active');
+
+    const titleSpan = activeBtn?.querySelector('span');
+    if (DOM.currentSectionTitle && titleSpan) {
+        DOM.currentSectionTitle.textContent = titleSpan.textContent;
+    }
 
     if (sectionId === 'history') renderAllList();
     if (sectionId === 'analytics') updateAnalytics();
@@ -620,12 +621,10 @@ document.getElementById('login-form')?.addEventListener('submit', (e) => {
     const password = document.getElementById('login-password').value;
     const errorElement = document.getElementById('auth-error');
     errorElement.textContent = '';
-
     if (!email || !password) {
         errorElement.textContent = 'Email и пароль обязательны';
         return;
     }
-
     auth.signInWithEmailAndPassword(email, password)
         .catch((error) => {
             const errorCode = error.code;
@@ -653,6 +652,7 @@ function logout() {
 
 // === 26. Инициализация
 document.addEventListener('DOMContentLoaded', () => {
+    cacheDOM(); // Кешируем DOM после загрузки
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     const savedDark = localStorage.getItem('dark-theme');
     const isDark = savedDark ? savedDark === 'true' : prefersDark;
