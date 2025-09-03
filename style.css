@@ -223,6 +223,7 @@ form .form-actions,
 form .form-actions button {
     width: 100%;
     max-width: none;
+    box-sizing: border-box;
 }
 
 input, select {
@@ -231,8 +232,21 @@ input, select {
     border-radius: 8px;
     font-size: 16px;
     width: 100%;
+    max-width: none;
     background: var(--card-bg);
     color: var(--text);
+    box-sizing: border-box;
+}
+
+/* Гарантируем одинаковую ширину для поля даты */
+input[type="date"] {
+    width: 100%;
+    max-width: none;
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 16px;
+    box-sizing: border-box;
 }
 
 input:focus, select:focus {
