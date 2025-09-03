@@ -15,7 +15,7 @@
 </head>
 <body>
     <div id="refresh-indicator" class="refresh-indicator"></div>
-
+    
     <!-- Экран авторизации -->
     <section id="auth-screen" class="auth-screen">
         <h2>🔐 Вход в Семейный бюджет</h2>
@@ -114,7 +114,7 @@
         <section id="add" class="hidden">
             <h2 id="add-title">➕ Новая транзакция</h2>
             <form id="add-form">
-                <input type="date" id="date" required />
+                <input type="date" id="date" required max="9999-12-31" />
                 <select id="type">
                     <option value="expense">Расход</option>
                     <option value="income">Доход</option>
