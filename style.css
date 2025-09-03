@@ -166,7 +166,7 @@ body {
 #app {
     padding-top: var(--header-height);
     min-height: 100vh;
-    padding-bottom: 70px;
+    padding-bottom: calc(env(safe-area-inset-bottom) + var(--nav-height));
 }
 
 h2, h3 {
@@ -260,9 +260,45 @@ li:last-child { border-bottom: none; }
     color: var(--info);
 }
 
+/* === КНОПКИ ДЕЙСТВИЙ И ИКОНКИ === */
+.actions {
+    display: flex;
+    gap: 8px;
+    margin-left: 8px;
+}
+
 .actions button {
-    font-size: 14px;
-    padding: 6px 10px;
+    background: none;
+    border: none;
+    padding: 6px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.8;
+    transition: all 0.2s;
+}
+
+.actions button:hover {
+    background-color: rgba(0, 0, 0, 0.1);
+    opacity: 1;
+    transform: scale(1.05);
+}
+
+.dark-theme .actions button:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.action-icon {
+    width: 16px;
+    height: 16px;
+    opacity: 0.9;
+    transition: opacity 0.2s;
+}
+
+.actions button:hover .action-icon {
+    opacity: 1;
 }
 
 /* Карточки */
@@ -408,7 +444,7 @@ li:last-child { border-bottom: none; }
 @media (max-width: 480px) {
     body {
         padding: 15px;
-        padding-bottom: calc(env(safe-area-inset-bottom) + 70px);
+        padding-bottom: calc(env(safe-area-inset-bottom) + var(--nav-height));
     }
     .app-header {
         padding: 12px 15px;
@@ -437,7 +473,6 @@ body:not(.dark-theme) {
 }
 
 /* =============== СТИЛИ ДЛЯ ФОРМЫ ДОБАВЛЕНИЯ =============== */
-
 /* Кнопки действий в форме */
 .form-actions {
     display: flex;
@@ -453,17 +488,6 @@ body:not(.dark-theme) {
 }
 
 /* Иконки в списке */
-.actions img {
-    width: 16px;
-    height: 16px;
-    opacity: 0.8;
-    transition: opacity 0.2s;
-}
-
-.actions button:hover img {
-    opacity: 1;
-}
-
 .type-icon,
 .info-icon {
     width: 14px;
