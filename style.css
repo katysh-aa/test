@@ -216,6 +216,15 @@ form {
     gap: 12px;
 }
 
+/* === ЕДИНОЕ ПРАВИЛО ДЛЯ ВСЕХ ПОЛЕЙ В ФОРМЕ === */
+form input,
+form select,
+form .form-actions,
+form .form-actions button {
+    width: 100%;
+    max-width: none;
+}
+
 input, select {
     padding: 12px;
     border: 1px solid var(--border);
