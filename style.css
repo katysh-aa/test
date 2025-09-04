@@ -1,0 +1,529 @@
+/* === Объединённые стили с переменными === */
+:root {
+    --primary: #007AFF;
+    --primary-dark: #0a84ff;
+    --bg: #f9f9f9;
+    --text: #333;
+    --card-bg: #fff;
+    --card-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+    --border: #ddd;
+    --info: #666;
+    --btn-secondary: #8e8e93;
+    --btn-danger: #ff3b30;
+    --btn-success: #34c759;
+    --header-height: 60px;
+    --nav-height: 60px;
+}
+
+.dark-theme {
+    --primary: #0a84ff;
+    --primary-dark: #0071e3;
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --card-bg: #2a2a2a;
+    --card-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+    --border: #555;
+    --info: #aaa;
+    --btn-secondary: #636366;
+    --btn-danger: #ff453a;
+    --btn-success: #30d158;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    max-width: 600px;
+    margin: 0 auto;
+    min-height: 100vh;
+    position: relative;
+    transition: background-color 0.3s, color 0.3s;
+    padding: 0;
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: calc(env(safe-area-inset-bottom) + var(--nav-height));
+}
+
+/* Заголовок приложения */
+.app-header {
+    position: fixed;
+    top: env(safe-area-inset-top);
+    left: 0;
+    right: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 15px;
+    background: var(--card-bg);
+    z-index: 1000;
+    max-width: 600px;
+    margin: 0 auto;
+    height: var(--header-height);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.app-header h1 {
+    margin: 0;
+    font-size: 20px;
+    color: var(--primary);
+    text-align: center;
+    flex: 1;
+}
+
+.header-icon {
+    width: 32px;
+    height: 32px;
+    padding: 4px;
+    border-radius: 6px;
+    transition: background-color 0.3s;
+}
+
+.app-header .btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    transition: background-color 0.3s;
+}
+
+.app-header .btn:hover {
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
+.dark-theme .app-header .btn:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* Навигация */
+.bottom-nav {
+    position: fixed;
+    bottom: env(safe-area-inset-bottom);
+    left: 0;
+    right: 0;
+    background: var(--card-bg);
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 10px 0;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    border-top: 1px solid var(--border);
+    height: var(--nav-height);
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.nav-btn {
+    background: none;
+    border: none;
+    color: var(--info);
+    font-size: 12px;
+    opacity: 0.7;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    transition: all 0.2s ease;
+    flex: 1;
+}
+
+.nav-btn.active {
+    opacity: 1;
+    color: var(--primary);
+    background: rgba(var(--primary-rgb), 0.08);
+}
+
+.nav-btn:hover {
+    background: rgba(var(--primary-rgb), 0.08);
+    color: var(--primary);
+    opacity: 1;
+}
+
+.nav-icon {
+    width: 20px;
+    height: 20px;
+}
+
+.dark-theme .nav-icon {
+    filter: invert(1) brightness(2);
+}
+
+/* Основной контент */
+#app {
+    padding-top: var(--header-height);
+    min-height: 100vh;
+    padding-bottom: calc(env(safe-area-inset-bottom) + var(--nav-height));
+}
+
+h2, h3 {
+    text-align: center;
+    color: var(--text);
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px;
+    margin-top: 20px;
+}
+
+h3 {
+    margin: 15px 0 10px;
+}
+
+/* Кнопки */
+.btn {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 12px 16px;
+    border-radius: 10px;
+    font-size: 16px;
+    cursor: pointer;
+    display: block;
+    width: 100%;
+    margin: 10px 0;
+    transition: background 0.3s;
+}
+
+.btn.small {
+    width: auto;
+    padding: 8px 12px;
+    font-size: 14px;
+}
+
+.btn.danger { background: var(--btn-danger); }
+.btn.success { background: var(--btn-success); }
+.btn.secondary { background: var(--btn-secondary); }
+
+/* Формы */
+form {
+    background: var(--card-bg);
+    padding: 15px;
+    border-radius: 12px;
+    box-shadow: var(--card-shadow);
+    display: grid;
+    gap: 12px;
+}
+
+/* === ЕДИНОЕ ПРАВИЛО ДЛЯ ВСЕХ ПОЛЕЙ В ФОРМЕ === */
+form input,
+form select,
+form .form-actions,
+form .form-actions button {
+    width: 100%;
+    max-width: none;
+    box-sizing: border-box;
+}
+
+input, select {
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 16px;
+    width: 100%;
+    max-width: none;
+    background: var(--card-bg);
+    color: var(--text);
+    box-sizing: border-box;
+}
+
+/* Гарантируем одинаковую ширину для поля даты */
+input[type="date"] {
+    width: 100%;
+    max-width: none;
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 16px;
+    box-sizing: border-box;
+}
+
+input:focus, select:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+/* Списки */
+li {
+    background: var(--card-bg);
+    padding: 12px 15px;
+    border-radius: 10px;
+    margin: 8px 0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+}
+
+li:last-child { border-bottom: none; }
+
+.info {
+    font-size: 14px;
+    color: var(--info);
+}
+
+/* === КНОПКИ ДЕЙСТВИЙ И ИКОНКИ === */
+.actions {
+    display: flex;
+    gap: 8px;
+    margin-left: 8px;
+}
+
+.actions button {
+    background: none;
+    border: none;
+    padding: 6px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.8;
+    transition: all 0.2s;
+}
+
+.actions button:hover {
+    background-color: rgba(0, 0, 0, 0.1);
+    opacity: 1;
+    transform: scale(1.05);
+}
+
+.dark-theme .actions button:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.action-icon {
+    width: 16px;
+    height: 16px;
+    opacity: 0.9;
+    transition: opacity 0.2s;
+}
+
+.actions button:hover .action-icon {
+    opacity: 1;
+}
+
+/* Карточки */
+.card, .chart-container {
+    background: var(--card-bg);
+    padding: 15px;
+    border-radius: 10px;
+    margin: 15px 0;
+    box-shadow: var(--card-shadow);
+}
+
+/* Статистика */
+.stats-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 15px;
+    margin: 15px 0;
+}
+
+@media (min-width: 480px) {
+    .stats-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+    .stats-grid .main-card {
+        grid-column: span 2;
+    }
+}
+
+.stat-card {
+    background: var(--card-bg);
+    padding: 20px;
+    border-radius: 12px;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.stat-card.main-card {
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: white;
+    padding: 30px 20px;
+}
+
+.value {
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.stat-card.main-card .value {
+    font-size: 32px;
+}
+
+/* Фильтры и кнопки */
+.list-controls {
+    max-width: 100%;
+    margin: 0 auto;
+    padding: 0 10px;
+    box-sizing: border-box;
+}
+
+.filter-section {
+    display: flex;
+    gap: 10px;
+    margin: 15px 0 8px;
+    justify-content: space-between;
+}
+
+.filter-section input {
+    flex: 1;
+    max-width: none;
+    padding: 12px;
+    font-size: 16px;
+}
+
+.filter-actions {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 15px;
+}
+
+.filter-actions .btn {
+    flex: 1;
+    padding: 10px 8px;
+    font-size: 14px;
+    white-space: nowrap;
+    text-align: center;
+}
+
+/* Индикатор обновления */
+.refresh-indicator {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: var(--primary);
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+    z-index: 1001;
+}
+
+/* Авторизация */
+.auth-screen {
+    text-align: center;
+    padding: 60px 20px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: #f5f5f5;
+}
+
+.auth-screen h2 {
+    margin-bottom: 20px;
+    color: var(--primary);
+    border: none;
+}
+
+.auth-screen input {
+    width: 100%;
+    max-width: 300px;
+    padding: 12px;
+    margin: 8px 0;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--card-bg);
+    color: var(--text);
+}
+
+.auth-screen button {
+    margin-top: 15px;
+}
+
+/* Ошибки */
+.error-text {
+    color: var(--btn-danger);
+    margin-top: 10px;
+    font-size: 14px;
+}
+
+/* Адаптивность */
+@media (max-width: 480px) {
+    body {
+        padding: 15px;
+        padding-bottom: calc(env(safe-area-inset-bottom) + var(--nav-height));
+    }
+    .app-header {
+        padding: 12px 15px;
+    }
+    .bottom-nav {
+        height: 65px;
+    }
+    .filter-section {
+        flex-direction: row;
+    }
+    .filter-actions {
+        flex-direction: row;
+    }
+    .filter-section input {
+        min-width: 130px;
+    }
+}
+
+/* Темизация */
+body.dark-theme {
+    --primary-rgb: 10, 132, 255;
+}
+
+body:not(.dark-theme) {
+    --primary-rgb: 0, 122, 255;
+}
+
+/* =============== СТИЛИ ДЛЯ ФОРМЫ ДОБАВЛЕНИЯ =============== */
+/* Кнопки действий в форме */
+.form-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+    justify-content: space-between;
+}
+
+.form-actions .btn.small {
+    width: auto;
+    padding: 8px 12px;
+    font-size: 14px;
+}
+
+/* Иконки в списке */
+.type-icon,
+.info-icon {
+    width: 14px;
+    height: 14px;
+    margin-right: 4px;
+    vertical-align: middle;
+    opacity: 0.7;
+}
+
+.dark-theme .type-icon,
+.dark-theme .info-icon {
+    filter: invert(0.8);
+}
+
+.info-icon {
+    filter: brightness(0.6);
+}
+
+.dark-theme .info-icon {
+    filter: brightness(0.8);
+}
+
+img[src*=".png"] {
+    background: none !important;
+}
