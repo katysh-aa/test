@@ -142,20 +142,47 @@
             </form>
             <ul id="budgets-list"></ul>
 
-            <!-- Новые блоки: Обязательные платежи и Уведомления -->
+            <!-- === ОБЯЗАТЕЛЬНЫЕ ПЛАТЕЖИ === -->
             <h3>💳 Обязательные платежи</h3>
             <form id="obligatory-form">
-                <input type="text" id="obligatory-name" placeholder="Название" required />
-                <input type="number" id="obligatory-amount" placeholder="Сумма (₽)" required />
+                <!-- 1. Дата -->
                 <input type="date" id="obligatory-due-date" required />
+
+                <!-- 2. Периодичность -->
                 <select id="obligatory-repeat">
+                    <option value="daily">Каждый день</option>
+                    <option value="weekly">Каждую неделю</option>
+                    <option value="biweekly">Каждые 2 недели</option>
                     <option value="monthly">Каждый месяц</option>
-                    <option value="once">Однократно</option>
+                    <option value="quarterly">Раз в квартал</option>
+                    <option value="yearly">Каждый год</option>
+                    <option value="weekday">По дням недели...</option>
                 </select>
+
+                <!-- Выбор дней недели (показывается при weekday) -->
+                <div id="weekday-selector" class="hidden">
+                    <label><input type="checkbox" value="1"> Пн</label>
+                    <label><input type="checkbox" value="2"> Вт</label>
+                    <label><input type="checkbox" value="3"> Ср</label>
+                    <label><input type="checkbox" value="4"> Чт</label>
+                    <label><input type="checkbox" value="5"> Пт</label>
+                    <label><input type="checkbox" value="6"> Сб</label>
+                    <label><input type="checkbox" value="0"> Вс</label>
+                </div>
+
+                <!-- 3. Статья расходов -->
+                <input list="obligatory-categories" id="obligatory-category" placeholder="Статья расходов" required />
+                <datalist id="obligatory-categories"></datalist>
+
+                <!-- 4. Сумма -->
+                <input type="number" id="obligatory-amount" placeholder="Сумма (₽)" required />
+
+                <!-- Кнопка -->
                 <button type="submit" class="btn small">Добавить</button>
             </form>
             <ul id="obligatory-list"></ul>
 
+            <!-- === УВЕДОМЛЕНИЯ === -->
             <div class="card">
                 <h3>🔔 Уведомления</h3>
                 <p>Ежедневное напоминание о бюджете</p>
