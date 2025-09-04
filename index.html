@@ -15,7 +15,6 @@
 </head>
 <body>
     <div id="refresh-indicator" class="refresh-indicator"></div>
-    
     <!-- Экран авторизации -->
     <section id="auth-screen" class="auth-screen">
         <h2>🔐 Вход в Семейный бюджет</h2>
@@ -27,7 +26,6 @@
             <p id="auth-error" class="error-text"></p>
         </form>
     </section>
-
     <!-- Основное приложение -->
     <div id="app" class="hidden">
         <!-- Фиксированная шапка -->
@@ -40,7 +38,6 @@
                 <img src="logout-icon.png" alt="Выйти" class="header-icon">
             </button>
         </header>
-
         <!-- Главная -->
         <section id="home">
             <h2>💰 До следующей зарплаты</h2>
@@ -60,7 +57,6 @@
                 </div>
             </div>
         </section>
-
         <!-- История -->
         <section id="history" class="hidden">
             <h2>📋 История операций</h2>
@@ -77,7 +73,6 @@
             </div>
             <ul id="all-transactions"></ul>
         </section>
-
         <!-- Анализ -->
         <section id="analytics" class="hidden">
             <h2>🔍 Анализ</h2>
@@ -109,7 +104,6 @@
                 </div>
             </div>
         </section>
-
         <!-- Добавить транзакцию -->
         <section id="add" class="hidden">
             <h2 id="add-title">➕ Новая транзакция</h2>
@@ -137,7 +131,6 @@
             <h3>Последние 10 операций</h3>
             <ul id="recent-transactions"></ul>
         </section>
-
         <!-- Бюджеты -->
         <section id="budgets" class="hidden">
             <h2>🎯 Бюджеты</h2>
@@ -148,8 +141,28 @@
                 <button type="submit" class="btn small">Добавить</button>
             </form>
             <ul id="budgets-list"></ul>
-        </section>
 
+            <!-- Новые блоки: Обязательные платежи и Уведомления -->
+            <h3>💳 Обязательные платежи</h3>
+            <form id="obligatory-form">
+                <input type="text" id="obligatory-name" placeholder="Название" required />
+                <input type="number" id="obligatory-amount" placeholder="Сумма (₽)" required />
+                <input type="date" id="obligatory-due-date" required />
+                <select id="obligatory-repeat">
+                    <option value="monthly">Каждый месяц</option>
+                    <option value="once">Однократно</option>
+                </select>
+                <button type="submit" class="btn small">Добавить</button>
+            </form>
+            <ul id="obligatory-list"></ul>
+
+            <div class="card">
+                <h3>🔔 Уведомления</h3>
+                <p>Ежедневное напоминание о бюджете</p>
+                <input type="time" id="notification-time" />
+                <button onclick="saveNotificationTime()" class="btn small">Сохранить</button>
+            </div>
+        </section>
         <!-- Нижняя навигация -->
         <nav class="bottom-nav">
             <button onclick="show('home')" class="nav-btn active">
@@ -174,7 +187,6 @@
             </button>
         </nav>
     </div>
-
     <script src="app.js"></script>
 </body>
 </html>
