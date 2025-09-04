@@ -56,6 +56,17 @@
                     <p id="next-payday">Дата</p>
                 </div>
             </div>
+
+            <!-- Уведомления — на главной, в одну строку -->
+            <div class="card" style="display: flex; align-items: center; gap: 12px; padding: 12px; flex-wrap: wrap;">
+                <div style="flex: 1; min-width: 200px;">
+                    <h3 style="margin: 0; font-size: 16px;">🔔 Уведомление</h3>
+                    <input type="time" id="notification-time" style="width: 100%; padding: 8px; margin-top: 4px;">
+                </div>
+                <button onclick="saveNotificationTime()" class="btn small" style="white-space: nowrap; height: fit-content;">
+                    Сохранить
+                </button>
+            </div>
         </section>
         <!-- История -->
         <section id="history" class="hidden">
@@ -141,54 +152,6 @@
                 <button type="submit" class="btn small">Добавить</button>
             </form>
             <ul id="budgets-list"></ul>
-
-            <!-- === ОБЯЗАТЕЛЬНЫЕ ПЛАТЕЖИ === -->
-            <h3>💳 Обязательные платежи</h3>
-            <form id="obligatory-form">
-                <!-- 1. Дата списания -->
-                <input type="date" id="obligatory-due-date" required />
-
-                <!-- 2. Периодичность -->
-                <select id="obligatory-repeat">
-                    <option value="daily">Каждый день</option>
-                    <option value="weekly">Каждую неделю</option>
-                    <option value="biweekly">Каждые 2 недели</option>
-                    <option value="monthly">Каждый месяц</option>
-                    <option value="quarterly">Раз в квартал</option>
-                    <option value="yearly">Каждый год</option>
-                    <option value="weekday">По дням недели...</option>
-                </select>
-
-                <!-- Выбор дней недели (показывается только при weekday) -->
-                <div id="weekday-selector" class="hidden">
-                    <label><input type="checkbox" value="1"> Пн</label>
-                    <label><input type="checkbox" value="2"> Вт</label>
-                    <label><input type="checkbox" value="3"> Ср</label>
-                    <label><input type="checkbox" value="4"> Чт</label>
-                    <label><input type="checkbox" value="5"> Пт</label>
-                    <label><input type="checkbox" value="6"> Сб</label>
-                    <label><input type="checkbox" value="0"> Вс</label>
-                </div>
-
-                <!-- 3. Статья расходов -->
-                <input list="obligatory-categories" id="obligatory-category" placeholder="Статья расходов" required />
-                <datalist id="obligatory-categories"></datalist>
-
-                <!-- 4. Сумма -->
-                <input type="number" id="obligatory-amount" placeholder="Сумма (₽)" required />
-
-                <!-- Кнопка -->
-                <button type="submit" class="btn small">Добавить</button>
-            </form>
-            <ul id="obligatory-list"></ul>
-
-            <!-- === УВЕДОМЛЕНИЯ === -->
-            <div class="card">
-                <h3>🔔 Уведомления</h3>
-                <p>Ежедневное напоминание о бюджете</p>
-                <input type="time" id="notification-time" />
-                <button onclick="saveNotificationTime()" class="btn small">Сохранить</button>
-            </div>
         </section>
         <!-- Нижняя навигация -->
         <nav class="bottom-nav">
