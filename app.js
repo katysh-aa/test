@@ -314,10 +314,10 @@ function updateAnalytics() {
         const values = Object.values(expensesByCategory);
         expensePieChart = new Chart(DOM.expensePieChart, {
             type: 'doughnut',
-            data: {
+             {
                 labels,
                 datasets: [{
-                    data: values,
+                     values,
                     backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#C9CBCF', '#7CFC00']
                 }]
             },
@@ -338,10 +338,10 @@ function updateAnalytics() {
         const values = Object.values(incomesByCategory);
         incomePieChart = new Chart(DOM.incomePieChart, {
             type: 'doughnut',
-            data: {
+             {
                 labels,
                 datasets: [{
-                    data: values,
+                     values,
                     backgroundColor: ['#34C759', '#4CD964', '#30D158', '#64D2FF', '#FFD700', '#FF9500', '#FF2D55', '#5856D6']
                 }]
             },
@@ -635,6 +635,7 @@ document.getElementById('login-form')?.addEventListener('submit', (e) => {
         errorElement.textContent = 'Email и пароль обязательны';
         return;
     }
+    // 🔓 Вход без проверки emailVerified
     auth.signInWithEmailAndPassword(email, password)
         .catch((error) => {
             const errorCode = error.code;
