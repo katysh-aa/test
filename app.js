@@ -307,23 +307,28 @@ function updateAnalytics() {
                 DOM.topExpenses.appendChild(li);
             });
     }
-    // Диаграмма расходов
-    if (DOM.expensePieChart) {
-        if (expensePieChart) expensePieChart.destroy();
-        const labels = Object.keys(expensesByCategory);
-        const values = Object.values(expensesByCategory);
-        expensePieChart = new Chart(DOM.expensePieChart, {
-            type: 'doughnut',
-             {
-                labels,
-                datasets: [{
-                     values,
-                    backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#C9CBCF', '#7CFC00']
-                }]
-            },
-            options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
-        });
-    }
+// Диаграмма расходов
+if (DOM.expensePieChart) {
+    if (expensePieChart) expensePieChart.destroy();
+    const labels = Object.keys(expensesByCategory);
+    const values = Object.values(expensesByCategory);
+    expensePieChart = new Chart(DOM.expensePieChart, {
+        type: 'doughnut',
+        data: {
+            labels,
+            datasets: [{
+                data: values,
+                backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#C9CBCF', '#7CFC00']
+            }]
+        },
+        options: { 
+            responsive: true, 
+            plugins: { 
+                legend: { position: 'bottom' } 
+            } 
+        }
+    });
+}
     // Доходы по статьям
     const incomesByCategory = {};
     currentPeriodTransactions
@@ -331,23 +336,27 @@ function updateAnalytics() {
         .forEach(t => {
             incomesByCategory[t.incomeCategory] = (incomesByCategory[t.incomeCategory] || 0) + t.amount;
         });
-    // Диаграмма доходов
-    if (DOM.incomePieChart) {
-        if (incomePieChart) incomePieChart.destroy();
-        const labels = Object.keys(incomesByCategory);
-        const values = Object.values(incomesByCategory);
-        incomePieChart = new Chart(DOM.incomePieChart, {
-            type: 'doughnut',
-             {
-                labels,
-                datasets: [{
-                     values,
-                    backgroundColor: ['#34C759', '#4CD964', '#30D158', '#64D2FF', '#FFD700', '#FF9500', '#FF2D55', '#5856D6']
-                }]
-            },
-            options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
-        });
-    }
+// Диаграмма доходов
+if (DOM.incomePieChart) {
+    if (incomePieChart) incomePieChart.destroy();
+    const labels = Object.keys(incomesByCategory);
+    const values = Object.values(incomesByCategory);
+    incomePieChart = new Chart(DOM.incomePieChart, {
+        type: 'doughnut',
+        data: {
+            labels,
+            datasets: [{
+                data: values,
+                backgroundColor: ['#34C759', '#4CD964', '#30D158', '#64D2FF', '#FFD700', '#FF9500', '#FF2D55', '#5856D6']
+            }]
+        },
+        options: { 
+            responsive: true, 
+            plugins: { 
+                legend: { position: 'bottom' } 
+            } 
+        }
+    });
 }
 
 // === 13. Форма добавления: переключение полей
