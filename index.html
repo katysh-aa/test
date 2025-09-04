@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Семейный бюджет</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Firebase Modular SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+    <!-- Дополнительные библиотеки -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+
+<body>
+    <div id="refresh-indicator" class="refresh-indicator"></div>
+    <!-- Экран авторизации -->
+    <section id="auth-screen" class="auth-screen">
+        <h2>🔐 Вход в Семейный бюджет</h2>
+        <p>Введите email и пароль</p>
+        <form id="login-form">
+            <input type="email" id="login-email" placeholder="Email" required />
+            <input type="password" id="login-password" placeholder="Пароль" required />
+            <button type="submit" class="btn">Войти</button>
+            <p id="auth-error" class="error-text"></p>
+        </form>
+    </section>
+    <!-- Основное приложение -->
+    <div id="app" class="hidden">
+        <!-- Фиксированная шапка -->
+        <header class="app-header">
+            <button onclick="toggleTheme()" class="btn theme-toggle" title="Тёмная тема">
+                <img src="theme-icon.png" alt="Переключить тему" class="header-icon">
+            </button>
+            <h1 id="current-section-title">Главная</h1>
+            <button onclick="logout()" class="btn logout-btn" title="Выйти">
+                <img src="logout-icon.png" alt="Выйти" class="header-icon">
+            </button>
+        </header>
+
+        <!-- Главная -->
+        <section id="home">
+            <h2>💰 До следующей зарплаты</h2>
+            <div class="stats-grid">
+                <div class="stat-card main-card">
+                    <h3>Остаток</h3>
+                    <p class="value" id="current-balance">0 ₽</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Ежедневный бюджет</h3>
+                    <p class="value" id="daily-budget">0 ₽</p>
+                </div>
+                <div class="stat-card">
+                    <h3>До зарплаты</h3>
+                    <p class="value" id="days-until-payday">0</p>
+                    <p id="next-payday">Дата</p>
+                </div>
+            </div>
+
+            <!-- Уведомления -->
+            <h3>🔔 Уведомления</h3>
+            <div class="card">
+                <label>
+                    <input type="number" id="notify-balance" placeholder="Предупреждать, если остаток ниже ₽">
+                </label>
+                <label>
+                    <input type="checkbox" id="notify-daily"> Уведомлять о дневном бюджете
+                </label>
+                <label>
+                    <input type="checkbox" id="notify-overall-budget"> Уведомлять о превышении общего бюджета
+                </label>
+                <label>
+                    <input type="checkbox" id="notify-category-budget"> Уведомлять о превышении по категории
+                </label>
+                <button onclick="saveNotifications()" class="btn small">Сохранить</button>
+            </div>
+        </section>
+
+        <!-- История -->
+        <section id="history" class="hidden">
+            <h2>📋 История операций</h2>
+            <div class="list-controls">
+                <div class="filter-section">
+                    <input type="date" id="filter-start" placeholder="С даты" />
+                    <input type="date" id="filter-end" placeholder="По дату" />
+                </div>
+                <div class="filter-actions">
+                    <button onclick="filterByDate()" class="btn small">🔍 Поиск</button>
+                    <button onclick="clearFilter()" class="btn secondary small">Сброс</button>
+                    <button onclick="exportToExcel()" class="btn small">📤 Экспорт</button>
+                </div>
+            </div>
+            <ul id="all-transactions"></ul>
+        </section>
+
+        <!-- Анализ -->
+        <section id="analytics" class="hidden">
+            <h2>🔍 Анализ</h2>
+            <div class="card">
+                <h3>📈 Доходы и расходы за период</h3>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h4>Доход</h4>
+                        <p class="value" id="total-income">0 ₽</p>
+                    </div>
+                    <div class="stat-card">
+                        <h4>Расход</h4>
+                        <p class="value" id="total-expense">0 ₽</p>
+                    </div>
+                </div>
+            </div>
+            <h3>Топ-3 статьи расходов</h3>
+            <ul id="top-expenses"></ul>
+            <div class="card">
+                <h3>📊 Расходы по категориям</h3>
+                <div class="chart-container">
+                    <canvas id="expensePieChart"></canvas>
+                </div>
+            </div>
+            <div class="card">
+                <h3>📊 Доходы по статьям</h3>
+                <div class="chart-container">
+                    <canvas id="incomePieChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- Добавить транзакцию -->
+        <section id="add" class="hidden">
+            <h2 id="add-title">➕ Новая транзакция</h2>
+            <form id="add-form">
+                <input type="date" id="date" required max="9999-12-31" />
+                <select id="type">
+                    <option value="expense">Расход</option>
+                    <option value="income">Доход</option>
+                </select>
+                <div id="expense-field">
+                    <input list="expense-categories" id="expense-category" placeholder="Статья расходов" required />
+                    <datalist id="expense-categories"></datalist>
+                </div>
+                <div id="income-field" class="hidden">
+                    <input list="income-categories" id="income-category" placeholder="Статья доходов" />
+                    <datalist id="income-categories"></datalist>
+                </div>
+                <input type="number" id="amount" placeholder="Сумма" step="0.01" required />
+                <input type="text" id="comment" placeholder="Комментарий" />
+                <div class="form-actions">
+                    <button type="button" id="delete-btn" class="btn danger small hidden">🗑️ Удалить</button>
+                    <button type="submit" class="btn">Сохранить</button>
+                </div>
+            </form>
+            <h3>Последние 10 операций</h3>
+            <ul id="recent-transactions"></ul>
+        </section>
+
+        <!-- Бюджеты -->
+        <section id="budgets" class="hidden">
+            <h2>🎯 Бюджеты</h2>
+            <p>Установите лимиты по категориям расходов</p>
+            <form id="budget-form">
+                <input list="expense-categories" id="budget-category" placeholder="Категория" required />
+                <input type="number" id="budget-amount" placeholder="Лимит (₽)" required />
+                <button type="submit" class="btn small">Добавить</button>
+            </form>
+            <ul id="budgets-list"></ul>
+        </section>
+
+        <!-- Настройки -->
+        <section id="settings" class="hidden">
+            <h2>⚙️ Настройки уведомлений</h2>
+            <div class="card">
+                <label>
+                    <input type="number" id="notify-balance-settings" placeholder="Порог остатка (₽)">
+                </label>
+                <label>
+                    <input type="checkbox" id="notify-daily-settings"> Уведомлять о дневном бюджете
+                </label>
+                <label>
+                    <input type="checkbox" id="notify-overall-budget-settings"> Уведомлять при превышении общего бюджета
+                </label>
+                <label>
+                    <input type="checkbox" id="notify-category-budget-settings"> Уведомлять при превышении по категории
+                </label>
+                <button onclick="saveNotifications()" class="btn">Сохранить</button>
+            </div>
+        </section>
+
+        <!-- Нижняя навигация -->
+        <nav class="bottom-nav">
+            <button onclick="show('home')" data-section="home" class="nav-btn active">
+                <img src="home-icon.png" alt="Главная" class="nav-icon">
+                <span>Главная</span>
+            </button>
+            <button onclick="show('history')" data-section="history" class="nav-btn">
+                <img src="list-icon.png" alt="История" class="nav-icon">
+                <span>История</span>
+            </button>
+            <button onclick="show('add')" data-section="add" class="nav-btn">
+                <img src="add-icon.png" alt="Добавить" class="nav-icon">
+                <span>Добавить</span>
+            </button>
+            <button onclick="show('analytics')" data-section="analytics" class="nav-btn">
+                <img src="analytics-icon.png" alt="Анализ" class="nav-icon">
+                <span>Анализ</span>
+            </button>
+            <button onclick="show('budgets')" data-section="budgets" class="nav-btn">
+                <img src="budget-icon.png" alt="Бюджеты" class="nav-icon">
+                <span>Бюджеты</span>
+            </button>
+            <button onclick="show('settings')" data-section="settings" class="nav-btn">
+                <img src="settings-icon.png" alt="Настройки" class="nav-icon">
+                <span>Настройки</span>
+            </button>
+        </nav>
+    </div>
+    <script src="app.js"></script>
+</body>
+
+</html>
