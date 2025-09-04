@@ -21,7 +21,7 @@ let editingTransactionId = null;
 let filterTimeout = null;
 let DOM = {};
 
-// === 3. Кеширование DOM-элементов (удалены элементы budgets)
+// === 3. Кеширование DOM-элементов (без budgets)
 function cacheDOM() {
     DOM = {
         // Основные
@@ -67,7 +67,7 @@ function formatNumber(num) {
     return num.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
 }
 
-// === 5. Коллекции Firebase (с проверкой)
+// === 5. Коллекции Firebase
 function userTransactions() {
     if (!auth.currentUser) {
         console.warn("❌ userTransactions(): пользователь не авторизован");
@@ -76,63 +76,71 @@ function userTransactions() {
     return db.collection('users').doc(auth.currentUser.uid).collection('transactions');
 }
 
-// === 6. Загрузка данных с реактивностью (без budgets)
+// === 6. Загрузка данных
 function loadFromFirebase() {
     if (!auth.currentUser) {
-        console.warn("❌ loadFromFirebase(): вызов без авторизации");
+        console.warn("❌ loadFromFirebase(): нет пользователя");
         return;
     }
     const q = userTransactions();
     if (!q) return;
-    q.orderBy('date', 'desc').onSnapshot((snapshot) => {
-        transactions = [];
-        snapshot.forEach(doc => {
-            transactions.push({ id: doc.id, ...doc.data() });
-        });
-        updateHome();
-        updateAnalytics();
-        if (DOM.allTransactions && !DOM.allTransactions.closest('.hidden')) {
-            renderAllList();
+
+    q.orderBy('date', 'desc').onSnapshot(
+        (snapshot) => {
+            transactions = [];
+            snapshot.forEach(doc => {
+                transactions.push({ id: doc.id, ...doc.data() });
+            });
+            updateHome();
+            updateAnalytics();
+            if (DOM.allTransactions && !DOM.allTransactions.closest('.hidden')) {
+                renderAllList();
+            }
+            updateDatalists();
+            renderRecentTransactions();
+        },
+        (error) => {
+            console.error("❌ Ошибка загрузки транзакций:", error);
+            if (error.code === 'permission-denied') {
+                alert('Нет доступа к данным. Проверьте правила Firebase.');
+            }
         }
-        updateDatalists();
-        renderRecentTransactions();
-    }, error => {
-        console.error("Ошибка загрузки транзакций:", error);
-        if (error.code === 'permission-denied') {
-            alert('Нет доступа к данным. Проверьте правила Firebase.');
-        }
-    });
+    );
 }
 
-// === 7. Вспомогательная: последний рабочий день перед датой
+// === 7. Вспомогательная: последний рабочий день
 function getLastWorkdayBefore(day, month, year) {
     const date = new Date(year, month, day);
     while (date.getDay() === 0 || date.getDay() === 6) {
         date.setDate(date.getDate() - 1);
     }
-    return new Date(date);
+    return date;
 }
 
-// === 8. Определение следующей зарплаты и периода
+// === 8. Определение периода и следующей зарплаты
 function getCurrentBudgetPeriodAndNextPayday() {
     const today = new Date();
     const currentMonth = today.getMonth();
     const nextMonth = (currentMonth + 1) % 12;
     const year = today.getFullYear();
     const nextYear = currentMonth + 1 > 11 ? year + 1 : year;
+
     const payday20 = new Date(year, currentMonth, 20);
-    const actualPayday20 = payday20.getDay() === 0 || payday20.getDay() === 6
+    const actualPayday20 = [0, 6].includes(payday20.getDay())
         ? getLastWorkdayBefore(20, currentMonth, year)
         : payday20;
+
     const payday5 = new Date(nextYear, nextMonth, 5);
-    const actualPayday5 = payday5.getDay() === 0 || payday5.getDay() === 6
+    const actualPayday5 = [0, 6].includes(payday5.getDay())
         ? getLastWorkdayBefore(5, nextMonth, nextYear)
         : payday5;
+
     let nextPayday, prevPayday;
     const prev5 = new Date(year, currentMonth, 5);
-    const actualPrev5 = prev5.getDay() === 0 || prev5.getDay() === 6
+    const actualPrev5 = [0, 6].includes(prev5.getDay())
         ? getLastWorkdayBefore(5, currentMonth, year)
         : prev5;
+
     if (today <= actualPrev5) {
         nextPayday = actualPrev5;
         prevPayday = getLastWorkdayBefore(20, (currentMonth - 1 + 12) % 12, currentMonth === 0 ? year - 1 : year);
@@ -143,6 +151,7 @@ function getCurrentBudgetPeriodAndNextPayday() {
         nextPayday = actualPayday5;
         prevPayday = actualPayday20;
     }
+
     const periodStart = new Date(prevPayday);
     periodStart.setDate(periodStart.getDate() + 1);
     return { nextPayday, periodStart };
@@ -170,7 +179,7 @@ function updateHome() {
     if (DOM.nextPayday) DOM.nextPayday.textContent = nextPayday.toLocaleDateString('ru-RU');
 }
 
-// === 10. Отображение истории
+// === 10. История операций
 function renderAllList() {
     if (!DOM.allTransactions) return;
     DOM.allTransactions.innerHTML = '';
@@ -179,6 +188,7 @@ function renderAllList() {
     let filtered = [...transactions];
     if (start) filtered = filtered.filter(t => t.date >= start);
     if (end) filtered = filtered.filter(t => t.date <= end);
+
     if (filtered.length === 0) {
         const li = document.createElement('li');
         li.textContent = 'Нет операций за период';
@@ -186,23 +196,18 @@ function renderAllList() {
         DOM.allTransactions.appendChild(li);
         return;
     }
+
     filtered.forEach(tx => {
         const li = document.createElement('li');
         const amountColor = tx.type === 'income' ? '#34c759' : '#ff3b30';
         const sign = tx.type === 'income' ? '+' : '-';
-        const comment = tx.comment ? `
-            <div class="info">
-                <img src="comment.png" class="info-icon"> ${tx.comment}
-            </div>` : '';
+        const comment = tx.comment ? `<div class="info"><img src="comment.png" class="info-icon"> ${tx.comment}</div>` : '';
         const detail = tx.type === 'income' && tx.incomeCategory
             ? `<div class="info"><img src="category.png" class="info-icon"> ${tx.incomeCategory}</div>`
-            : (tx.expenseCategory
-                ? `<div class="info"><img src="category.png" class="info-icon"> ${tx.expenseCategory}</div>`
-                : '');
-        const typeIcon = tx.type === 'income'
-            ? '<img src="income.png" class="type-icon">'
-            : '<img src="expense.png" class="type-icon">';
+            : (tx.expenseCategory ? `<div class="info"><img src="category.png" class="info-icon"> ${tx.expenseCategory}</div>` : '');
+        const typeIcon = tx.type === 'income' ? '<img src="income.png" class="type-icon">' : '<img src="expense.png" class="type-icon">';
         const category = tx.type === 'income' ? tx.incomeCategory : tx.expenseCategory;
+
         li.innerHTML = `
             <div>
                 <div>
@@ -227,7 +232,7 @@ function renderAllList() {
     });
 }
 
-// === 11. Фильтры с дебаунсом
+// === 11. Фильтры
 function filterByDate() {
     const start = DOM.filterStart?.value;
     const end = DOM.filterEnd?.value;
@@ -245,7 +250,7 @@ function clearFilter() {
     renderAllList();
 }
 
-// === 12. Анализ: диаграммы и отчёт
+// === 12. Анализ
 function updateAnalytics() {
     const { periodStart } = getCurrentBudgetPeriodAndNextPayday();
     const startStr = periodStart.toISOString().split('T')[0];
@@ -261,7 +266,6 @@ function updateAnalytics() {
     if (DOM.totalIncome) DOM.totalIncome.textContent = formatNumber(totalIncome) + ' ₽';
     if (DOM.totalExpense) DOM.totalExpense.textContent = formatNumber(totalExpense) + ' ₽';
 
-    // Расходы по категориям
     const expensesByCategory = {};
     currentPeriodTransactions
         .filter(t => t.type === 'expense')
@@ -269,7 +273,6 @@ function updateAnalytics() {
             expensesByCategory[t.expenseCategory] = (expensesByCategory[t.expenseCategory] || 0) + t.amount;
         });
 
-    // Топ-3 расхода
     if (DOM.topExpenses) {
         DOM.topExpenses.innerHTML = '';
         Object.entries(expensesByCategory)
@@ -282,30 +285,17 @@ function updateAnalytics() {
             });
     }
 
-    // Диаграмма расходов
     if (DOM.expensePieChart) {
         if (expensePieChart) expensePieChart.destroy();
         const labels = Object.keys(expensesByCategory);
         const values = Object.values(expensesByCategory);
         expensePieChart = new Chart(DOM.expensePieChart, {
             type: 'doughnut',
-            data: {
-                labels,
-                datasets: [{
-                    data: values,
-                    backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#C9CBCF', '#7CFC00']
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: { position: 'bottom' }
-                }
-            }
+            data: { labels, datasets: [{ data: values, backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#C9CBCF', '#7CFC00'] }] },
+            options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
         });
     }
 
-    // Доходы по статьям
     const incomesByCategory = {};
     currentPeriodTransactions
         .filter(t => t.type === 'income')
@@ -313,31 +303,19 @@ function updateAnalytics() {
             incomesByCategory[t.incomeCategory] = (incomesByCategory[t.incomeCategory] || 0) + t.amount;
         });
 
-    // Диаграмма доходов
     if (DOM.incomePieChart) {
         if (incomePieChart) incomePieChart.destroy();
         const labels = Object.keys(incomesByCategory);
         const values = Object.values(incomesByCategory);
         incomePieChart = new Chart(DOM.incomePieChart, {
             type: 'doughnut',
-            data: {
-                labels,
-                datasets: [{
-                    data: values,
-                    backgroundColor: ['#34C759', '#4CD964', '#30D158', '#64D2FF', '#FFD700', '#FF9500', '#FF2D55', '#5856D6']
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: { position: 'bottom' }
-                }
-            }
+            data: { labels, datasets: [{ data: values, backgroundColor: ['#34C759', '#4CD964', '#30D158', '#64D2FF', '#FFD700', '#FF9500', '#FF2D55', '#5856D6'] }] },
+            options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
         });
     }
 }
 
-// === 13. Переключение полей формы
+// === 13. Форма добавления
 function setupAddForm() {
     if (!DOM.addForm) return;
     DOM.type?.addEventListener('change', toggleCategoryFields);
@@ -354,9 +332,11 @@ function toggleCategoryFields() {
     DOM.incomeField?.classList.toggle('hidden', !isIncome);
 }
 
-// === 14. Обработка формы добавления
+// === 14. Обработка формы
 function handleAddFormSubmit(e) {
     e.preventDefault();
+    console.log("🚀 Попытка добавить транзакцию");
+
     const type = DOM.type.value;
     const isIncome = type === 'income';
     const newTx = {
@@ -386,9 +366,11 @@ function handleAddFormSubmit(e) {
 
     const ref = userTransactions();
     if (!ref) {
-        alert('Ошибка: не удалось получить доступ к данным. Перезагрузите страницу.');
+        alert('Ошибка: не удалось получить доступ к данным.');
         return;
     }
+
+    console.log("✅ Пишем в:", ref.path);
 
     const saveBtn = DOM.addForm.querySelector('button[type="submit"]');
     const originalText = saveBtn.textContent;
@@ -401,16 +383,21 @@ function handleAddFormSubmit(e) {
 
     saveOperation
         .then(() => {
+            console.log("✅ Успешно сохранено");
             resetAddForm();
         })
         .catch(err => {
-            console.error('Ошибка сохранения:', err);
-            alert('Ошибка: ' + err.message);
+            console.error("❌ Ошибка сохранения:", err);
+            alert(`Ошибка: ${err.message}`);
         })
         .finally(() => {
             saveBtn.disabled = false;
             saveBtn.textContent = originalText;
         });
+}
+
+if (DOM.addForm) {
+    DOM.addForm.addEventListener('submit', handleAddFormSubmit);
 }
 
 // === 15. Сброс формы
@@ -452,9 +439,7 @@ function deleteTransaction(id) {
             return;
         }
         ref.doc(id).delete()
-            .then(() => {
-                show('history');
-            })
+            .then(() => show('history'))
             .catch(err => {
                 console.error('Ошибка удаления:', err);
                 alert('Не удалось удалить');
@@ -485,16 +470,14 @@ function updateDatalists() {
     });
 }
 
-// === 19. Последние 10 транзакций
+// === 19. Последние транзакции
 function renderRecentTransactions() {
     if (!DOM.recentTransactions) return;
     DOM.recentTransactions.innerHTML = '';
     const recent = transactions.slice(0, 10);
     recent.forEach(tx => {
         const li = document.createElement('li');
-        const typeIcon = tx.type === 'income'
-            ? '<img src="income.png" class="type-icon">'
-            : '<img src="expense.png" class="type-icon">';
+        const typeIcon = tx.type === 'income' ? '<img src="income.png" class="type-icon">' : '<img src="expense.png" class="type-icon">';
         const category = tx.type === 'income' ? tx.incomeCategory : tx.expenseCategory;
         const amountColor = tx.type === 'income' ? 'var(--btn-success)' : 'var(--btn-danger)';
         const sign = tx.type === 'income' ? '+' : '-';
@@ -515,7 +498,6 @@ function renderRecentTransactions() {
                 </button>
             </div>
         `;
-        li.style.cursor = 'default';
         DOM.recentTransactions.appendChild(li);
     });
 }
@@ -544,17 +526,25 @@ function toggleTheme() {
 }
 
 // === 22. Аутентификация
-auth.onAuthStateChanged((user) => {
+auth.onAuthStateChanged(async (user) => {
     console.log('🔐 onAuthStateChanged:', user ? user.email : 'null');
     const authScreen = document.getElementById('auth-screen');
     const app = document.getElementById('app');
 
     if (!authScreen || !app) {
-        console.error("❌ DOM не загружен: auth-screen или app не найдены");
+        console.error("❌ DOM не загружен");
         return;
     }
 
     if (user) {
+        // 🔑 Ключевое исправление: создаём документ пользователя, если его нет
+        const userDocRef = db.collection('users').doc(user.uid);
+        const doc = await userDocRef.get();
+        if (!doc.exists) {
+            console.log("🆕 Создаём документ пользователя");
+            await userDocRef.set({}, { merge: true });
+        }
+
         authScreen.classList.add('hidden');
         app.classList.remove('hidden');
         loadFromFirebase();
