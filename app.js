@@ -86,12 +86,18 @@ function formatNumber(num) {
 
 // === 5. Коллекции Firebase (с проверкой)
 function userTransactions() {
-    if (!auth.currentUser) return null;
+    if (!auth.currentUser) {
+        console.warn("❌ userTransactions(): пользователь не авторизован");
+        return null;
+    }
     return db.collection('users').doc(auth.currentUser.uid).collection('transactions');
 }
 
 function userBudgets() {
-    if (!auth.currentUser) return null;
+    if (!auth.currentUser) {
+        console.warn("❌ userBudgets(): пользователь не авторизован");
+        return null;
+    }
     return db.collection('users').doc(auth.currentUser.uid).collection('budgets');
 }
 
@@ -105,7 +111,10 @@ function userObligatoryExpenses() {
 
 // === 6. Загрузка данных с реактивностью
 function loadFromFirebase() {
-    if (!auth.currentUser) return;
+    if (!auth.currentUser) {
+        console.warn("❌ loadFromFirebase(): вызов без авторизации");
+        return;
+    }
 
     const q = userTransactions();
     if (!q) return;
@@ -714,10 +723,18 @@ DOM.obligatoryRepeat?.addEventListener('change', function () {
     }
 });
 
-// Форма обязательных платежей
+// Форма обязательных платежей — исправленная версия
 if (DOM.obligatoryForm) {
-    DOM.obligatoryForm.addEventListener('submit', function(e) {
+    DOM.obligatoryForm.addEventListener('submit', function (e) {
         e.preventDefault();
+
+        // 🔐 Проверка авторизации
+        if (!auth.currentUser) {
+            alert('Ошибка: вы не авторизованы. Перезагрузите страницу.');
+            console.warn('❌ Попытка добавить обязательный платёж без авторизации');
+            return;
+        }
+
         const dueDate = DOM.obligatoryDueDate.value;
         const repeat = DOM.obligatoryRepeat.value;
         const category = DOM.obligatoryCategory.value.trim();
@@ -755,13 +772,17 @@ if (DOM.obligatoryForm) {
 
         ref.add(data)
             .then(() => {
-                console.log('✅ Обязательный платёж добавлен');
+                console.log('✅ Обязательный платёж успешно добавлен:', data);
                 DOM.obligatoryForm.reset();
                 if (DOM.weekdaySelector) DOM.weekdaySelector.classList.add('hidden');
             })
             .catch(err => {
-                console.error('❌ Ошибка:', err);
-                alert('Не удалось сохранить: ' + (err.message.includes('permission') ? 'Доступ запрещён' : err.message));
+                console.error('❌ Ошибка при добавлении обязательного платежа:', err);
+                if (err.message.includes('permission-denied')) {
+                    alert('❌ Доступ запрещён. Проверьте правила Firestore.');
+                } else {
+                    alert('❌ Ошибка: ' + err.message);
+                }
             });
     });
 }
@@ -857,12 +878,13 @@ function toggleTheme() {
 
 // === 28. Аутентификация
 auth.onAuthStateChanged((user) => {
+    console.log('🔐 onAuthStateChanged:', user ? user.email : 'null');
     if (user) {
         document.getElementById('auth-screen').classList.add('hidden');
         document.getElementById('app').classList.remove('hidden');
         loadFromFirebase();
         show('home');
-        initNotificationTime(); // ✅ Только после входа
+        initNotificationTime(); // Только после входа
     } else {
         document.getElementById('app').classList.add('hidden');
         document.getElementById('auth-screen').classList.remove('hidden');
