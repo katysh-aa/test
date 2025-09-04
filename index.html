@@ -145,7 +145,7 @@
             <!-- === ОБЯЗАТЕЛЬНЫЕ ПЛАТЕЖИ === -->
             <h3>💳 Обязательные платежи</h3>
             <form id="obligatory-form">
-                <!-- 1. Дата -->
+                <!-- 1. Дата списания -->
                 <input type="date" id="obligatory-due-date" required />
 
                 <!-- 2. Периодичность -->
@@ -159,7 +159,7 @@
                     <option value="weekday">По дням недели...</option>
                 </select>
 
-                <!-- Выбор дней недели (показывается при weekday) -->
+                <!-- Выбор дней недели (показывается только при weekday) -->
                 <div id="weekday-selector" class="hidden">
                     <label><input type="checkbox" value="1"> Пн</label>
                     <label><input type="checkbox" value="2"> Вт</label>
