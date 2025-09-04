@@ -14,7 +14,6 @@
     --header-height: 60px;
     --nav-height: 60px;
 }
-
 .dark-theme {
     --primary: #0a84ff;
     --primary-dark: #0071e3;
@@ -28,13 +27,11 @@
     --btn-danger: #ff453a;
     --btn-success: #30d158;
 }
-
 * {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
 }
-
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     background: var(--bg);
@@ -48,7 +45,6 @@ body {
     padding-top: env(safe-area-inset-top);
     padding-bottom: calc(env(safe-area-inset-bottom) + var(--nav-height));
 }
-
 /* Заголовок приложения */
 .app-header {
     position: fixed;
@@ -66,7 +62,6 @@ body {
     height: var(--header-height);
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
-
 .app-header h1 {
     margin: 0;
     font-size: 20px;
@@ -74,7 +69,6 @@ body {
     text-align: center;
     flex: 1;
 }
-
 .header-icon {
     width: 32px;
     height: 32px;
@@ -82,7 +76,6 @@ body {
     border-radius: 6px;
     transition: background-color 0.3s;
 }
-
 .app-header .btn {
     background: none;
     border: none;
@@ -95,19 +88,15 @@ body {
     border-radius: 8px;
     transition: background-color 0.3s;
 }
-
 .app-header .btn:hover {
     background-color: rgba(0, 0, 0, 0.1);
 }
-
 .dark-theme .app-header .btn:hover {
     background-color: rgba(255, 255, 255, 0.1);
 }
-
 .hidden {
     display: none !important;
 }
-
 /* Навигация */
 .bottom-nav {
     position: fixed;
@@ -126,7 +115,6 @@ body {
     max-width: 600px;
     margin: 0 auto;
 }
-
 .nav-btn {
     background: none;
     border: none;
@@ -140,35 +128,29 @@ body {
     transition: all 0.2s ease;
     flex: 1;
 }
-
 .nav-btn.active {
     opacity: 1;
     color: var(--primary);
     background: rgba(var(--primary-rgb), 0.08);
 }
-
 .nav-btn:hover {
     background: rgba(var(--primary-rgb), 0.08);
     color: var(--primary);
     opacity: 1;
 }
-
 .nav-icon {
     width: 20px;
     height: 20px;
 }
-
 .dark-theme .nav-icon {
     filter: invert(1) brightness(2);
 }
-
 /* Основной контент */
 #app {
     padding-top: var(--header-height);
     min-height: 100vh;
     padding-bottom: calc(env(safe-area-inset-bottom) + var(--nav-height));
 }
-
 h2, h3 {
     text-align: center;
     color: var(--text);
@@ -176,11 +158,9 @@ h2, h3 {
     padding-bottom: 8px;
     margin-top: 20px;
 }
-
 h3 {
     margin: 15px 0 10px;
 }
-
 /* Кнопки */
 .btn {
     background: var(--primary);
@@ -195,17 +175,14 @@ h3 {
     margin: 10px 0;
     transition: background 0.3s;
 }
-
 .btn.small {
     width: auto;
     padding: 8px 12px;
     font-size: 14px;
 }
-
 .btn.danger { background: var(--btn-danger); }
 .btn.success { background: var(--btn-success); }
 .btn.secondary { background: var(--btn-secondary); }
-
 /* Формы */
 form {
     background: var(--card-bg);
@@ -215,7 +192,6 @@ form {
     display: grid;
     gap: 12px;
 }
-
 /* === ЕДИНОЕ ПРАВИЛО ДЛЯ ВСЕХ ПОЛЕЙ В ФОРМЕ === */
 form input,
 form select,
@@ -225,7 +201,6 @@ form .form-actions button {
     max-width: none;
     box-sizing: border-box;
 }
-
 input, select {
     padding: 12px;
     border: 1px solid var(--border);
@@ -237,7 +212,6 @@ input, select {
     color: var(--text);
     box-sizing: border-box;
 }
-
 /* Гарантируем одинаковую ширину для поля даты */
 input[type="date"] {
     width: 100%;
@@ -248,12 +222,10 @@ input[type="date"] {
     font-size: 16px;
     box-sizing: border-box;
 }
-
 input:focus, select:focus {
     outline: none;
     border-color: var(--primary);
 }
-
 /* Списки */
 li {
     background: var(--card-bg);
@@ -266,21 +238,17 @@ li {
     align-items: center;
     border-bottom: 1px solid var(--border);
 }
-
 li:last-child { border-bottom: none; }
-
 .info {
     font-size: 14px;
     color: var(--info);
 }
-
 /* === КНОПКИ ДЕЙСТВИЙ И ИКОНКИ === */
 .actions {
     display: flex;
     gap: 8px;
     margin-left: 8px;
 }
-
 .actions button {
     background: none;
     border: none;
@@ -293,28 +261,23 @@ li:last-child { border-bottom: none; }
     opacity: 0.8;
     transition: all 0.2s;
 }
-
 .actions button:hover {
     background-color: rgba(0, 0, 0, 0.1);
     opacity: 1;
     transform: scale(1.05);
 }
-
 .dark-theme .actions button:hover {
     background-color: rgba(255, 255, 255, 0.1);
 }
-
 .action-icon {
     width: 16px;
     height: 16px;
     opacity: 0.9;
     transition: opacity 0.2s;
 }
-
 .actions button:hover .action-icon {
     opacity: 1;
 }
-
 /* Карточки */
 .card, .chart-container {
     background: var(--card-bg);
@@ -323,7 +286,6 @@ li:last-child { border-bottom: none; }
     margin: 15px 0;
     box-shadow: var(--card-shadow);
 }
-
 /* Статистика */
 .stats-grid {
     display: grid;
@@ -331,7 +293,6 @@ li:last-child { border-bottom: none; }
     gap: 15px;
     margin: 15px 0;
 }
-
 @media (min-width: 480px) {
     .stats-grid {
         grid-template-columns: 1fr 1fr;
@@ -340,7 +301,6 @@ li:last-child { border-bottom: none; }
         grid-column: span 2;
     }
 }
-
 .stat-card {
     background: var(--card-bg);
     padding: 20px;
@@ -348,22 +308,18 @@ li:last-child { border-bottom: none; }
     text-align: center;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
-
 .stat-card.main-card {
     background: linear-gradient(135deg, var(--primary), var(--primary-dark));
     color: white;
     padding: 30px 20px;
 }
-
 .value {
     font-size: 24px;
     font-weight: bold;
 }
-
 .stat-card.main-card .value {
     font-size: 32px;
 }
-
 /* Фильтры и кнопки */
 .list-controls {
     max-width: 100%;
@@ -371,27 +327,23 @@ li:last-child { border-bottom: none; }
     padding: 0 10px;
     box-sizing: border-box;
 }
-
 .filter-section {
     display: flex;
     gap: 10px;
     margin: 15px 0 8px;
     justify-content: space-between;
 }
-
 .filter-section input {
     flex: 1;
     max-width: none;
     padding: 12px;
     font-size: 16px;
 }
-
 .filter-actions {
     display: flex;
     gap: 8px;
     margin-bottom: 15px;
 }
-
 .filter-actions .btn {
     flex: 1;
     padding: 10px 8px;
@@ -399,7 +351,6 @@ li:last-child { border-bottom: none; }
     white-space: nowrap;
     text-align: center;
 }
-
 /* Индикатор обновления */
 .refresh-indicator {
     position: fixed;
@@ -413,7 +364,6 @@ li:last-child { border-bottom: none; }
     pointer-events: none;
     z-index: 1001;
 }
-
 /* Авторизация */
 .auth-screen {
     text-align: center;
@@ -425,13 +375,11 @@ li:last-child { border-bottom: none; }
     align-items: center;
     background: #f5f5f5;
 }
-
 .auth-screen h2 {
     margin-bottom: 20px;
     color: var(--primary);
     border: none;
 }
-
 .auth-screen input {
     width: 100%;
     max-width: 300px;
@@ -442,18 +390,15 @@ li:last-child { border-bottom: none; }
     background: var(--card-bg);
     color: var(--text);
 }
-
 .auth-screen button {
     margin-top: 15px;
 }
-
 /* Ошибки */
 .error-text {
     color: var(--btn-danger);
     margin-top: 10px;
     font-size: 14px;
 }
-
 /* Адаптивность */
 @media (max-width: 480px) {
     body {
@@ -476,16 +421,13 @@ li:last-child { border-bottom: none; }
         min-width: 130px;
     }
 }
-
 /* Темизация */
 body.dark-theme {
     --primary-rgb: 10, 132, 255;
 }
-
 body:not(.dark-theme) {
     --primary-rgb: 0, 122, 255;
 }
-
 /* =============== СТИЛИ ДЛЯ ФОРМЫ ДОБАВЛЕНИЯ =============== */
 /* Кнопки действий в форме */
 .form-actions {
@@ -494,13 +436,11 @@ body:not(.dark-theme) {
     margin-top: 20px;
     justify-content: space-between;
 }
-
 .form-actions .btn.small {
     width: auto;
     padding: 8px 12px;
     font-size: 14px;
 }
-
 /* Иконки в списке */
 .type-icon,
 .info-icon {
@@ -510,20 +450,64 @@ body:not(.dark-theme) {
     vertical-align: middle;
     opacity: 0.7;
 }
-
 .dark-theme .type-icon,
 .dark-theme .info-icon {
     filter: invert(0.8);
 }
-
 .info-icon {
     filter: brightness(0.6);
 }
-
 .dark-theme .info-icon {
     filter: brightness(0.8);
 }
-
 img[src*=".png"] {
     background: none !important;
+}
+
+/* === Уведомления — компактный блок под шапкой === */
+.notification-card {
+    margin: 15px 0 !important;
+    padding: 12px 15px;
+}
+
+.notification-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.notification-row .notification-label {
+    flex: 1;
+    min-width: 200px;
+}
+
+.notification-row .notification-label h3 {
+    margin: 0 0 6px;
+    font-size: 16px;
+    color: var(--text);
+}
+
+.time-input {
+    width: 100%;
+    max-width: none;
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 16px;
+    background: var(--card-bg);
+    color: var(--text);
+    box-sizing: border-box;
+}
+
+/* Адаптивность */
+@media (max-width: 480px) {
+    .notification-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .notification-row .btn.small {
+        width: auto;
+        align-self: flex-start;
+    }
 }
