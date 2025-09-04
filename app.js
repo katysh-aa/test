@@ -61,14 +61,16 @@ function cacheDOM() {
         budgetCategory: document.getElementById('budget-category'),
         budgetAmount: document.getElementById('budget-amount'),
         budgetsList: document.getElementById('budgets-list'),
-        // Обязательные платежи (НОВОЕ)
+        // Обязательные платежи
         obligatoryForm: document.getElementById('obligatory-form'),
-        obligatoryName: document.getElementById('obligatory-name'),
-        obligatoryAmount: document.getElementById('obligatory-amount'),
         obligatoryDueDate: document.getElementById('obligatory-due-date'),
         obligatoryRepeat: document.getElementById('obligatory-repeat'),
+        weekdaySelector: document.getElementById('weekday-selector'),
+        weekdayCheckboxes: document.querySelectorAll('#weekday-selector input[type="checkbox"]'),
+        obligatoryCategory: document.getElementById('obligatory-category'),
+        obligatoryAmount: document.getElementById('obligatory-amount'),
         obligatoryList: document.getElementById('obligatory-list'),
-        // Уведомления (НОВОЕ)
+        // Уведомления
         notificationTimeInput: document.getElementById('notification-time'),
         // Навигация
         currentSectionTitle: document.getElementById('current-section-title'),
@@ -125,7 +127,7 @@ function loadFromFirebase() {
         }
     });
 
-    // НОВОЕ: Подписка на обязательные платежи
+    // Подписка на обязательные платежи
     userObligatoryExpenses().onSnapshot((snapshot) => {
         obligatoryExpenses = [];
         snapshot.forEach(doc => {
@@ -137,6 +139,8 @@ function loadFromFirebase() {
         if (!DOM.home?.classList.contains('hidden')) {
             updateHome();
         }
+        // Генерируем транзакции по расписанию
+        generateObligatoryTransactions();
     });
 }
 
@@ -188,17 +192,79 @@ function getCurrentBudgetPeriodAndNextPayday() {
 function getTotalObligatoryExpensesInPeriod(periodStart, nextPayday) {
     const startStr = periodStart.toISOString().split('T')[0];
     const endStr = nextPayday.toISOString().split('T')[0];
+    let total = 0;
 
-    return obligatoryExpenses.reduce((total, exp) => {
-        const expDate = exp.dueDate; // строка "2025-04-10"
-        if (expDate >= startStr && expDate <= endStr) {
-            return total + exp.amount;
+    obligatoryExpenses.forEach(exp => {
+        let current = new Date(exp.dueDate);
+        while (current <= nextPayday) {
+            const dateStr = current.toISOString().split('T')[0];
+            if (dateStr >= startStr && dateStr <= endStr) {
+                total += exp.amount;
+            }
+            if (current > nextPayday) break;
+            current = getNextDate(current, exp.repeat, exp.weekdays);
         }
-        return total;
-    }, 0);
+    });
+
+    return total;
 }
 
-// === 10. Обновление главной
+// === 10. Получить следующую дату по периодичности
+function getNextDate(date, repeat, weekdays) {
+    const d = new Date(date);
+    switch (repeat) {
+        case 'daily': d.setDate(d.getDate() + 1); break;
+        case 'weekly': d.setDate(d.getDate() + 7); break;
+        case 'biweekly': d.setDate(d.getDate() + 14); break;
+        case 'monthly': d.setMonth(d.getMonth() + 1); break;
+        case 'quarterly': d.setMonth(d.getMonth() + 3); break;
+        case 'yearly': d.setFullYear(d.getFullYear() + 1); break;
+        case 'weekday':
+            if (!weekdays || weekdays.length === 0) return d;
+            do {
+                d.setDate(d.getDate() + 1);
+            } while (!weekdays.includes(d.getDay()));
+            break;
+        default: d.setDate(d.getDate() + 1);
+    }
+    return d;
+}
+
+// === 11. Генерация транзакций по расписанию
+function generateObligatoryTransactions() {
+    if (!auth.currentUser) return;
+    const today = new Date();
+    const periodEnd = new Date(today);
+    periodEnd.setMonth(periodEnd.getMonth() + 3); // на 3 месяца вперёд
+
+    obligatoryExpenses.forEach(exp => {
+        let current = new Date(exp.dueDate);
+        while (current <= periodEnd) {
+            const dateStr = current.toISOString().split('T')[0];
+            const existing = transactions.find(t =>
+                t.date === dateStr &&
+                t.expenseCategory === exp.category &&
+                t.amount === exp.amount &&
+                t.obligatoryId === exp.id
+            );
+            if (!existing) {
+                // Создаём автоматическую транзакцию
+                userTransactions().add({
+                    date: dateStr,
+                    type: 'expense',
+                    expenseCategory: exp.category,
+                    amount: exp.amount,
+                    comment: 'Автоматический платёж',
+                    obligatoryId: exp.id,
+                    createdAt: new Date().toISOString()
+                });
+            }
+            current = getNextDate(current, exp.repeat, exp.weekdays);
+        }
+    });
+}
+
+// === 12. Обновление главной
 function updateHome() {
     const { nextPayday, periodStart } = getCurrentBudgetPeriodAndNextPayday();
     const startStr = periodStart.toISOString().split('T')[0];
@@ -215,7 +281,7 @@ function updateHome() {
 
     const daysUntil = Math.max(1, Math.ceil((nextPayday - new Date()) / (1000 * 60 * 60 * 24)));
 
-    // НОВОЕ: Учитываем обязательные платежи
+    // Учитываем обязательные платежи
     const obligatoryTotal = getTotalObligatoryExpensesInPeriod(periodStart, nextPayday);
     const availableForDaily = Math.max(0, balance - obligatoryTotal);
     const dailyBudget = availableForDaily / daysUntil;
@@ -226,7 +292,7 @@ function updateHome() {
     if (DOM.nextPayday) DOM.nextPayday.textContent = nextPayday.toLocaleDateString('ru-RU');
 }
 
-// === 11. Отображение истории
+// === 13. Отображение истории
 function renderAllList() {
     if (!DOM.allTransactions) return;
     DOM.allTransactions.innerHTML = '';
@@ -283,7 +349,7 @@ function renderAllList() {
     });
 }
 
-// === 12. Фильтры с дебаунсом
+// === 14. Фильтры с дебаунсом
 function filterByDate() {
     const start = DOM.filterStart?.value;
     const end = DOM.filterEnd?.value;
@@ -300,7 +366,7 @@ function clearFilter() {
     renderAllList();
 }
 
-// === 13. Анализ: диаграммы и отчёт
+// === 15. Анализ: диаграммы и отчёт
 function updateAnalytics() {
     const { periodStart } = getCurrentBudgetPeriodAndNextPayday();
     const startStr = periodStart.toISOString().split('T')[0];
@@ -376,7 +442,7 @@ function updateAnalytics() {
     }
 }
 
-// === 14. Форма добавления: переключение полей
+// === 16. Форма добавления: переключение полей
 function setupAddForm() {
     if (!DOM.addForm) return;
     DOM.type?.addEventListener('change', toggleCategoryFields);
@@ -392,7 +458,7 @@ function toggleCategoryFields() {
     DOM.incomeField?.classList.toggle('hidden', !isIncome);
 }
 
-// === 15. Добавление/редактирование транзакции
+// === 17. Добавление/редактирование транзакции
 function handleAddFormSubmit(e) {
     e.preventDefault();
     const type = DOM.type.value;
@@ -443,7 +509,7 @@ if (DOM.addForm) {
     DOM.addForm.addEventListener('submit', handleAddFormSubmit);
 }
 
-// === 16. Сброс формы
+// === 18. Сброс формы
 function resetAddForm() {
     DOM.addForm?.reset();
     editingTransactionId = null;
@@ -453,7 +519,7 @@ function resetAddForm() {
     toggleCategoryFields();
 }
 
-// === 17. Редактирование
+// === 19. Редактирование
 function editTransaction(id) {
     const tx = transactions.find(t => t.id === id);
     if (!tx) return;
@@ -473,7 +539,7 @@ function editTransaction(id) {
     toggleCategoryFields();
 }
 
-// === 18. Удаление
+// === 20. Удаление
 function deleteTransaction(id) {
     if (confirm('Удалить операцию?')) {
         userTransactions().doc(id).delete()
@@ -487,7 +553,7 @@ function deleteTransaction(id) {
     }
 }
 
-// === 19. Datalists
+// === 21. Datalists
 function updateDatalists() {
     const expenseCategories = [...new Set(transactions
         .filter(t => t.type === 'expense')
@@ -497,27 +563,21 @@ function updateDatalists() {
         .filter(t => t.type === 'income')
         .map(t => t.incomeCategory)
         .filter(Boolean))];
-    const expenseDatalist = document.getElementById('expense-categories');
-    const incomeDatalist = document.getElementById('income-categories');
-    if (expenseDatalist) {
-        expenseDatalist.innerHTML = '';
-        expenseCategories.forEach(cat => {
-            const option = document.createElement('option');
-            option.value = cat;
-            expenseDatalist.appendChild(option);
-        });
-    }
-    if (incomeDatalist) {
-        incomeDatalist.innerHTML = '';
-        incomeCategories.forEach(cat => {
-            const option = document.createElement('option');
-            option.value = cat;
-            incomeDatalist.appendChild(option);
-        });
-    }
+
+    ['expense-categories', 'income-categories', 'obligatory-categories'].forEach(id => {
+        const list = document.getElementById(id);
+        if (list) {
+            list.innerHTML = '';
+            expenseCategories.forEach(cat => {
+                const option = document.createElement('option');
+                option.value = cat;
+                list.appendChild(option);
+            });
+        }
+    });
 }
 
-// === 20. Последние 10 транзакций
+// === 22. Последние 10 транзакций
 function renderRecentTransactions() {
     if (!DOM.recentTransactions) return;
     DOM.recentTransactions.innerHTML = '';
@@ -552,7 +612,7 @@ function renderRecentTransactions() {
     });
 }
 
-// === 21. Бюджеты
+// === 23. Бюджеты
 function renderBudgets() {
     if (!DOM.budgetsList) return;
     DOM.budgetsList.innerHTML = '';
@@ -590,7 +650,7 @@ function deleteBudget(id) {
     }
 }
 
-// === 22. Обязательные платежи
+// === 24. Обязательные платежи
 function renderObligatoryList() {
     if (!DOM.obligatoryList) return;
     DOM.obligatoryList.innerHTML = '';
@@ -603,10 +663,21 @@ function renderObligatoryList() {
     }
     obligatoryExpenses.forEach(exp => {
         const li = document.createElement('li');
+        let repeatText = '';
+        switch (exp.repeat) {
+            case 'daily': repeatText = 'Каждый день'; break;
+            case 'weekly': repeatText = 'Каждую неделю'; break;
+            case 'biweekly': repeatText = 'Каждые 2 недели'; break;
+            case 'monthly': repeatText = 'Каждый месяц'; break;
+            case 'quarterly': repeatText = 'Раз в квартал'; break;
+            case 'yearly': repeatText = 'Каждый год'; break;
+            case 'weekday': repeatText = 'По дням недели'; break;
+            default: repeatText = 'Однократно';
+        }
         li.innerHTML = `
             <div>
-                <div><strong>${exp.name}</strong>: ${formatNumber(exp.amount)} ₽</div>
-                <div class="info">Дата: ${exp.dueDate} (${exp.repeat === 'monthly' ? 'каждый месяц' : 'однократно'})</div>
+                <div><strong>${exp.category}</strong>: ${formatNumber(exp.amount)} ₽</div>
+                <div class="info">Дата: ${exp.dueDate}, ${repeatText}</div>
             </div>
             <div class="actions">
                 <button class="btn small danger" onclick="deleteObligatory('${exp.id}')">
@@ -617,31 +688,59 @@ function renderObligatoryList() {
         DOM.obligatoryList.appendChild(li);
     });
 }
+
+// Показ/скрытие выбора дней недели
+DOM.obligatoryRepeat?.addEventListener('change', function () {
+    if (this.value === 'weekday') {
+        DOM.weekdaySelector?.classList.remove('hidden');
+    } else {
+        DOM.weekdaySelector?.classList.add('hidden');
+    }
+});
+
+// Форма обязательных платежей
 if (DOM.obligatoryForm) {
     DOM.obligatoryForm.addEventListener('submit', function(e) {
         e.preventDefault();
-        const name = DOM.obligatoryName.value.trim();
-        const amount = parseFloat(DOM.obligatoryAmount.value);
         const dueDate = DOM.obligatoryDueDate.value;
         const repeat = DOM.obligatoryRepeat.value;
-        if (!name || isNaN(amount) || amount <= 0 || !dueDate) {
-            alert('Заполните все поля корректно');
+        const category = DOM.obligatoryCategory.value.trim();
+        const amount = parseFloat(DOM.obligatoryAmount.value);
+
+        if (!dueDate || !category || isNaN(amount) || amount <= 0) {
+            alert('Заполните все поля');
             return;
         }
-        userObligatoryExpenses().add({
-            name,
-            amount,
+
+        let data = {
             dueDate,
             repeat,
+            category,
+            amount,
             createdAt: new Date().toISOString().split('T')[0]
-        }).then(() => {
+        };
+
+        if (repeat === 'weekday') {
+            const selected = Array.from(DOM.weekdayCheckboxes)
+                .filter(cb => cb.checked)
+                .map(cb => parseInt(cb.value));
+            if (selected.length === 0) {
+                alert('Выберите хотя бы один день недели');
+                return;
+            }
+            data.weekdays = selected;
+        }
+
+        userObligatoryExpenses().add(data).then(() => {
             DOM.obligatoryForm.reset();
+            if (DOM.weekdaySelector) DOM.weekdaySelector.classList.add('hidden');
         }).catch(err => {
-            console.error('Ошибка добавления обязательной траты:', err);
+            console.error('Ошибка:', err);
             alert('Не удалось сохранить');
         });
     });
 }
+
 function deleteObligatory(id) {
     if (confirm('Удалить обязательный платёж?')) {
         userObligatoryExpenses().doc(id).delete()
@@ -652,7 +751,7 @@ function deleteObligatory(id) {
     }
 }
 
-// === 23. Уведомления
+// === 25. Уведомления
 function saveNotificationTime(value = null) {
     const time = value || DOM.notificationTimeInput?.value;
     if (!time) return;
@@ -660,6 +759,7 @@ function saveNotificationTime(value = null) {
     localStorage.setItem('notificationTime', time);
     alert(`Уведомление будет в ${time}`);
 }
+
 function startNotificationChecker() {
     setInterval(() => {
         if (!notificationTime || !auth.currentUser) return;
@@ -690,8 +790,9 @@ function startNotificationChecker() {
                 notificationTime = localStorage.getItem('notificationTime') || '';
             }, 60000);
         }
-    }, 60000); // раз в минуту
+    }, 60000);
 }
+
 function initNotificationTime() {
     if (DOM.notificationTimeInput) {
         DOM.notificationTimeInput.value = notificationTime;
@@ -702,7 +803,7 @@ function initNotificationTime() {
     startNotificationChecker();
 }
 
-// === 24. Навигация
+// === 26. Навигация
 function show(sectionId) {
     document.querySelectorAll('section').forEach(s => s.classList.add('hidden'));
     const section = document.getElementById(sectionId);
@@ -723,13 +824,13 @@ function show(sectionId) {
     }
 }
 
-// === 25. Тема
+// === 27. Тема
 function toggleTheme() {
     document.body.classList.toggle('dark-theme');
     localStorage.setItem('dark-theme', document.body.classList.contains('dark-theme'));
 }
 
-// === 26. Аутентификация
+// === 28. Аутентификация
 auth.onAuthStateChanged((user) => {
     if (user) {
         document.getElementById('auth-screen').classList.add('hidden');
@@ -742,7 +843,7 @@ auth.onAuthStateChanged((user) => {
     }
 });
 
-// === 27. Вход
+// === 29. Вход
 document.getElementById('login-form')?.addEventListener('submit', (e) => {
     e.preventDefault();
     const email = document.getElementById('login-email').value.trim();
@@ -768,7 +869,7 @@ document.getElementById('login-form')?.addEventListener('submit', (e) => {
         });
 });
 
-// === 28. Выход
+// === 30. Выход
 function logout() {
     if (confirm('Выйти?')) {
         auth.signOut().catch(err => {
@@ -778,12 +879,12 @@ function logout() {
     }
 }
 
-// === 29. Инициализация
+// === 31. Инициализация
 document.addEventListener('DOMContentLoaded', () => {
     cacheDOM();
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     const savedDark = localStorage.getItem('dark-theme');
     const isDark = savedDark ? savedDark === 'true' : prefersDark;
     if (isDark) document.body.classList.add('dark-theme');
-    initNotificationTime(); // НОВОЕ: запуск уведомлений
+    initNotificationTime();
 });
