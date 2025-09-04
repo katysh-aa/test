@@ -21,7 +21,7 @@ let editingTransactionId = null;
 let filterTimeout = null;
 let DOM = {};
 
-// === 3. Кеширование DOM-элементов (удалён budgetsList)
+// === 3. Кеширование DOM-элементов (удалены элементы budgets)
 function cacheDOM() {
     DOM = {
         // Основные
@@ -76,7 +76,7 @@ function userTransactions() {
     return db.collection('users').doc(auth.currentUser.uid).collection('transactions');
 }
 
-// === 6. Загрузка данных с реактивностью (удалён код с budgets)
+// === 6. Загрузка данных с реактивностью (без budgets)
 function loadFromFirebase() {
     if (!auth.currentUser) {
         console.warn("❌ loadFromFirebase(): вызов без авторизации");
@@ -98,6 +98,9 @@ function loadFromFirebase() {
         renderRecentTransactions();
     }, error => {
         console.error("Ошибка загрузки транзакций:", error);
+        if (error.code === 'permission-denied') {
+            alert('Нет доступа к данным. Проверьте правила Firebase.');
+        }
     });
 }
 
@@ -334,7 +337,7 @@ function updateAnalytics() {
     }
 }
 
-// === 13. Форма добавления: переключение полей
+// === 13. Переключение полей формы
 function setupAddForm() {
     if (!DOM.addForm) return;
     DOM.type?.addEventListener('change', toggleCategoryFields);
@@ -351,7 +354,7 @@ function toggleCategoryFields() {
     DOM.incomeField?.classList.toggle('hidden', !isIncome);
 }
 
-// === 14. Добавление/редактирование транзакции
+// === 14. Обработка формы добавления
 function handleAddFormSubmit(e) {
     e.preventDefault();
     const type = DOM.type.value;
@@ -408,10 +411,6 @@ function handleAddFormSubmit(e) {
             saveBtn.disabled = false;
             saveBtn.textContent = originalText;
         });
-}
-
-if (DOM.addForm) {
-    DOM.addForm.addEventListener('submit', handleAddFormSubmit);
 }
 
 // === 15. Сброс формы
@@ -521,7 +520,7 @@ function renderRecentTransactions() {
     });
 }
 
-// === 20. Навигация (удалён вызов renderBudgets)
+// === 20. Навигация
 function show(sectionId) {
     document.querySelectorAll('section').forEach(s => s.classList.add('hidden'));
     const section = document.getElementById(sectionId);
@@ -536,7 +535,6 @@ function show(sectionId) {
     if (sectionId === 'history') renderAllList();
     if (sectionId === 'analytics') updateAnalytics();
     if (sectionId === 'add') setupAddForm();
-    // Убрано: if (sectionId === 'budgets') renderBudgets();
 }
 
 // === 21. Тема
@@ -548,24 +546,20 @@ function toggleTheme() {
 // === 22. Аутентификация
 auth.onAuthStateChanged((user) => {
     console.log('🔐 onAuthStateChanged:', user ? user.email : 'null');
+    const authScreen = document.getElementById('auth-screen');
+    const app = document.getElementById('app');
+
+    if (!authScreen || !app) {
+        console.error("❌ DOM не загружен: auth-screen или app не найдены");
+        return;
+    }
+
     if (user) {
-        const authScreen = document.getElementById('auth-screen');
-        const app = document.getElementById('app');
-        if (!authScreen || !app) {
-            console.error("❌ Не найдены элементы: auth-screen или app");
-            return;
-        }
         authScreen.classList.add('hidden');
         app.classList.remove('hidden');
         loadFromFirebase();
         show('home');
     } else {
-        const authScreen = document.getElementById('auth-screen');
-        const app = document.getElementById('app');
-        if (!authScreen || !app) {
-            console.error("❌ Не найдены элементы: auth-screen или app");
-            return;
-        }
         app.classList.add('hidden');
         authScreen.classList.remove('hidden');
     }
