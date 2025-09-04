@@ -41,6 +41,19 @@
         <!-- Главная -->
         <section id="home">
             <h2>💰 До следующей зарплаты</h2>
+
+            <!-- Уведомления — сразу под заголовком, над карточками -->
+            <div class="card notification-card">
+                <div class="notification-row">
+                    <div class="notification-label">
+                        <h3 style="margin: 0; font-size: 16px;">🔔 Уведомление</h3>
+                        <input type="time" id="notification-time" class="time-input">
+                    </div>
+                    <button onclick="saveNotificationTime()" class="btn small">Сохранить</button>
+                </div>
+            </div>
+
+            <!-- Основные карточки -->
             <div class="stats-grid">
                 <div class="stat-card main-card">
                     <h3>Остаток</h3>
@@ -55,17 +68,6 @@
                     <p class="value" id="days-until-payday">0 дней</p>
                     <p id="next-payday">Дата</p>
                 </div>
-            </div>
-
-            <!-- Уведомления — на главной, в одну строку -->
-            <div class="card" style="display: flex; align-items: center; gap: 12px; padding: 12px; flex-wrap: wrap;">
-                <div style="flex: 1; min-width: 200px;">
-                    <h3 style="margin: 0; font-size: 16px;">🔔 Уведомление</h3>
-                    <input type="time" id="notification-time" style="width: 100%; padding: 8px; margin-top: 4px;">
-                </div>
-                <button onclick="saveNotificationTime()" class="btn small" style="white-space: nowrap; height: fit-content;">
-                    Сохранить
-                </button>
             </div>
         </section>
         <!-- История -->
