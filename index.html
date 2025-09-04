@@ -138,18 +138,6 @@
             <ul id="recent-transactions"></ul>
         </section>
 
-        <!-- Бюджеты -->
-        <section id="budgets" class="hidden">
-            <h2>🎯 Бюджеты</h2>
-            <p>Установите лимиты по категориям расходов</p>
-            <form id="budget-form">
-                <input list="expense-categories" id="budget-category" placeholder="Категория" required />
-                <input type="number" id="budget-amount" placeholder="Лимит (₽)" required />
-                <button type="submit" class="btn small">Добавить</button>
-            </form>
-            <ul id="budgets-list"></ul>
-        </section>
-
         <!-- Нижняя навигация -->
         <nav class="bottom-nav">
             <button onclick="show('home')" class="nav-btn active">
@@ -167,10 +155,6 @@
             <button onclick="show('analytics')" class="nav-btn">
                 <img src="analytics-icon.png" alt="Анализ" class="nav-icon">
                 <span>Анализ</span>
-            </button>
-            <button onclick="show('budgets')" class="nav-btn">
-                <img src="budget-icon.png" alt="Бюджеты" class="nav-icon">
-                <span>Бюджеты</span>
             </button>
         </nav>
     </div>
