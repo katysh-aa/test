@@ -8,6 +8,7 @@ const firebaseConfig = {
     appId: "1:853003887380:web:5aa5fda151ff9823c9d801",
     measurementId: "G-0JZTCC3MLW"
 };
+
 // Инициализация Firebase
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
@@ -21,12 +22,69 @@ let transactions = [];
 let savingsGoal = 500000;
 let financialPlans = [];
 let editingPlanId = null;
+let deferredPrompt = null; // Для PWA установки
 
 // Глобальные переменные для графиков
 let expensePieChart = null;
 let savingsWeeklyChart = null;
 
-// === 3. Централизованное получение курса доллара с кэшированием
+// === 3. PWA: Service Worker Registration
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('/sw.js')
+      .then(function(registration) {
+        console.log('ServiceWorker registration successful with scope: ', registration.scope);
+        
+        // Периодически проверяем обновления (раз в час)
+        setInterval(() => {
+          registration.update();
+        }, 60 * 60 * 1000);
+      })
+      .catch(function(err) {
+        console.log('ServiceWorker registration failed: ', err);
+      });
+  });
+}
+
+// === 4. PWA: Before Install Prompt
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  console.log('PWA installation available');
+  
+  // Показываем кнопку установки (опционально)
+  // showInstallButton();
+});
+
+// === 5. PWA: Install App Function
+function installApp() {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then((choiceResult) => {
+      if (choiceResult.outcome === 'accepted') {
+        console.log('User accepted the install prompt');
+      } else {
+        console.log('User dismissed the install prompt');
+      }
+      deferredPrompt = null;
+    });
+  }
+}
+
+// === 6. PWA: Detect iOS
+function isIOS() {
+  return [
+    'iPad Simulator',
+    'iPhone Simulator',
+    'iPod Simulator',
+    'iPad',
+    'iPhone',
+    'iPod'
+  ].includes(navigator.platform) || 
+  (navigator.userAgent.includes("Mac") && "ontouchend" in document);
+}
+
+// === 7. Централизованное получение курса доллара с кэшированием
 let cachedUsdRate = null;
 let cachedUsdRateTime = null;
 let usdRatePromise = null;
@@ -61,7 +119,7 @@ async function getUsdRate() {
     }
 }
 
-// === 4. Форматирование чисел
+// === 8. Форматирование чисел
 function formatNumber(num) {
     if (isNaN(num) || num === null) return "0";
     return num.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
@@ -71,7 +129,7 @@ function formatShort(num) {
     return (num / 1000).toFixed(1).replace(/\.0$/, "") + " тыс. р.";
 }
 
-// === 5. Функция для создания элемента списка транзакции
+// === 9. Функция для создания элемента списка транзакции
 function createTransactionListItem(tx) {
     const li = document.createElement('li');
     const amountColor = tx.type === 'income' ? '#34c759' : '#ff3b30';
@@ -96,7 +154,7 @@ function createTransactionListItem(tx) {
     return li;
 }
 
-// === 6. Загрузка цели
+// === 10. Загрузка цели
 function loadGoalFromFirebase() {
     goalDocRef.onSnapshot(doc => {
         if (doc.exists) {
@@ -114,7 +172,7 @@ function loadGoalFromFirebase() {
     });
 }
 
-// === 7. Сохранение цели
+// === 11. Сохранение цели
 function saveGoal() {
     const input = document.getElementById('savings-goal');
     const value = parseFloat(input.value);
@@ -135,7 +193,7 @@ function saveGoal() {
         });
 }
 
-// === 8. Загрузка данных
+// === 12. Загрузка данных
 function loadFromFirebase() {
     showLoadingIndicator(true);
     let isFirstLoad = true;
@@ -159,6 +217,14 @@ function loadFromFirebase() {
             // ✅ ИСПРАВЛЕНО: Сбрасываем кэш курса при первом запуске приложения
             cachedUsdRate = null;
             updateDollarSavings();
+            
+            // Показываем подсказку об установке для iOS
+            if (isIOS() && !localStorage.getItem('iosPromptShown')) {
+                setTimeout(() => {
+                    document.getElementById('ios-install-prompt').style.display = 'block';
+                    localStorage.setItem('iosPromptShown', 'true');
+                }, 3000);
+            }
         }
     }, error => {
         console.error("Ошибка загрузки транзакций:", error);
@@ -178,7 +244,7 @@ function loadFromFirebase() {
     });
 }
 
-// === 9. Обновление выпадающих списков
+// === 13. Обновление выпадающих списков
 function updateDropdowns() {
     const regularTransactions = transactions.filter(t => !t.isDollarSavings);
     const categories = [...new Set(regularTransactions.map(t => t.category))].sort();
@@ -201,7 +267,7 @@ function updateDropdowns() {
     updateSelect('edit-authors', authors);
 }
 
-// === 10. Обновление главной
+// === 14. Обновление главной
 function updateHome() {
     const now = new Date();
     const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
@@ -263,7 +329,7 @@ function updateHome() {
     }
 }
 
-// === 11. Обновление блока "Долларовые накопления"
+// === 15. Обновление блока "Долларовые накопления"
 function updateDollarSavings() {
     getUsdRateCached()
         .then(usdRate => {
@@ -301,7 +367,7 @@ function updateDollarSavings() {
         });
 }
 
-// === 12. Последние 10 операций
+// === 16. Последние 10 операций
 function renderRecentList() {
     const list = document.getElementById('recent-transactions');
     if (!list) return;
@@ -323,7 +389,7 @@ function renderRecentList() {
     });
 }
 
-// === 13. Добавление операции
+// === 17. Добавление операции
 document.getElementById('add-form')?.addEventListener('submit', e => {
     e.preventDefault();
     const form = e.target;
@@ -359,7 +425,7 @@ document.getElementById('add-form')?.addEventListener('submit', e => {
         });
 });
 
-// === 14. Редактирование операции
+// === 18. Редактирование операции
 function startEdit(id) {
     const tx = transactions.find(t => t.id === id);
     if (!tx) return;
@@ -415,7 +481,7 @@ function cancelEdit() {
     document.getElementById('edit-form').reset();
 }
 
-// === 15. Удаление операции
+// === 19. Удаление операции
 function deleteTransaction(id) {
     if (confirm('Удалить операцию?')) {
         const txToDelete = transactions.find(t => t.id === id);
@@ -437,7 +503,7 @@ function deleteTransaction(id) {
     }
 }
 
-// === 16. Финансовый план
+// === 20. Финансовый план
 function renderPlanList() {
     const list = document.getElementById('plan-list');
     if (!list) return;
@@ -470,7 +536,7 @@ function renderPlanList() {
     });
 }
 
-// === 17. Редактирование плана
+// === 21. Редактирование плана
 function startEditPlan(id) {
     const plan = financialPlans.find(p => p.id === id);
     if (!plan) return;
@@ -480,7 +546,7 @@ function startEditPlan(id) {
     document.getElementById('plan-expense').value = plan.expense;
 }
 
-// === 18. Ввод плана
+// === 22. Ввод плана
 document.getElementById('plan-form')?.addEventListener('submit', e => {
     e.preventDefault();
     const month = document.getElementById('plan-month').value;
@@ -513,7 +579,7 @@ document.getElementById('plan-form')?.addEventListener('submit', e => {
     }
 });
 
-// === 19. Удаление плана
+// === 23. Удаление плана
 function deletePlan(id) {
     if (confirm('Удалить план?')) {
         plansCollection.doc(id).delete()
@@ -524,7 +590,7 @@ function deletePlan(id) {
     }
 }
 
-// === 20. Импорт
+// === 24. Импорт
 function importPlanFromExcel() {
     const fileInput = document.getElementById('import-plan-file');
     const file = fileInput.files[0];
@@ -585,7 +651,7 @@ function importPlanFromExcel() {
     reader.readAsArrayBuffer(file);
 }
 
-// === 21. Обновление аналитики
+// === 25. Обновление аналитики
 function updateAnalytics() {
     const regularTransactions = transactions.filter(t => !t.isDollarSavings);
     const income = regularTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
@@ -620,7 +686,7 @@ function updateAnalytics() {
     updateMonthlyPlan();
 }
 
-// === 22. Ежемесячный план
+// === 26. Ежемесячный план
 function updateMonthlyPlan() {
     const now = new Date();
     const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
@@ -657,14 +723,14 @@ function updateMonthlyPlan() {
     }
 }
 
-// === 23. Формат месяца
+// === 27. Формат месяца
 function formatMonth(monthStr) {
     const [year, month] = monthStr.split('-');
     const date = new Date(year, month - 1);
     return date.toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' });
 }
 
-// === 24. BI-графики
+// === 28. BI-графики
 function initBI() {
     const today = new Date();
     const startDate = new Date(today.getFullYear(), today.getMonth(), 1);
@@ -724,7 +790,7 @@ function getWeeklySavingsWithStartBalance(transactions, start, end, initialBalan
     return result;
 }
 
-// === 25. Обновление графиков
+// === 29. Обновление графиков
 function updateExpensePieChart(transactions) {
     const ctx = document.getElementById('expensePieChart');
     if (!ctx) return;
@@ -799,7 +865,7 @@ function updateSavingsWeeklyChart(weeklyData) {
     }
 }
 
-// === 26. Авторизация
+// === 30. Авторизация
 document.getElementById('login-form')?.addEventListener('submit', e => {
     e.preventDefault();
     const email = document.getElementById('login-email').value;
@@ -814,7 +880,7 @@ document.getElementById('login-form')?.addEventListener('submit', e => {
         });
 });
 
-// === 27. Прослушка аутентификации
+// === 31. Прослушка аутентификации
 auth.onAuthStateChanged(user => {
     if (user) {
         console.log('Пользователь авторизован:', user.email);
@@ -829,7 +895,7 @@ auth.onAuthStateChanged(user => {
     }
 });
 
-// === 28. Выход
+// === 32. Выход
 function logout() {
     if (confirm('Вы уверены, что хотите выйти?')) {
         auth.signOut().catch(err => {
@@ -839,14 +905,14 @@ function logout() {
     }
 }
 
-// === 29. Тема
+// === 33. Тема
 function toggleTheme() {
     const body = document.body;
     const isDark = body.classList.toggle('dark-theme');
     localStorage.setItem('dark-theme', isDark);
 }
 
-// === 30. Инициализация темы и фильтров
+// === 34. Инициализация темы и фильтров
 document.addEventListener('DOMContentLoaded', () => {
     const isDark = localStorage.getItem('dark-theme') === 'true';
     if (isDark) {
@@ -862,7 +928,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// === 31. Навигация
+// === 35. Навигация
 function show(sectionId) {
     document.querySelectorAll('section').forEach(s => s.style.display = 'none');
     const section = document.getElementById(sectionId);
@@ -887,7 +953,7 @@ function show(sectionId) {
     }
 }
 
-// === 32. Pull-to-refresh
+// === 36. Pull-to-refresh
 let startY = 0;
 let currentY = 0;
 let isPulling = false;
@@ -928,7 +994,7 @@ document.body.addEventListener('touchend', () => {
     }
 });
 
-// === 33. История операций
+// === 37. История операций
 function renderAllList() {
     const list = document.getElementById('all-transactions');
     if (!list) return;
@@ -982,7 +1048,7 @@ function updateUI() {
 // Дебаунсированная версия
 const updateUIDebounced = debounce(updateUI, 100);
 
-// === 34. Экспорт
+// === 38. Экспорт
 function exportToExcel() {
     const start = document.getElementById('filter-start')?.value;
     const end = document.getElementById('filter-end')?.value;
@@ -1014,7 +1080,7 @@ function exportToExcel() {
     }
 }
 
-// === 35. Функция для отображения/скрытия индикатора загрузки
+// === 39. Функция для отображения/скрытия индикатора загрузки
 function showLoadingIndicator(show) {
     const indicator = document.getElementById('refresh-indicator');
     if (indicator) {
@@ -1022,7 +1088,7 @@ function showLoadingIndicator(show) {
     }
 }
 
-// === 36. Вспомогательная функция: Проверяет, активна ли секция
+// === 40. Вспомогательная функция: Проверяет, активна ли секция
 function isSectionActive(sectionId) {
     const section = document.getElementById(sectionId);
     return section && section.style.display !== 'none';
