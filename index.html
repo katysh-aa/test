@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Семейный бюджет</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+    <div id="refresh-indicator" class="refresh-indicator"></div>
+    <section id="auth-screen" class="auth-screen">
+        <h2>🔐 Вход в Семейный бюджет</h2>
+        <p>Введите email и пароль</p>
+        <form id="login-form">
+            <input type="email" id="login-email" placeholder="Email" required />
+            <input type="password" id="login-password" placeholder="Пароль" required />
+            <button type="submit" class="btn">Войти</button>
+            <p id="auth-error" style="color: red; margin-top: 10px;"></p>
+        </form>
+    </section>
+    <header class="app-header">
+        <button onclick="toggleTheme()" class="btn theme-toggle" title="Тёмная тема">
+            <img src="icons/theme-icon.png" alt="Переключить тему" class="header-icon">
+        </button>
+        <h1 id="current-section-title">Главная</h1>
+        <button onclick="logout()" class="btn logout-btn" title="Выйти из аккаунта">
+            <img src="icons/logout-icon.png" alt="Выйти" class="header-icon">
+        </button>
+    </header>
+    <div id="app" style="display: none;">
+        <section id="home">
+            <h2>Цель накоплений</h2>
+            <div class="goal-section">
+                <label><strong>Установите цель:</strong></label>
+                <div class="input-group">
+                    <input type="number" id="savings-goal" value="500000" placeholder="500000" />
+                    <button onclick="saveGoal()" class="btn small">Сохранить</button>
+                </div>
+            </div>
+            <div class="stats-grid">
+                <!-- Всего накоплено (все активы) -->
+                <div class="stat-card main-card">
+                    <h3>Всего накоплено</h3>
+                    <p class="value" id="total-savings">0 ₽</p>
+                </div>
+                <!-- Рублевые накопления -->
+                <h2>Рублевые накопления</h2>
+                <div class="stat-card ruble-savings-card">
+                    <h3>Накоплено рублей</h3>
+                    <p class="value" id="ruble-savings-amount">0 ₽</p>
+                    <div class="inner-progress-bar">
+                        <div id="ruble-progress-fill" class="inner-progress-fill"></div>
+                    </div>
+                    <p class="info" id="ruble-progress-text">0% от цели</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Доход за месяц</h3>
+                    <p class="value" id="monthly-income">0 ₽</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Расход за месяц</h3>
+                    <p class="value" id="monthly-expense">0 ₽</p>
+                </div>
+            </div>
+            <!-- Блок: Долларовые накопления -->
+            <h2>Долларовые накопления</h2>
+            <div class="stats-grid">
+                <div class="stat-card dollar-card">
+                    <h3>Накоплено долларов</h3>
+                    <p class="value" id="dollar-savings-amount">0 $</p>
+                    <p class="info" id="dollar-rate">Курс: загрузка...</p>
+                </div>
+                <div class="stat-card ruble-card">
+                    <h3>Сумма в рублях</h3>
+                    <p class="value" id="dollar-savings-rub">0 ₽</p>
+                    <p class="info">По курсу ЦБ</p>
+                </div>
+            </div>
+            <!-- Конец блока -->
+        </section>
+        <section id="add" style="display: none;">
+            <h2>Добавить операцию</h2>
+            <form id="add-form">
+                <input type="date" id="date" required />
+                <input list="categories" id="category" placeholder="Категория (еда, транспорт и т.д.)" required />
+                <datalist id="categories"></datalist>
+                <input type="number" id="amount" placeholder="Сумма" step="0.01" required />
+                <select id="type" required>
+                    <option value="income">Доход</option>
+                    <option value="expense">Расход</option>
+                </select>
+                <input list="authors" id="author" placeholder="Автор" required />
+                <datalist id="authors"></datalist>
+                <input type="text" id="comment" placeholder="Комментарий (необязательно)" />
+                <div class="toggle-container">
+                    <div class="toggle-switch">
+                        <input type="checkbox" id="dollar-savings" class="toggle-input" />
+                        <label for="dollar-savings" class="toggle-label">
+                            <span class="toggle-button"></span>
+                        </label>
+                    </div>
+                    <span class="toggle-text">Доллары</span>
+                </div>
+                <button type="submit" class="btn">Добавить</button>
+            </form>
+            <form id="edit-form" style="display: none;">
+                <input type="hidden" id="edit-id" />
+                <input type="date" id="edit-date" required />
+                <input list="edit-categories" id="edit-category" placeholder="Категория" required />
+                <datalist id="edit-categories"></datalist>
+                <input type="number" id="edit-amount" placeholder="Сумма" step="0.01" required />
+                <select id="edit-type" required>
+                    <option value="income">Доход</option>
+                    <option value="expense">Расход</option>
+                </select>
+                <input list="edit-authors" id="edit-author" placeholder="Автор" required />
+                <datalist id="edit-authors"></datalist>
+                <input type="text" id="edit-comment" placeholder="Комментарий" />
+                <div class="toggle-container">
+                    <div class="toggle-switch">
+                        <input type="checkbox" id="edit-dollar-savings" class="toggle-input" />
+                        <label for="edit-dollar-savings" class="toggle-label">
+                            <span class="toggle-button"></span>
+                        </label>
+                    </div>
+                    <span class="toggle-text">Доллары</span>
+                </div>
+                <button type="submit" class="btn">Сохранить</button>
+                <button type="button" onclick="cancelEdit()" class="btn secondary">Отмена</button>
+            </form>
+            <h3>Последние 10 операций</h3>
+            <ul id="recent-transactions"></ul>
+        </section>
+        <section id="plan" style="display: none;">
+            <h2>Финансовый план</h2>
+            <p>Запланируйте доходы и расходы по месяцам</p>
+            <div class="card">
+                <h3>Ввести вручную</h3>
+                <form id="plan-form">
+                    <input type="month" id="plan-month" required />
+                    <input type="number" id="plan-income" placeholder="Планируемый доход (₽)" step="0.01" required />
+                    <input type="number" id="plan-expense" placeholder="Планируемые расходы (₽)" step="0.01" required />
+                    <button type="submit" class="btn">💾 Сохранить</button>
+                </form>
+            </div>
+            <div class="card">
+                <h3>📥 Импорт из Excel</h3>
+                <p class="excel-hint">Формат: <code>Месяц (ГГГГ-ММ), Доход, Расход</code></p>
+                <input type="file" id="import-plan-file" accept=".xlsx, .xls" class="file-input" />
+                <button onclick="importPlanFromExcel()" class="btn small">Загрузить</button>
+            </div>
+            <h3>Текущие планы</h3>
+            <ul id="plan-list"></ul>
+        </section>
+        <section id="analytics" style="display: none;">
+            <h2>Отчет</h2>
+            <div class="card">
+                <h3>📊 Финансовый план на месяц</h3>
+                <p><strong>Текущий месяц:</strong> <span id="current-month">Загрузка...</span></p>
+                <p><strong>Доход (план):</strong> <span id="plan-income-value">— ₽</span></p>
+                <p><strong>Доход (факт):</strong> <span id="fact-income-value">0 ₽</span></p>
+                <div class="progress-bar">
+                    <div id="progress-income-bar" class="progress-fill"></div>
+                </div>
+                <p><strong>Расход (план):</strong> <span id="plan-expense-value">— ₽</span></p>
+                <p><strong>Расход (факт):</strong> <span id="fact-expense-value">0 ₽</span></p>
+                <div class="progress-bar">
+                    <div id="progress-expense-bar" class="progress-fill"></div>
+                </div>
+            </div>
+            <div class="card">
+                <h3>📊 Итоги</h3>
+                <p><strong>Доходы:</strong> <span id="analytics-income">0 ₽</span></p>
+                <p><strong>Расходы:</strong> <span id="analytics-expense">0 ₽</span></p>
+                <p><strong>Накоплено в этом месяце:</strong> <span id="monthly-savings">0 ₽</span></p>
+            </div>
+            <div class="card">
+                <h3>📉 Топ-3 статьи расходов</h3>
+                <ul id="top-expenses"></ul>
+            </div>
+            <h2>📊 Анализ</h2>
+            <div class="card">
+                <h3>📅 Выберите период</h3>
+                <div class="bi-filter">
+                    <input type="date" id="bi-start-date" />
+                    <input type="date" id="bi-end-date" />
+                    <button onclick="updateBI()" class="btn small">Показать</button>
+                </div>
+            </div>
+            <div class="chart-container">
+                <h3>📉 Расходы по категориям</h3>
+                <canvas id="expensePieChart"></canvas>
+            </div>
+            <div class="chart-container fixed-height">
+                <h3>📈 Рост накоплений по неделям</h3>
+                <canvas id="savingsWeeklyChart"></canvas>
+            </div>
+        </section>
+        <section id="list" style="display: none;">
+            <h2>📋 История операций</h2>
+            <div class="filter-section">
+                <input type="date" id="filter-start" placeholder="С даты" />
+                <input type="date" id="filter-end" placeholder="По дату" />
+                <button onclick="filterByDate()" class="btn">🔍 Фильтровать</button>
+                <button onclick="clearFilter()" class="btn secondary">Сбросить</button>
+                <button onclick="exportToExcel()" class="btn">📤 Экспорт</button>
+            </div>
+            <ul id="all-transactions"></ul>
+        </section>
+        <nav class="bottom-nav">
+            <button onclick="show('home')" class="nav-btn">
+                <img src="icons/home-icon.png" alt="Главная" class="nav-icon">
+                <span>Главная</span>
+            </button>
+            <button onclick="show('plan')" class="nav-btn">
+                <img src="icons/plan-icon.png" alt="План" class="nav-icon">
+                <span>План</span>
+            </button>
+            <button onclick="show('add')" class="nav-btn">
+                <img src="icons/add-icon.png" alt="Добавить" class="nav-icon">
+                <span>Добавить</span>
+            </button>
+            <button onclick="show('analytics')" class="nav-btn">
+                <img src="icons/analytics-icon.png" alt="Отчет" class="nav-icon">
+                <span>Отчет</span>
+            </button>
+            <button onclick="show('list')" class="nav-btn">
+                <img src="icons/list-icon.png" alt="История" class="nav-icon">
+                <span>История</span>
+            </button>
+        </nav>
+    </div>
+    <script src="app.js"></script>
+</body>
+
+</html>
