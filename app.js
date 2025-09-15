@@ -22,74 +22,28 @@ let transactions = [];
 let savingsGoal = 500000;
 let financialPlans = [];
 let editingPlanId = null;
-let deferredPrompt = null; // Для PWA установки
 
 // Глобальные переменные для графиков
 let expensePieChart = null;
 let savingsWeeklyChart = null;
 
-// === 3. PWA: Service Worker Registration
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', function() {
-    navigator.serviceWorker.register('/sw.js')
-      .then(function(registration) {
-        console.log('ServiceWorker registration successful with scope: ', registration.scope);
-        
-        // Периодически проверяем обновления (раз в час)
-        setInterval(() => {
-          registration.update();
-        }, 60 * 60 * 1000);
-      })
-      .catch(function(err) {
-        console.log('ServiceWorker registration failed: ', err);
-      });
-  });
-}
+// ✅ Добавлено: Unsubscribers для избежания утечек памяти
+let transactionsUnsub = null;
+let plansUnsub = null;
+let goalUnsub = null;
 
-// === 4. PWA: Before Install Prompt
-window.addEventListener('beforeinstallprompt', (e) => {
-  e.preventDefault();
-  deferredPrompt = e;
-  console.log('PWA installation available');
-  
-  // Показываем кнопку установки (опционально)
-  // showInstallButton();
-});
-
-// === 5. PWA: Install App Function
-function installApp() {
-  if (deferredPrompt) {
-    deferredPrompt.prompt();
-    deferredPrompt.userChoice.then((choiceResult) => {
-      if (choiceResult.outcome === 'accepted') {
-        console.log('User accepted the install prompt');
-      } else {
-        console.log('User dismissed the install prompt');
-      }
-      deferredPrompt = null;
-    });
-  }
-}
-
-// === 6. PWA: Detect iOS
-function isIOS() {
-  return [
-    'iPad Simulator',
-    'iPhone Simulator',
-    'iPod Simulator',
-    'iPad',
-    'iPhone',
-    'iPod'
-  ].includes(navigator.platform) || 
-  (navigator.userAgent.includes("Mac") && "ontouchend" in document);
-}
-
-// === 7. Централизованное получение курса доллара с кэшированием
+// === 3. Централизованное получение курса доллара с кэшированием
 let cachedUsdRate = null;
 let cachedUsdRateTime = null;
 let usdRatePromise = null;
 
 function getUsdRateCached() {
+    const CACHE_DURATION = 24 * 60 * 60 * 1000;
+    // ✅ Сначала проверяем кэш — это важно!
+    if (cachedUsdRate && (Date.now() - cachedUsdRateTime) < CACHE_DURATION) {
+        return Promise.resolve(cachedUsdRate);
+    }
+    // Только потом создаем промис
     if (!usdRatePromise) {
         usdRatePromise = getUsdRate().finally(() => {
             usdRatePromise = null;
@@ -99,11 +53,6 @@ function getUsdRateCached() {
 }
 
 async function getUsdRate() {
-    // ✅ ИСПРАВЛЕНО: Кэшируем на 24 часа, а не на 10 минут
-    const CACHE_DURATION = 24 * 60 * 60 * 1000;
-    if (cachedUsdRate && (Date.now() - cachedUsdRateTime) < CACHE_DURATION) {
-        return cachedUsdRate;
-    }
     try {
         const response = await fetch('https://www.cbr-xml-daily.ru/daily_json.js');
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
@@ -119,17 +68,18 @@ async function getUsdRate() {
     }
 }
 
-// === 8. Форматирование чисел
+// === 4. Форматирование чисел
 function formatNumber(num) {
     if (isNaN(num) || num === null) return "0";
     return num.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
 }
+
 function formatShort(num) {
     if (isNaN(num) || num === null) return "0";
     return (num / 1000).toFixed(1).replace(/\.0$/, "") + " тыс. р.";
 }
 
-// === 9. Функция для создания элемента списка транзакции
+// === 5. Функция для создания элемента списка транзакции
 function createTransactionListItem(tx) {
     const li = document.createElement('li');
     const amountColor = tx.type === 'income' ? '#34c759' : '#ff3b30';
@@ -154,9 +104,12 @@ function createTransactionListItem(tx) {
     return li;
 }
 
-// === 10. Загрузка цели
+// === 6. Загрузка цели
 function loadGoalFromFirebase() {
-    goalDocRef.onSnapshot(doc => {
+    // ✅ Отписываемся перед новой подпиской
+    if (goalUnsub) goalUnsub();
+
+    goalUnsub = goalDocRef.onSnapshot(doc => {
         if (doc.exists) {
             savingsGoal = doc.data().amount || 500000;
         } else {
@@ -169,15 +122,16 @@ function loadGoalFromFirebase() {
         localStorage.setItem('savingsGoal', savingsGoal);
     }, error => {
         console.error("Ошибка загрузки цели:", error);
+        showToast('Не удалось загрузить цель', 'danger');
     });
 }
 
-// === 11. Сохранение цели
+// === 7. Сохранение цели
 function saveGoal() {
     const input = document.getElementById('savings-goal');
     const value = parseFloat(input.value);
     if (isNaN(value) || value < 0) {
-        alert('Введите корректную сумму');
+        showToast('Введите корректную сумму', 'danger');
         return;
     }
     goalDocRef.set({ amount: value })
@@ -185,27 +139,30 @@ function saveGoal() {
             savingsGoal = value;
             localStorage.setItem('savingsGoal', savingsGoal);
             updateHome();
-            alert(`🎯 Цель обновлена: ${formatNumber(savingsGoal)} ₽`);
+            showToast(`🎯 Цель обновлена: ${formatNumber(savingsGoal)} ₽`, 'success');
         })
         .catch(err => {
             console.error("Ошибка сохранения цели:", err);
-            alert("Не удалось сохранить цель.");
+            showToast("Не удалось сохранить цель.", 'danger');
         });
 }
 
-// === 12. Загрузка данных
+// === 8. Загрузка данных
 function loadFromFirebase() {
     showLoadingIndicator(true);
+
+    // ✅ Отписываемся от предыдущих слушателей
+    if (transactionsUnsub) transactionsUnsub();
+    if (plansUnsub) plansUnsub();
+
     let isFirstLoad = true;
 
-    transactionsCollection.orderBy('date', 'desc').onSnapshot(snapshot => {
+    transactionsUnsub = transactionsCollection.orderBy('date', 'desc').onSnapshot(snapshot => {
         transactions = [];
         snapshot.forEach(doc => {
             transactions.push({ id: doc.id, ...doc.data() });
         });
-
         updateUIDebounced();
-
         if (isFirstLoad) {
             isFirstLoad = false;
             if (document.getElementById('date')) {
@@ -213,26 +170,17 @@ function loadFromFirebase() {
             }
             show('home');
             showLoadingIndicator(false);
-
-            // ✅ ИСПРАВЛЕНО: Сбрасываем кэш курса при первом запуске приложения
+            // ✅ Сбрасываем кэш курса при первом запуске
             cachedUsdRate = null;
             updateDollarSavings();
-            
-            // Показываем подсказку об установке для iOS
-            if (isIOS() && !localStorage.getItem('iosPromptShown')) {
-                setTimeout(() => {
-                    document.getElementById('ios-install-prompt').style.display = 'block';
-                    localStorage.setItem('iosPromptShown', 'true');
-                }, 3000);
-            }
         }
     }, error => {
         console.error("Ошибка загрузки транзакций:", error);
-        alert("Ошибка загрузки данных. Проверьте подключение к интернету.");
+        showToast("Ошибка загрузки данных. Проверьте подключение к интернету.", 'danger');
         showLoadingIndicator(false);
     });
 
-    plansCollection.onSnapshot(snapshot => {
+    plansUnsub = plansCollection.onSnapshot(snapshot => {
         financialPlans = [];
         snapshot.forEach(doc => {
             financialPlans.push({ id: doc.id, ...doc.data() });
@@ -244,7 +192,7 @@ function loadFromFirebase() {
     });
 }
 
-// === 13. Обновление выпадающих списков
+// === 9. Обновление выпадающих списков
 function updateDropdowns() {
     const regularTransactions = transactions.filter(t => !t.isDollarSavings);
     const categories = [...new Set(regularTransactions.map(t => t.category))].sort();
@@ -267,7 +215,7 @@ function updateDropdowns() {
     updateSelect('edit-authors', authors);
 }
 
-// === 14. Обновление главной
+// === 10. Обновление главной
 function updateHome() {
     const now = new Date();
     const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
@@ -296,8 +244,6 @@ function updateHome() {
                 return t.type === 'income' ? sum + t.amount : sum - t.amount;
             }, 0);
             totalDollarInRub = totalDollarAmount * usdRate;
-
-            const totalAllSavings = totalRubleSavings + totalDollarInRub;
             if (document.getElementById('total-savings')) {
                 document.getElementById('total-savings').textContent = formatNumber(totalAllSavings) + ' ₽';
             }
@@ -309,6 +255,7 @@ function updateHome() {
             }
         })
         .finally(() => {
+            const totalAllSavings = totalRubleSavings + totalDollarInRub;
             if (document.getElementById('ruble-savings-amount')) {
                 document.getElementById('ruble-savings-amount').textContent = formatNumber(totalRubleSavings) + ' ₽';
             }
@@ -329,7 +276,7 @@ function updateHome() {
     }
 }
 
-// === 15. Обновление блока "Долларовые накопления"
+// === 11. Обновление блока "Долларовые накопления"
 function updateDollarSavings() {
     getUsdRateCached()
         .then(usdRate => {
@@ -338,7 +285,6 @@ function updateDollarSavings() {
                 return t.type === 'income' ? sum + t.amount : sum - t.amount;
             }, 0);
             const totalRubAmount = totalDollarAmount * usdRate;
-
             if (document.getElementById('dollar-savings-amount')) {
                 document.getElementById('dollar-savings-amount').textContent = formatNumber(totalDollarAmount) + ' $';
             }
@@ -367,7 +313,7 @@ function updateDollarSavings() {
         });
 }
 
-// === 16. Последние 10 операций
+// === 12. Последние 10 операций
 function renderRecentList() {
     const list = document.getElementById('recent-transactions');
     if (!list) return;
@@ -389,7 +335,7 @@ function renderRecentList() {
     });
 }
 
-// === 17. Добавление операции
+// === 13. Добавление операции
 document.getElementById('add-form')?.addEventListener('submit', e => {
     e.preventDefault();
     const form = e.target;
@@ -403,7 +349,7 @@ document.getElementById('add-form')?.addEventListener('submit', e => {
         isDollarSavings: form['dollar-savings']?.checked || false
     };
     if (!newTx.date || !newTx.category || isNaN(newTx.amount) || newTx.amount <= 0 || !newTx.author) {
-        alert('Заполните все обязательные поля корректно');
+        showToast('Заполните все обязательные поля корректно', 'danger');
         return;
     }
     transactionsCollection.add(newTx)
@@ -418,14 +364,15 @@ document.getElementById('add-form')?.addEventListener('submit', e => {
                 updateDollarSavings();
                 updateHome();
             }
+            showToast('✅ Операция добавлена', 'success');
         })
         .catch(err => {
             console.error('Ошибка добавления операции:', err);
-            alert('Ошибка: ' + err.message);
+            showToast('Ошибка: ' + err.message, 'danger');
         });
 });
 
-// === 18. Редактирование операции
+// === 14. Редактирование операции
 function startEdit(id) {
     const tx = transactions.find(t => t.id === id);
     if (!tx) return;
@@ -456,7 +403,7 @@ document.getElementById('edit-form')?.addEventListener('submit', e => {
         isDollarSavings: form['edit-dollar-savings']?.checked || false
     };
     if (!updatedTx.date || !updatedTx.category || isNaN(updatedTx.amount) || updatedTx.amount <= 0 || !updatedTx.author) {
-        alert('Заполните все обязательные поля корректно');
+        showToast('Заполните все обязательные поля корректно', 'danger');
         return;
     }
     transactionsCollection.doc(id).update(updatedTx)
@@ -469,10 +416,11 @@ document.getElementById('edit-form')?.addEventListener('submit', e => {
             }
             updateDollarSavings();
             updateHome();
+            showToast('✅ Операция обновлена', 'success');
         })
         .catch(err => {
             console.error('Ошибка обновления операции:', err);
-            alert('Ошибка: ' + err.message);
+            showToast('Ошибка: ' + err.message, 'danger');
         });
 });
 
@@ -481,7 +429,7 @@ function cancelEdit() {
     document.getElementById('edit-form').reset();
 }
 
-// === 19. Удаление операции
+// === 15. Удаление операции
 function deleteTransaction(id) {
     if (confirm('Удалить операцию?')) {
         const txToDelete = transactions.find(t => t.id === id);
@@ -495,15 +443,16 @@ function deleteTransaction(id) {
                     updateDollarSavings();
                     updateHome();
                 }
+                showToast('🗑️ Операция удалена', 'success');
             })
             .catch(err => {
                 console.error('Ошибка удаления операции:', err);
-                alert('Не удалось удалить операцию');
+                showToast('Не удалось удалить операцию', 'danger');
             });
     }
 }
 
-// === 20. Финансовый план
+// === 16. Финансовый план
 function renderPlanList() {
     const list = document.getElementById('plan-list');
     if (!list) return;
@@ -536,7 +485,7 @@ function renderPlanList() {
     });
 }
 
-// === 21. Редактирование плана
+// === 17. Редактирование плана
 function startEditPlan(id) {
     const plan = financialPlans.find(p => p.id === id);
     if (!plan) return;
@@ -546,14 +495,14 @@ function startEditPlan(id) {
     document.getElementById('plan-expense').value = plan.expense;
 }
 
-// === 22. Ввод плана
+// === 18. Ввод плана
 document.getElementById('plan-form')?.addEventListener('submit', e => {
     e.preventDefault();
     const month = document.getElementById('plan-month').value;
     const income = parseFloat(document.getElementById('plan-income').value);
     const expense = parseFloat(document.getElementById('plan-expense').value);
     if (isNaN(income) || isNaN(expense) || !month) {
-        alert('Заполните все поля корректно');
+        showToast('Заполните все поля корректно', 'danger');
         return;
     }
     if (editingPlanId) {
@@ -561,41 +510,47 @@ document.getElementById('plan-form')?.addEventListener('submit', e => {
             .then(() => {
                 editingPlanId = null;
                 document.getElementById('plan-form').reset();
+                showToast('✅ План обновлён', 'success');
             })
             .catch(err => {
                 console.error('Ошибка обновления плана:', err);
-                alert('Не удалось обновить план');
+                showToast('Не удалось обновить план', 'danger');
             });
     } else {
         const exists = financialPlans.find(p => p.month === month);
         if (exists) {
             if (confirm(`План на ${formatMonth(month)} уже существует. Заменить?`)) {
                 plansCollection.doc(exists.id).update({ income, expense });
+                showToast('✅ План заменён', 'success');
             }
         } else {
             plansCollection.add({ month, income, expense });
+            showToast('✅ План добавлен', 'success');
         }
         document.getElementById('plan-form').reset();
     }
 });
 
-// === 23. Удаление плана
+// === 19. Удаление плана
 function deletePlan(id) {
     if (confirm('Удалить план?')) {
         plansCollection.doc(id).delete()
+            .then(() => {
+                showToast('🗑️ План удалён', 'success');
+            })
             .catch(err => {
                 console.error('Ошибка удаления плана:', err);
-                alert('Не удалось удалить план');
+                showToast('Не удалось удалить план', 'danger');
             });
     }
 }
 
-// === 24. Импорт
+// === 20. Импорт
 function importPlanFromExcel() {
     const fileInput = document.getElementById('import-plan-file');
     const file = fileInput.files[0];
     if (!file) {
-        alert('Выберите файл');
+        showToast('Выберите файл', 'danger');
         return;
     }
     const MAX_ROWS = 1000;
@@ -608,7 +563,7 @@ function importPlanFromExcel() {
             const json = XLSX.utils.sheet_to_json(sheet, { header: 1 });
             const rows = json.slice(json[0]?.includes('Месяц') ? 1 : 0);
             if (rows.length > MAX_ROWS) {
-                alert(`Файл содержит слишком много строк (максимум ${MAX_ROWS}).`);
+                showToast(`Файл содержит слишком много строк (максимум ${MAX_ROWS}).`, 'danger');
                 return;
             }
             const batch = db.batch();
@@ -633,25 +588,25 @@ function importPlanFromExcel() {
                 validCount++;
             }
             if (validCount === 0) {
-                alert('Не удалось распознать данные');
+                showToast('Не удалось распознать данные', 'danger');
                 return;
             }
             batch.commit().then(() => {
-                alert(`✅ Успешно импортировано ${validCount} записей`);
+                showToast(`✅ Успешно импортировано ${validCount} записей`, 'success');
                 fileInput.value = '';
             }).catch(err => {
                 console.error('Ошибка импорта:', err);
-                alert('Ошибка при импорте данных');
+                showToast('Ошибка при импорте данных', 'danger');
             });
         } catch (err) {
             console.error(err);
-            alert('Ошибка при обработке файла');
+            showToast('Ошибка при обработке файла', 'danger');
         }
     };
     reader.readAsArrayBuffer(file);
 }
 
-// === 25. Обновление аналитики
+// === 21. Обновление аналитики
 function updateAnalytics() {
     const regularTransactions = transactions.filter(t => !t.isDollarSavings);
     const income = regularTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
@@ -672,6 +627,7 @@ function updateAnalytics() {
     regularTransactions.filter(t => t.type === 'expense').forEach(t => {
         expensesByCategory[t.category] = (expensesByCategory[t.category] || 0) + t.amount;
     });
+
     const sorted = Object.entries(expensesByCategory).sort((a, b) => b[1] - a[1]).slice(0, 3);
     const topList = document.getElementById('top-expenses');
     if (topList) {
@@ -686,19 +642,21 @@ function updateAnalytics() {
     updateMonthlyPlan();
 }
 
-// === 26. Ежемесячный план
+// === 22. Ежемесячный план
 function updateMonthlyPlan() {
     const now = new Date();
     const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
     if (document.getElementById('current-month')) {
         document.getElementById('current-month').textContent = formatMonth(currentMonth);
     }
+
     const plan = financialPlans.find(p => p.month === currentMonth);
     const regularTransactions = transactions.filter(t => !t.isDollarSavings);
     const actualIncome = regularTransactions.filter(t => t.type === 'income' && t.date.startsWith(currentMonth)).reduce((sum, t) => sum + t.amount, 0);
     const actualExpense = regularTransactions.filter(t => t.type === 'expense' && t.date.startsWith(currentMonth)).reduce((sum, t) => sum + t.amount, 0);
     const plannedIncome = plan ? plan.income : 0;
     const plannedExpense = plan ? plan.expense : 0;
+
     if (document.getElementById('plan-income-value')) {
         document.getElementById('plan-income-value').textContent = `${formatNumber(plannedIncome)} ₽`;
     }
@@ -708,6 +666,7 @@ function updateMonthlyPlan() {
     if (document.getElementById('progress-income-bar')) {
         document.getElementById('progress-income-bar').style.width = plannedIncome > 0 ? Math.min(100, (actualIncome / plannedIncome) * 100) + '%' : '0%';
     }
+
     if (document.getElementById('plan-expense-value')) {
         document.getElementById('plan-expense-value').textContent = `${formatNumber(plannedExpense)} ₽`;
     }
@@ -717,20 +676,21 @@ function updateMonthlyPlan() {
     if (document.getElementById('progress-expense-bar')) {
         document.getElementById('progress-expense-bar').style.width = plannedExpense > 0 ? Math.min(100, (actualExpense / plannedExpense) * 100) + '%' : '0%';
     }
+
     const monthlySavings = actualIncome - actualExpense;
     if (document.getElementById('monthly-savings')) {
         document.getElementById('monthly-savings').textContent = formatShort(monthlySavings);
     }
 }
 
-// === 27. Формат месяца
+// === 23. Формат месяца
 function formatMonth(monthStr) {
     const [year, month] = monthStr.split('-');
     const date = new Date(year, month - 1);
     return date.toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' });
 }
 
-// === 28. BI-графики
+// === 24. BI-графики
 function initBI() {
     const today = new Date();
     const startDate = new Date(today.getFullYear(), today.getMonth(), 1);
@@ -748,13 +708,19 @@ function updateBI() {
     const end = document.getElementById('bi-end-date')?.value;
     if (!start || !end) return;
     if (new Date(start) > new Date(end)) {
-        alert('Дата начала не может быть больше даты окончания');
+        showToast('Дата начала не может быть больше даты окончания', 'danger');
         return;
     }
+
     const regularTransactions = transactions.filter(t => !t.isDollarSavings);
-    const filtered = regularTransactions.filter(t => t.date >= start && t.date <= end);
-    const balanceAtStart = regularTransactions.filter(t => t.date < start).reduce((sum, t) => t.type === 'income' ? sum + t.amount : sum - t.amount, 0);
+    const filtered = regularTransactions.filter(t => 
+        new Date(t.date) >= new Date(start) && 
+        new Date(t.date) <= new Date(end)
+    );
+
+    const balanceAtStart = regularTransactions.filter(t => new Date(t.date) < new Date(start)).reduce((sum, t) => t.type === 'income' ? sum + t.amount : sum - t.amount, 0);
     const weeklyData = getWeeklySavingsWithStartBalance(filtered, start, end, balanceAtStart);
+
     updateExpensePieChart(filtered);
     updateSavingsWeeklyChart(weeklyData);
 }
@@ -767,39 +733,50 @@ function getWeeklySavingsWithStartBalance(transactions, start, end, initialBalan
     let cumulativeSavings = initialBalance;
     const result = [];
     result.push({ week: '0', label: 'Начало', savings: cumulativeSavings });
+
     while (current <= endDate) {
         const weekStart = new Date(current);
         const weekEnd = new Date(current);
         weekEnd.setDate(weekEnd.getDate() + 6);
         if (weekEnd > endDate) weekEnd.setTime(endDate.getTime());
+
         const weekStr = weekStart.toISOString().slice(0, 10);
         const weekEndStr = weekEnd.toISOString().slice(0, 10);
-        const weekTransactions = sorted.filter(t => t.date >= weekStr && t.date <= weekEndStr);
+        const weekTransactions = sorted.filter(t => 
+            new Date(t.date) >= new Date(weekStr) && 
+            new Date(t.date) <= new Date(weekEndStr)
+        );
+
         const income = weekTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
         const expense = weekTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
         const weeklySavings = income - expense;
         cumulativeSavings += weeklySavings;
+
         result.push({
             week: weekNum,
             label: `Неделя ${weekNum}`,
             savings: cumulativeSavings
         });
+
         weekNum++;
         current.setDate(current.getDate() + 7);
     }
     return result;
 }
 
-// === 29. Обновление графиков
+// === 25. Обновление графиков
 function updateExpensePieChart(transactions) {
     const ctx = document.getElementById('expensePieChart');
     if (!ctx) return;
+
     const expensesByCategory = {};
     transactions.filter(t => t.type === 'expense').forEach(t => {
         expensesByCategory[t.category] = (expensesByCategory[t.category] || 0) + t.amount;
     });
+
     const categories = Object.keys(expensesByCategory);
     const values = Object.values(expensesByCategory);
+
     if (expensePieChart) {
         expensePieChart.data.labels = categories;
         expensePieChart.data.datasets[0].data = values;
@@ -829,8 +806,10 @@ function updateExpensePieChart(transactions) {
 function updateSavingsWeeklyChart(weeklyData) {
     const ctx = document.getElementById('savingsWeeklyChart');
     if (!ctx) return;
+
     const weekLabels = weeklyData.map(w => w.week === '0' ? 'Начало' : w.week.toString());
     const weekSavings = weeklyData.map(w => w.savings);
+
     if (savingsWeeklyChart) {
         savingsWeeklyChart.data.labels = weekLabels;
         savingsWeeklyChart.data.datasets[0].data = weekSavings;
@@ -865,7 +844,7 @@ function updateSavingsWeeklyChart(weeklyData) {
     }
 }
 
-// === 30. Авторизация
+// === 26. Авторизация
 document.getElementById('login-form')?.addEventListener('submit', e => {
     e.preventDefault();
     const email = document.getElementById('login-email').value;
@@ -873,14 +852,16 @@ document.getElementById('login-form')?.addEventListener('submit', e => {
     auth.signInWithEmailAndPassword(email, password)
         .then(() => {
             document.getElementById('auth-error').textContent = '';
+            showToast('✅ Добро пожаловать!', 'success');
         })
         .catch(err => {
             console.error('Ошибка авторизации:', err);
             document.getElementById('auth-error').textContent = err.message;
+            showToast('Ошибка входа: ' + err.message, 'danger');
         });
 });
 
-// === 31. Прослушка аутентификации
+// === 27. Прослушка аутентификации
 auth.onAuthStateChanged(user => {
     if (user) {
         console.log('Пользователь авторизован:', user.email);
@@ -895,24 +876,24 @@ auth.onAuthStateChanged(user => {
     }
 });
 
-// === 32. Выход
+// === 28. Выход
 function logout() {
     if (confirm('Вы уверены, что хотите выйти?')) {
         auth.signOut().catch(err => {
             console.error('Ошибка выхода:', err);
-            alert('Не удалось выйти из системы');
+            showToast('Не удалось выйти из системы', 'danger');
         });
     }
 }
 
-// === 33. Тема
+// === 29. Тема
 function toggleTheme() {
     const body = document.body;
     const isDark = body.classList.toggle('dark-theme');
     localStorage.setItem('dark-theme', isDark);
 }
 
-// === 34. Инициализация темы и фильтров
+// === 30. Инициализация темы и фильтров
 document.addEventListener('DOMContentLoaded', () => {
     const isDark = localStorage.getItem('dark-theme') === 'true';
     if (isDark) {
@@ -928,7 +909,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// === 35. Навигация
+// === 31. Навигация
 function show(sectionId) {
     document.querySelectorAll('section').forEach(s => s.style.display = 'none');
     const section = document.getElementById(sectionId);
@@ -953,17 +934,19 @@ function show(sectionId) {
     }
 }
 
-// === 36. Pull-to-refresh
+// === 32. Pull-to-refresh
 let startY = 0;
 let currentY = 0;
 let isPulling = false;
 const refreshIndicator = document.getElementById('refresh-indicator');
+
 document.body.addEventListener('touchstart', e => {
     if (window.scrollY === 0) {
         startY = e.touches[0].clientY;
         isPulling = true;
     }
 }, { passive: false });
+
 document.body.addEventListener('touchmove', e => {
     if (!isPulling) return;
     currentY = e.touches[0].clientY;
@@ -975,6 +958,7 @@ document.body.addEventListener('touchmove', e => {
         }
     }
 }, { passive: false });
+
 document.body.addEventListener('touchend', () => {
     if (!isPulling) return;
     isPulling = false;
@@ -989,12 +973,13 @@ document.body.addEventListener('touchend', () => {
                 refreshIndicator.style.opacity = 0;
             }
         }, 1500);
+        showToast('🔄 Данные обновлены', 'info');
     } else if (refreshIndicator) {
         refreshIndicator.style.opacity = 0;
     }
 });
 
-// === 37. История операций
+// === 33. История операций
 function renderAllList() {
     const list = document.getElementById('all-transactions');
     if (!list) return;
@@ -1003,13 +988,16 @@ function renderAllList() {
         return;
     }
     list.innerHTML = '';
+
     const start = document.getElementById('filter-start')?.value;
     const end = document.getElementById('filter-end')?.value;
     if (start) localStorage.setItem('filter-start', start);
     if (end) localStorage.setItem('filter-end', end);
+
     let filtered = transactions;
-    if (start) filtered = filtered.filter(t => t.date >= start);
-    if (end) filtered = filtered.filter(t => t.date <= end);
+    if (start) filtered = filtered.filter(t => new Date(t.date) >= new Date(start));
+    if (end) filtered = filtered.filter(t => new Date(t.date) <= new Date(end));
+
     if (filtered.length === 0) {
         const li = document.createElement('li');
         li.textContent = 'Нет операций за выбранный период';
@@ -1017,6 +1005,7 @@ function renderAllList() {
         list.appendChild(li);
         return;
     }
+
     const sorted = [...filtered].sort((a, b) => new Date(b.date) - new Date(a.date));
     sorted.forEach(tx => {
         list.appendChild(createTransactionListItem(tx));
@@ -1038,27 +1027,35 @@ const renderAllListDebounced = debounce(renderAllList, 300);
 // Создаем объединённую функцию обновления UI
 function updateUI() {
     renderRecentList();
-    updateHome();
-    updateDollarSavings();
     updateDropdowns();
-    if (isSectionActive('analytics')) updateAnalytics();
-    if (isSectionActive('list')) renderAllListDebounced();
+
+    if (isSectionActive('home')) {
+        updateHome();
+        updateDollarSavings();
+    }
+    if (isSectionActive('analytics')) {
+        updateAnalytics();
+    }
+    if (isSectionActive('list')) {
+        renderAllListDebounced();
+    }
 }
 
 // Дебаунсированная версия
 const updateUIDebounced = debounce(updateUI, 100);
 
-// === 38. Экспорт
+// === 34. Экспорт
 function exportToExcel() {
     const start = document.getElementById('filter-start')?.value;
     const end = document.getElementById('filter-end')?.value;
     let filtered = [...transactions];
-    if (start) filtered = filtered.filter(t => t.date >= start);
-    if (end) filtered = filtered.filter(t => t.date <= end);
+    if (start) filtered = filtered.filter(t => new Date(t.date) >= new Date(start));
+    if (end) filtered = filtered.filter(t => new Date(t.date) <= new Date(end));
     if (filtered.length === 0) {
-        alert('Нет данных для экспорта');
+        showToast('Нет данных для экспорта', 'danger');
         return;
     }
+
     const data = filtered.map(tx => ({
         "Дата": tx.date,
         "Категория": tx.category,
@@ -1068,19 +1065,21 @@ function exportToExcel() {
         "Комментарий": tx.comment || '',
         "Долларовые накопления": tx.isDollarSavings ? 'Да' : 'Нет'
     }));
+
     try {
         const ws = XLSX.utils.json_to_sheet(data);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Операции");
         const period = start && end ? `${start}_до_${end}` : "все";
         XLSX.writeFile(wb, `финансы_экспорт_${period}.xlsx`);
+        showToast('✅ Экспорт завершён', 'success');
     } catch (err) {
         console.error('Ошибка экспорта:', err);
-        alert('Ошибка при экспорте данных');
+        showToast('Ошибка при экспорте данных', 'danger');
     }
 }
 
-// === 39. Функция для отображения/скрытия индикатора загрузки
+// === 35. Функция для отображения/скрытия индикатора загрузки
 function showLoadingIndicator(show) {
     const indicator = document.getElementById('refresh-indicator');
     if (indicator) {
@@ -1088,8 +1087,37 @@ function showLoadingIndicator(show) {
     }
 }
 
-// === 40. Вспомогательная функция: Проверяет, активна ли секция
+// === 36. Вспомогательная функция: Проверяет, активна ли секция
 function isSectionActive(sectionId) {
     const section = document.getElementById(sectionId);
     return section && section.style.display !== 'none';
+}
+
+// === 🍎 ДОБАВЛЕНО: Кастомные тосты в стиле iOS ===
+function showToast(message, type = 'info') {
+    // Удаляем предыдущий тост, если есть
+    const existing = document.querySelector('.toast');
+    if (existing) {
+        existing.remove();
+    }
+
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+
+    // Запускаем анимацию появления
+    setTimeout(() => {
+        toast.classList.add('show');
+    }, 100);
+
+    // Автоматическое скрытие через 3 секунды
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => {
+            if (toast.parentNode) {
+                document.body.removeChild(toast);
+            }
+        }, 300);
+    }, 3000);
 }
