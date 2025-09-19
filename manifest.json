@@ -4,9 +4,12 @@
   "description": "Приложение для учета семейного бюджета",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
+  "background_color": "#f2f2f7",
   "theme_color": "#007AFF",
-  "orientation": "portrait",
+  "orientation": "portrait-primary",
+  "lang": "ru",
+  "dir": "ltr",
+  "categories": ["finance", "productivity", "utilities"],
   "icons": [
     {
       "src": "icons/icon-72x72.png",
@@ -33,8 +36,14 @@
       "purpose": "maskable any"
     },
     {
-      "src": "icons/icon-180x180.png",
+      "src": "icons/icon-152x152.png",
       "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "icons/icon-180x180.png",
+      "sizes": "180x180",
       "type": "image/png",
       "purpose": "maskable any"
     },
@@ -56,5 +65,83 @@
       "type": "image/png",
       "purpose": "maskable any"
     }
-  ]
+  ],
+  "screenshots": [
+    {
+      "src": "screenshots/home-light.png",
+      "sizes": "1280x800",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Главная страница в светлой теме"
+    },
+    {
+      "src": "screenshots/home-dark.png",
+      "sizes": "1280x800",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Главная страница в темной теме"
+    },
+    {
+      "src": "screenshots/mobile-home-light.png",
+      "sizes": "720x1280",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Главная страница на мобильном в светлой теме"
+    },
+    {
+      "src": "screenshots/mobile-home-dark.png",
+      "sizes": "720x1280",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Главная страница на мобильном в темной теме"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Добавить операцию",
+      "short_name": "Добавить",
+      "description": "Быстро добавить новую финансовую операцию",
+      "url": "/#add",
+      "icons": [
+        {
+          "src": "icons/add-icon-96x96.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Финансовый план",
+      "short_name": "План",
+      "description": "Просмотр и редактирование финансового плана",
+      "url": "/#plan",
+      "icons": [
+        {
+          "src": "icons/plan-icon-96x96.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Аналитика",
+      "short_name": "Отчет",
+      "description": "Просмотр финансовой аналитики и отчетов",
+      "url": "/#analytics",
+      "icons": [
+        {
+          "src": "icons/analytics-icon-96x96.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false,
+  "display_override": ["standalone", "minimal-ui"],
+  "handle_links": "auto",
+  "launch_handler": {
+    "client_mode": "focus-existing"
+  }
 }
