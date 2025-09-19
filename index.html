@@ -17,14 +17,11 @@
     <!-- Preload critical resources -->
     <link rel="preload" href="style.css" as="style">
     <link rel="preload" href="app.js" as="script">
-    <!-- Firebase scripts with defer for better performance -->
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js" defer></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js" defer></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js" defer></script>
-    <!-- Chart.js loaded only when needed -->
-    <link rel="prefetch" href="https://cdn.jsdelivr.net/npm/chart.js">
-    <!-- XLSX loaded only when needed -->
-    <link rel="prefetch" href="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js">
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <div id="refresh-indicator" class="refresh-indicator"></div>
@@ -35,16 +32,16 @@
             <input type="email" id="login-email" placeholder="Email" required />
             <input type="password" id="login-password" placeholder="Пароль" required />
             <button type="submit" class="btn">Войти</button>
-            <p id="auth-error" class="error-message"></p>
+            <p id="auth-error" style="color: red; margin-top: 10px;"></p>
         </form>
     </section>
     <header class="app-header">
-        <button onclick="toggleTheme()" class="btn theme-toggle" title="Тёмная тема" aria-label="Переключить тему">
-            <img src="icons/theme-icon.png" alt="" class="header-icon">
+        <button onclick="toggleTheme()" class="btn theme-toggle" title="Тёмная тема">
+            <img src="icons/theme-icon.png" alt="Переключить тему" class="header-icon">
         </button>
         <h1 id="current-section-title">Главная</h1>
-        <button onclick="logout()" class="btn logout-btn" title="Выйти из аккаунта" aria-label="Выйти">
-            <img src="icons/logout-icon.png" alt="" class="header-icon">
+        <button onclick="logout()" class="btn logout-btn" title="Выйти из аккаунта">
+            <img src="icons/logout-icon.png" alt="Выйти" class="header-icon">
         </button>
     </header>
     <div id="app" style="display: none;">
@@ -68,7 +65,7 @@
                 <div class="stat-card ruble-savings-card">
                     <h3>Накоплено рублей</h3>
                     <p class="value" id="ruble-savings-amount">0 ₽</p>
-                    <div class="inner-progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                    <div class="inner-progress-bar">
                         <div id="ruble-progress-fill" class="inner-progress-fill"></div>
                     </div>
                     <p class="info" id="ruble-progress-text">0% от цели</p>
@@ -88,7 +85,7 @@
                 <div class="stat-card dollar-card">
                     <h3>Накоплено долларов</h3>
                     <p class="value" id="dollar-savings-amount">0 $</p>
-                    <p class="info" id="dollar-rate">Курс: загрузка...</p>
+                    <p class="info" id="dollar-rate">Курс: загрузка...</p> <!-- Изменено: будет обновлено JS -->
                 </div>
                 <div class="stat-card ruble-card">
                     <h3>Сумма в рублях</h3>
@@ -115,7 +112,7 @@
                 <div class="toggle-container">
                     <div class="toggle-switch">
                         <input type="checkbox" id="dollar-savings" class="toggle-input" />
-                        <label for="dollar-savings" class="toggle-label" aria-label="Долларовые накопления">
+                        <label for="dollar-savings" class="toggle-label">
                             <span class="toggle-button"></span>
                         </label>
                     </div>
@@ -124,7 +121,6 @@
                 <button type="submit" class="btn">Добавить</button>
             </form>
             <form id="edit-form" style="display: none;">
-                <h3>Редактировать операцию</h3>
                 <input type="hidden" id="edit-id" />
                 <input type="date" id="edit-date" required />
                 <input list="edit-categories" id="edit-category" placeholder="Категория" required />
@@ -140,7 +136,7 @@
                 <div class="toggle-container">
                     <div class="toggle-switch">
                         <input type="checkbox" id="edit-dollar-savings" class="toggle-input" />
-                        <label for="edit-dollar-savings" class="toggle-label" aria-label="Долларовые накопления">
+                        <label for="edit-dollar-savings" class="toggle-label">
                             <span class="toggle-button"></span>
                         </label>
                     </div>
@@ -150,7 +146,7 @@
                 <button type="button" onclick="cancelEdit()" class="btn secondary">Отмена</button>
             </form>
             <h3>Последние 10 операций</h3>
-            <ul id="recent-transactions" aria-label="Последние операции"></ul>
+            <ul id="recent-transactions"></ul>
         </section>
         <section id="plan" style="display: none;">
             <h2>Финансовый план</h2>
@@ -171,7 +167,7 @@
                 <button onclick="importPlanFromExcel()" class="btn small">Загрузить</button>
             </div>
             <h3>Текущие планы</h3>
-            <ul id="plan-list" aria-label="Финансовые планы"></ul>
+            <ul id="plan-list"></ul>
         </section>
         <section id="analytics" style="display: none;">
             <h2>Отчет</h2>
@@ -180,14 +176,10 @@
                 <p><strong>Текущий месяц:</strong> <span id="current-month">Загрузка...</span></p>
                 <p><strong>Доход (план):</strong> <span id="plan-income-value">— ₽</span></p>
                 <p><strong>Доход (факт):</strong> <span id="fact-income-value">0 ₽</span></p>
-                <div class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
-                  <div id="progress-income-bar" class="progress-fill"></div>
-                </div>
+                <div class="progress-bar"><div id="progress-income-bar" class="progress-fill"></div></div>
                 <p><strong>Расход (план):</strong> <span id="plan-expense-value">— ₽</span></p>
                 <p><strong>Расход (факт):</strong> <span id="fact-expense-value">0 ₽</span></p>
-                <div class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
-                  <div id="progress-expense-bar" class="progress-fill"></div>
-                </div>
+                <div class="progress-bar"><div id="progress-expense-bar" class="progress-fill"></div></div>
             </div>
             <div class="card">
                 <h3>📊 Итоги</h3>
@@ -210,47 +202,55 @@
             </div>
             <div class="chart-container">
                 <h3>📉 Расходы по категориям</h3>
-                <canvas id="expensePieChart" role="img" aria-label="График расходов по категориям"></canvas>
+                <canvas id="expensePieChart"></canvas>
             </div>
             <div class="chart-container fixed-height">
                 <h3>📈 Рост накоплений по неделям</h3>
-                <canvas id="savingsWeeklyChart" role="img" aria-label="График роста накоплений"></canvas>
+                <canvas id="savingsWeeklyChart"></canvas>
             </div>
         </section>
         <section id="list" style="display: none;">
             <h2>📋 История операций</h2>
             <div class="filter-section">
-                <input type="date" id="filter-start" placeholder="С даты" />
-                <input type="date" id="filter-end" placeholder="По дату" />
-                <button onclick="filterByDate()" class="btn">🔍 Фильтровать</button>
-                <button onclick="clearFilter()" class="btn secondary">Сбросить</button>
+                <!-- Удалены старые input и кнопки -->
+                <!-- <input type="date" id="filter-start" placeholder="С даты" /> -->
+                <!-- <input type="date" id="filter-end" placeholder="По дату" /> -->
+                <!-- <button onclick="filterByDate()" class="btn">🔍 Фильтровать</button> -->
+                <!-- <button onclick="clearFilter()" class="btn secondary">Сбросить</button> -->
+                <!-- Добавлен новый компонент -->
+                <div class="date-range-container">
+                    <label for="filter-date-range">Выберите период:</label>
+                    <input type="text" id="filter-date-range" readonly placeholder="С - По" class="date-range-input" />
+                    <input type="hidden" id="filter-start" />
+                    <input type="hidden" id="filter-end" />
+                </div>
                 <button onclick="exportToExcel()" class="btn">📤 Экспорт</button>
             </div>
-            <ul id="all-transactions" aria-label="История операций"></ul>
+            <ul id="all-transactions"></ul>
         </section>
-        <nav class="bottom-nav" role="navigation" aria-label="Основная навигация">
-            <button onclick="show('home')" class="nav-btn" aria-label="Главная">
-                <img src="icons/home-icon.png" alt="" class="nav-icon">
+        <nav class="bottom-nav">
+            <button onclick="show('home')" class="nav-btn">
+                <img src="icons/home-icon.png" alt="Главная" class="nav-icon">
                 <span>Главная</span>
             </button>
-            <button onclick="show('plan')" class="nav-btn" aria-label="План">
-                <img src="icons/plan-icon.png" alt="" class="nav-icon">
+            <button onclick="show('plan')" class="nav-btn">
+                <img src="icons/plan-icon.png" alt="План" class="nav-icon">
                 <span>План</span>
             </button>
-            <button onclick="show('add')" class="nav-btn" aria-label="Добавить">
-                <img src="icons/add-icon.png" alt="" class="nav-icon">
+            <button onclick="show('add')" class="nav-btn">
+                <img src="icons/add-icon.png" alt="Добавить" class="nav-icon">
                 <span>Добавить</span>
             </button>
-            <button onclick="show('analytics')" class="nav-btn" aria-label="Отчет">
-                <img src="icons/analytics-icon.png" alt="" class="nav-icon">
+            <button onclick="show('analytics')" class="nav-btn">
+                <img src="icons/analytics-icon.png" alt="Отчет" class="nav-icon">
                 <span>Отчет</span>
             </button>
-            <button onclick="show('list')" class="nav-btn" aria-label="История">
-                <img src="icons/list-icon.png" alt="" class="nav-icon">
+            <button onclick="show('list')" class="nav-btn">
+                <img src="icons/list-icon.png" alt="История" class="nav-icon">
                 <span>История</span>
             </button>
         </nav>
     </div>
-    <script src="app.js" defer></script>
+    <script src="app.js"></script>
 </body>
 </html>
