@@ -13,9 +13,7 @@ body {
     min-height: 100vh;
     position: relative;
     transition: background-color 0.3s ease, color 0.3s ease;
-    padding: env(safe-area-inset-top) 16px env(safe-area-inset-bottom);
-    padding-top: calc(80px + env(safe-area-inset-top));
-    padding-bottom: calc(100px + env(safe-area-inset-bottom));
+    padding: 80px 16px 100px;
     line-height: 1.5;
 }
 body.dark-theme {
@@ -25,7 +23,7 @@ body.dark-theme {
 /* === Шапка === */
 .app-header {
     position: fixed;
-    top: env(safe-area-inset-top);
+    top: 0;
     left: 0;
     right: 0;
     display: flex;
@@ -45,6 +43,7 @@ body.dark-theme {
 body.dark-theme .app-header {
     background: rgba(28, 28, 30, 0.8); /* Полупрозрачный темный */
     border-bottom-color: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3); /* Темная тень */
 }
 .app-header h1 {
     margin: 0;
@@ -59,9 +58,9 @@ body.dark-theme .app-header h1 {
     color: #ffffff;
 }
 .header-icon {
-    width: 44px;
-    height: 44px;
-    transition: transform 0.2s ease;
+    width: 24px;
+    height: 24px;
+    transition: transform 0.2s ease, filter 0.2s ease; /* Добавлен filter для плавности */
 }
 .app-header .btn {
     background: none;
@@ -70,9 +69,9 @@ body.dark-theme .app-header h1 {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 44px;
-    height: 44px;
-    border-radius: 12px;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
     transition: background-color 0.3s ease;
 }
 .app-header .btn:hover {
@@ -114,14 +113,14 @@ body.dark-theme h3 {
     color: white;
     border: none;
     padding: 14px 16px;
-    border-radius: 18px;
+    border-radius: 12px;
     font-size: 17px;
     font-weight: 500;
     cursor: pointer;
     display: block;
     width: 100%;
     margin: 12px 0;
-    transition: all 0.2s ease;
+    transition: all 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease; /* Добавлены transform и box-shadow */
     box-shadow: 0 1px 3px rgba(0, 122, 255, 0.3);
 }
 .btn:hover {
@@ -134,10 +133,8 @@ body.dark-theme h3 {
 }
 .btn.small {
     width: auto;
-    padding: 12px 16px;
+    padding: 8px 16px;
     font-size: 15px;
-    min-width: 44px;
-    min-height: 44px;
 }
 .btn.danger {
     background: #ff3b30;
@@ -175,18 +172,29 @@ form {
     padding: 0;
     margin: 0;
     border: none;
+    /* Добавим максимальную ширину и центрирование для форм внутри секций */
+    max-width: 100%;
+    margin: 0 auto;
+    padding: 0 16px; /* Добавим внутренние отступы */
 }
 input,
 select {
     padding: 14px 16px;
     border: 1px solid rgba(0, 0, 0, 0.1);
-    border-radius: 18px;
+    border-radius: 12px;
     font-size: 17px;
     transition: all 0.3s ease;
     width: 100%;
     background: rgba(255, 255, 255, 0.9);
     color: #1d1d1f;
     font-family: inherit;
+    /* Добавим стили для datalist */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2386868b' d='M6 8.5L2.5 5 1.8 5.7 6 10.2 10.2 5.7 9.5 5z'/%3E%3C/svg%3E"); /* Простая стрелка вниз */
+    background-repeat: no-repeat;
+    background-position: right 16px center; /* Позиционируем справа с отступом */
+    background-size: 12px 12px;
+    padding-right: 40px; /* Добавим отступ справа для иконки */
+    min-width: 0; /* Позволяет элементам сжиматься в гриде */
 }
 input:focus,
 select:focus {
@@ -194,16 +202,26 @@ select:focus {
     border-color: #007AFF;
     box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.2);
 }
+/* Стили для placeholder */
+input::placeholder, textarea::placeholder {
+    color: #86868b; /* Серый цвет Apple */
+    opacity: 1; /* Для Firefox */
+}
 body.dark-theme input,
 body.dark-theme select {
     background: rgba(255, 255, 255, 0.1);
     color: #ffffff;
     border-color: rgba(255, 255, 255, 0.2);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%238e8e93' d='M6 8.5L2.5 5 1.8 5.7 6 10.2 10.2 5.7 9.5 5z'/%3E%3C/svg%3E");
 }
 body.dark-theme input:focus,
 body.dark-theme select:focus {
     border-color: #0a84ff;
     box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.3);
+}
+body.dark-theme input::placeholder, body.dark-theme textarea::placeholder {
+    color: #8e8e93;
+    opacity: 1;
 }
 /* === Списки === */
 ul {
@@ -216,19 +234,18 @@ li {
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     padding: 16px;
-    border-radius: 18px;
+    border-radius: 12px;
     margin: 8px 0;
     display: flex;
     justify-content: space-between;
     align-items: center;
     font-size: 17px;
-    transition: all 0.2s ease;
+    transition: all 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease; /* Добавлены transform и box-shadow */
     border: 1px solid rgba(0, 0, 0, 0.05);
-    min-height: 64px;
 }
 li:hover {
     transform: translateY(-1px);
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
 }
 body.dark-theme li {
     background: rgba(255, 255, 255, 0.08);
@@ -252,11 +269,11 @@ body.dark-theme .info {
 }
 /* Стили для иконок действий */
 .actions button {
-    width: 44px;
-    height: 44px;
+    width: 36px;
+    height: 36px;
     padding: 0;
     margin: 0;
-    border-radius: 12px;
+    border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -272,8 +289,8 @@ body.dark-theme .actions button:hover {
     background-color: rgba(255, 255, 255, 0.1);
 }
 .action-icon {
-    width: 20px;
-    height: 20px;
+    width: 18px;
+    height: 18px;
     display: block;
     filter: brightness(0) invert(0.5); /* Полутон для светлой темы */
 }
@@ -283,7 +300,7 @@ body.dark-theme .action-icon {
 /* === Навигация === */
 .bottom-nav {
     position: fixed;
-    bottom: env(safe-area-inset-bottom);
+    bottom: 0;
     left: 0;
     right: 0;
     background: rgba(255, 255, 255, 0.8);
@@ -316,16 +333,16 @@ body.dark-theme .bottom-nav {
     flex-direction: column;
     align-items: center;
     gap: 4px;
-    transition: all 0.2s ease;
+    transition: all 0.2s ease, transform 0.2s ease; /* Добавлен transform */
     flex: 1;
-    height: 60px;
+    height: 56px;
     justify-content: center;
 }
 .nav-btn:hover,
 .nav-btn.active {
     color: #007AFF;
     transform: translateY(-1px);
-    font-weight: 600;
+    background-color: rgba(0, 0, 0, 0.05); /* Легкий фон при наведении/активации */
 }
 body.dark-theme .nav-btn {
     color: #8e8e93;
@@ -333,7 +350,7 @@ body.dark-theme .nav-btn {
 body.dark-theme .nav-btn:hover,
 body.dark-theme .nav-btn.active {
     color: #0a84ff;
-    font-weight: 600;
+    background-color: rgba(255, 255, 255, 0.1); /* Легкий фон при наведении/активации */
 }
 .nav-icon {
     width: 24px;
@@ -351,19 +368,24 @@ body.dark-theme .nav-icon {
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     padding: 20px;
-    border-radius: 18px;
+    border-radius: 16px;
     margin: 20px 16px;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
     border: 1px solid rgba(0, 0, 0, 0.05);
-    transition: all 0.2s ease;
+    transition: all 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease; /* Добавлены transform и box-shadow */
+    /* Добавим max-width и центрирование */
+    max-width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    box-sizing: border-box;
 }
 .card:hover {
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 body.dark-theme .card {
     background: rgba(255, 255, 255, 0.08);
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
     border-color: rgba(255, 255, 255, 0.1);
 }
 body.dark-theme .card:hover {
@@ -376,6 +398,12 @@ body.dark-theme .card:hover {
     gap: 16px;
     margin: 20px 0;
     padding: 0 16px;
+    /* Убедимся, что ширина 100% и нет лишних отступов */
+    width: 100%;
+    box-sizing: border-box;
+    max-width: 100%;
+    margin-left: auto;
+    margin-right: auto;
 }
 @media (min-width: 480px) {
     .stats-grid {
@@ -390,15 +418,15 @@ body.dark-theme .card:hover {
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     padding: 24px;
-    border-radius: 18px;
+    border-radius: 16px;
     text-align: center;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
     border: 1px solid rgba(0, 0, 0, 0.05);
-    transition: all 0.2s ease;
+    transition: all 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease; /* Добавлены transform и box-shadow */
 }
 .stat-card:hover {
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 .stat-card.main-card {
     background: linear-gradient(135deg, #007AFF, #0056b3);
@@ -409,7 +437,7 @@ body.dark-theme .card:hover {
 }
 body.dark-theme .stat-card {
     background: rgba(255, 255, 255, 0.08);
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
     border-color: rgba(255, 255, 255, 0.1);
 }
 body.dark-theme .stat-card.main-card {
@@ -465,10 +493,6 @@ body.dark-theme .stat-card.dollar-card {
     border-radius: 3px;
     overflow: hidden;
     margin: 16px 0 8px;
-    position: relative;
-}
-.inner-progress-bar[role="progressbar"] {
-    /* Добавляем ARIA атрибуты для доступности */
 }
 .inner-progress-fill {
     height: 100%;
@@ -483,10 +507,6 @@ body.dark-theme .stat-card.dollar-card {
     border-radius: 3px;
     overflow: hidden;
     margin: 12px 0;
-    position: relative;
-}
-.progress-bar[role="progressbar"] {
-    /* Добавляем ARIA атрибуты для доступности */
 }
 .progress-fill {
     height: 100%;
@@ -508,9 +528,14 @@ body.dark-theme .progress-fill {
     background: rgba(255, 255, 255, 0.7);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border-radius: 18px;
+    border-radius: 16px;
     margin: 0 16px;
     border: 1px solid rgba(0, 0, 0, 0.05);
+    /* Добавим max-width для согласованности */
+    max-width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    box-sizing: border-box;
 }
 body.dark-theme .goal-section {
     background: rgba(255, 255, 255, 0.08);
@@ -532,11 +557,16 @@ body.dark-theme .goal-section label {
     align-items: center;
     flex-wrap: wrap;
     justify-content: center;
+    /* Добавим max-width и центрирование */
+    max-width: 100%;
+    margin: 0 auto;
 }
 .input-group input {
     flex: 1;
     min-width: 150px;
     max-width: 200px;
+    /* Убедимся, что они не выходят за пределы контейнера */
+    box-sizing: border-box;
 }
 /* Графики */
 .chart-container {
@@ -544,18 +574,15 @@ body.dark-theme .goal-section label {
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     padding: 20px;
-    border-radius: 18px;
+    border-radius: 16px;
     margin: 20px 16px;
     text-align: center;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
     border: 1px solid rgba(0, 0, 0, 0.05);
-}
-.chart-container.fixed-height {
-    height: 300px;
 }
 body.dark-theme .chart-container {
     background: rgba(255, 255, 255, 0.08);
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
     border-color: rgba(255, 255, 255, 0.1);
 }
 /* Индикатор обновления */
@@ -611,7 +638,7 @@ body.dark-theme .auth-screen h2 {
     padding: 16px;
     margin: 12px 0;
     border: 1px solid rgba(0, 0, 0, 0.1);
-    border-radius: 18px;
+    border-radius: 12px;
     font-size: 17px;
     background: rgba(255, 255, 255, 0.9);
     color: #1d1d1f;
@@ -744,110 +771,115 @@ body.dark-theme .toggle-button {
 body.dark-theme .toggle-input:checked + .toggle-label .toggle-button {
     background-color: #30d158; /* Зеленый цвет iOS в темной теме */
 }
-/* === Тосты (вместо alert) === */
-.toast {
-    position: fixed;
-    top: 80px;
-    left: 50%;
-    transform: translateX(-50%) translateY(-100%);
-    background: rgba(0, 0, 0, 0.8);
-    color: white;
-    padding: 12px 24px;
+
+/* --- Начало новых стилей для компонента выбора диапазона дат --- */
+.date-range-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.date-range-input {
+    padding: 14px 16px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
     border-radius: 12px;
-    font-size: 15px;
-    z-index: 2000;
-    transition: transform 0.3s ease;
-    pointer-events: none;
-    max-width: 80%;
-    text-align: center;
+    font-size: 17px;
+    background: rgba(255, 255, 255, 0.9);
+    color: #1d1d1f;
+    font-family: inherit;
+    cursor: pointer; /* Указывает, что поле кликабельное */
+    text-align: center; /* Центрируем текст */
+    transition: all 0.3s ease; /* Плавные переходы */
+    width: 100%; /* Занимает всю ширину */
+    min-width: 0; /* Позволяет сжиматься в гриде */
 }
-.toast.show {
-    transform: translateX(-50%) translateY(0);
+
+.date-range-input:focus {
+    outline: none;
+    border-color: #007AFF;
+    box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.2);
 }
-.toast.danger {
-    background: #ff3b30;
+
+body.dark-theme .date-range-input {
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    border-color: rgba(255, 255, 255, 0.2);
 }
-.toast.success {
-    background: #34c759;
+
+body.dark-theme .date-range-input:focus {
+    border-color: #0a84ff;
+    box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.3);
 }
-.toast.info {
-    background: #007AFF;
-}
-body.dark-theme .toast {
-    background: rgba(28, 28, 30, 0.9);
-    color: white;
-}
-/* === Фильтры и секция списка === */
+/* --- Конец новых стилей для компонента выбора диапазона дат --- */
+
+/* --- Начало улучшения выравнивания для .filter-section --- */
 .filter-section {
     display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-    padding: 0 16px 16px;
+    flex-wrap: wrap; /* Позволяет элементам переноситься на новую строку */
+    gap: 10px; /* Отступы между элементами */
     align-items: center;
+    justify-content: center; /* Центрируем элементы */
+    padding: 16px;
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 16px;
+    margin: 20px 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    box-sizing: border-box;
+    /* Добавим max-width и центрирование */
+    max-width: 100%;
+    margin-left: auto;
+    margin-right: auto;
 }
-.filter-section input[type="date"] {
-    flex: 1;
-    min-width: 140px;
+
+body.dark-theme .filter-section {
+    background: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    border-color: rgba(255, 255, 255, 0.1);
 }
+
+/* Стили для кнопок внутри .filter-section */
 .filter-section .btn {
-    flex: 1;
-    min-width: 100px;
-    margin: 0;
+    flex: 1 1 auto; /* Кнопки будут расти и сжиматься */
+    margin: 0; /* Убираем внешние отступы по умолчанию */
+    min-width: 100px; /* Минимальная ширина кнопки */
+    white-space: nowrap; /* Предотвращаем перенос текста в кнопке */
 }
-/* === Секция плана === */
-.excel-hint {
-    font-size: 14px;
-    color: #86868b;
-    margin: 8px 0;
+
+/* Адаптивность для .filter-section */
+@media (max-width: 480px) {
+    .filter-section {
+        flex-direction: column; /* Элементы в колонку на маленьких экранах */
+        align-items: stretch; /* Растягиваем элементы на всю ширину */
+    }
+
+    .filter-section .btn {
+        width: 100%; /* Кнопки на всю ширину */
+        min-width: auto; /* Отменяем минимальную ширину */
+    }
 }
-body.dark-theme .excel-hint {
-    color: #8e8e93;
-}
-.file-input {
-    margin: 12px 0;
-    padding: 12px;
-    border: 1px dashed rgba(0, 0, 0, 0.2);
-    border-radius: 12px;
-    background: rgba(255, 255, 255, 0.5);
-}
-body.dark-theme .file-input {
-    border-color: rgba(255, 255, 255, 0.2);
-    background: rgba(255, 255, 255, 0.05);
-}
-/* === Секция аналитики === */
-.bi-filter {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-    align-items: center;
-}
-.bi-filter input[type="date"] {
-    flex: 1;
-    min-width: 140px;
-}
-.bi-filter .btn {
-    flex: 1;
-    min-width: 100px;
-    margin: 0;
-}
-/* === Улучшения для доступности === */
-.btn:focus, 
-input:focus, 
-select:focus, 
-.nav-btn:focus {
+/* --- Конец улучшения выравнивания для .filter-section --- */
+
+/* --- Дополнительные улучшения доступности (Accessibility) --- */
+/* Добавим фокусные стили для интерактивных элементов */
+.btn:focus,
+.nav-btn:focus,
+.actions button:focus,
+.toggle-label:focus,
+.app-header .btn:focus,
+.date-range-input:focus {
     outline: 2px solid #007AFF;
     outline-offset: 2px;
 }
-body.dark-theme .btn:focus, 
-body.dark-theme input:focus, 
-body.dark-theme select:focus, 
-body.dark-theme .nav-btn:focus {
-    outline: 2px solid #0a84ff;
+body.dark-theme .btn:focus,
+body.dark-theme .nav-btn:focus,
+body.dark-theme .actions button:focus,
+body.dark-theme .toggle-label:focus,
+body.dark-theme .app-header .btn:focus,
+body.dark-theme .date-range-input:focus {
+    outline-color: #0a84ff;
 }
-/* === Анимации и плавные переходы === */
-* {
-    transition: background-color 0.3s ease, 
-                color 0.3s ease, 
-                border-color 0.3s ease, 
-                box-shadow 0.3s ease;
-}
+/* --- Конец дополнительных улучшений доступности --- */
