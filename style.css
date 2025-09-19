@@ -22,7 +22,6 @@ body.dark-theme {
     background: #000000;
     color: #ffffff;
 }
-
 /* === Шапка === */
 .app-header {
     position: fixed;
@@ -82,12 +81,10 @@ body.dark-theme .app-header h1 {
 body.dark-theme .app-header .btn:hover {
     background-color: rgba(255, 255, 255, 0.1);
 }
-
 /* === Основное содержимое === */
 #app {
     padding-top: 70px;
 }
-
 /* Заголовки секций */
 h2 {
     font-size: 22px;
@@ -111,7 +108,6 @@ h3 {
 body.dark-theme h3 {
     color: #ffffff;
 }
-
 /* === Кнопки в стиле iOS === */
 .btn {
     background: #007AFF;
@@ -171,7 +167,6 @@ body.dark-theme .btn.secondary {
     background: #636366;
     box-shadow: 0 1px 3px rgba(99, 99, 102, 0.4);
 }
-
 /* === Формы === */
 form {
     display: grid;
@@ -210,7 +205,6 @@ body.dark-theme select:focus {
     border-color: #0a84ff;
     box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.3);
 }
-
 /* === Списки === */
 ul {
     list-style: none;
@@ -286,7 +280,6 @@ body.dark-theme .actions button:hover {
 body.dark-theme .action-icon {
     filter: brightness(0) invert(0.8); /* Более яркий для темной темы */
 }
-
 /* === Навигация === */
 .bottom-nav {
     position: fixed;
@@ -352,7 +345,6 @@ body.dark-theme .nav-icon {
     filter: brightness(0) invert(1);
     opacity: 0.85;
 }
-
 /* === Карточки статистики === */
 .card {
     background: rgba(255, 255, 255, 0.7);
@@ -377,7 +369,6 @@ body.dark-theme .card {
 body.dark-theme .card:hover {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
-
 /* Сетка статистики */
 .stats-grid {
     display: grid;
@@ -444,7 +435,6 @@ body.dark-theme .stat-card.main-card {
 .stat-card.main-card .value {
     font-size: 36px;
 }
-
 /* Цветные карточки */
 .stat-card.ruble-savings-card {
     background: #e32636;
@@ -468,7 +458,6 @@ body.dark-theme .stat-card.dollar-card {
     color: white;
     box-shadow: 0 4px 16px rgba(133, 187, 101, 0.3);
 }
-
 /* Прогресс-бары */
 .inner-progress-bar {
     height: 6px;
@@ -476,6 +465,10 @@ body.dark-theme .stat-card.dollar-card {
     border-radius: 3px;
     overflow: hidden;
     margin: 16px 0 8px;
+    position: relative;
+}
+.inner-progress-bar[role="progressbar"] {
+    /* Добавляем ARIA атрибуты для доступности */
 }
 .inner-progress-fill {
     height: 100%;
@@ -490,6 +483,10 @@ body.dark-theme .stat-card.dollar-card {
     border-radius: 3px;
     overflow: hidden;
     margin: 12px 0;
+    position: relative;
+}
+.progress-bar[role="progressbar"] {
+    /* Добавляем ARIA атрибуты для доступности */
 }
 .progress-fill {
     height: 100%;
@@ -504,7 +501,6 @@ body.dark-theme .progress-bar {
 body.dark-theme .progress-fill {
     background: #0a84ff;
 }
-
 /* Секция цели */
 .goal-section {
     padding: 20px 16px;
@@ -542,7 +538,6 @@ body.dark-theme .goal-section label {
     min-width: 150px;
     max-width: 200px;
 }
-
 /* Графики */
 .chart-container {
     background: rgba(255, 255, 255, 0.7);
@@ -555,12 +550,14 @@ body.dark-theme .goal-section label {
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
     border: 1px solid rgba(0, 0, 0, 0.05);
 }
+.chart-container.fixed-height {
+    height: 300px;
+}
 body.dark-theme .chart-container {
     background: rgba(255, 255, 255, 0.08);
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
     border-color: rgba(255, 255, 255, 0.1);
 }
-
 /* Индикатор обновления */
 .refresh-indicator {
     position: fixed;
@@ -583,7 +580,6 @@ body.dark-theme .chart-container {
 body.dark-theme .refresh-indicator {
     background: #0a84ff;
 }
-
 /* Экран авторизации */
 .auth-screen {
     text-align: center;
@@ -645,7 +641,6 @@ body.dark-theme .auth-screen input:focus {
     font-size: 15px;
     color: #ff3b30;
 }
-
 /* Адаптивность */
 @media (max-width: 480px) {
     body {
@@ -686,7 +681,6 @@ body.dark-theme .auth-screen input:focus {
         margin: 20px 8px;
     }
 }
-
 /* === Тумблер === */
 .toggle-container {
     display: flex;
@@ -750,7 +744,6 @@ body.dark-theme .toggle-button {
 body.dark-theme .toggle-input:checked + .toggle-label .toggle-button {
     background-color: #30d158; /* Зеленый цвет iOS в темной теме */
 }
-
 /* === Тосты (вместо alert) === */
 .toast {
     position: fixed;
@@ -776,4 +769,85 @@ body.dark-theme .toggle-input:checked + .toggle-label .toggle-button {
 }
 .toast.success {
     background: #34c759;
+}
+.toast.info {
+    background: #007AFF;
+}
+body.dark-theme .toast {
+    background: rgba(28, 28, 30, 0.9);
+    color: white;
+}
+/* === Фильтры и секция списка === */
+.filter-section {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 0 16px 16px;
+    align-items: center;
+}
+.filter-section input[type="date"] {
+    flex: 1;
+    min-width: 140px;
+}
+.filter-section .btn {
+    flex: 1;
+    min-width: 100px;
+    margin: 0;
+}
+/* === Секция плана === */
+.excel-hint {
+    font-size: 14px;
+    color: #86868b;
+    margin: 8px 0;
+}
+body.dark-theme .excel-hint {
+    color: #8e8e93;
+}
+.file-input {
+    margin: 12px 0;
+    padding: 12px;
+    border: 1px dashed rgba(0, 0, 0, 0.2);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.5);
+}
+body.dark-theme .file-input {
+    border-color: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.05);
+}
+/* === Секция аналитики === */
+.bi-filter {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+}
+.bi-filter input[type="date"] {
+    flex: 1;
+    min-width: 140px;
+}
+.bi-filter .btn {
+    flex: 1;
+    min-width: 100px;
+    margin: 0;
+}
+/* === Улучшения для доступности === */
+.btn:focus, 
+input:focus, 
+select:focus, 
+.nav-btn:focus {
+    outline: 2px solid #007AFF;
+    outline-offset: 2px;
+}
+body.dark-theme .btn:focus, 
+body.dark-theme input:focus, 
+body.dark-theme select:focus, 
+body.dark-theme .nav-btn:focus {
+    outline: 2px solid #0a84ff;
+}
+/* === Анимации и плавные переходы === */
+* {
+    transition: background-color 0.3s ease, 
+                color 0.3s ease, 
+                border-color 0.3s ease, 
+                box-shadow 0.3s ease;
 }
