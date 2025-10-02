@@ -1,5 +1,3 @@
-[file name]: config.js
-[file content begin]
 // Firebase Configuration
 
 const firebaseConfig = {
@@ -230,4 +228,3 @@ if (typeof module !== 'undefined' && module.exports) {
         AppConfig 
     };
 }
-[file content end]
