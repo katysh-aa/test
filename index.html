@@ -6,17 +6,23 @@
     <title>Семейный бюджет</title>
     <link rel="stylesheet" href="style.css">
     <link rel="icon" type="image/x-icon" href="icons/favicon.ico">
+    
     <!-- PWA Meta Tags -->
     <meta name="theme-color" content="#007AFF">
     <link rel="manifest" href="/manifest.json">
+
     <!-- Apple Specific Meta Tags -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Семейный бюджет">
     <link rel="apple-touch-icon" href="icons/icon-152x152.png">
+
     <!-- Preload critical resources -->
     <link rel="preload" href="style.css" as="style">
+    <link rel="preload" href="config.js" as="script">
     <link rel="preload" href="app.js" as="script">
+    
+    <!-- External Libraries -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -24,7 +30,23 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
+    <!-- Refresh Indicator -->
     <div id="refresh-indicator" class="refresh-indicator"></div>
+    
+    <!-- Notification Container for Future Use -->
+    <div id="notification-container" class="notification-container" style="display: none;">
+        <div id="notification" class="notification">
+            <span id="notification-message"></span>
+            <button id="notification-close" class="notification-close">&times;</button>
+        </div>
+    </div>
+
+    <!-- Offline Indicator -->
+    <div id="offline-indicator" class="offline-indicator" style="display: none;">
+        <span>🔴 Оффлайн режим</span>
+    </div>
+
+    <!-- Auth Screen -->
     <section id="auth-screen" class="auth-screen">
         <h2>🔐 Вход в Семейный бюджет</h2>
         <p>Введите email и пароль</p>
@@ -35,6 +57,8 @@
             <p id="auth-error" style="color: red; margin-top: 10px;"></p>
         </form>
     </section>
+
+    <!-- App Header -->
     <header class="app-header">
         <button onclick="toggleTheme()" class="btn theme-toggle" title="Тёмная тема">
             <img src="icons/theme-icon.png" alt="Переключить тему" class="header-icon">
@@ -44,7 +68,10 @@
             <img src="icons/logout-icon.png" alt="Выйти" class="header-icon">
         </button>
     </header>
+
+    <!-- Main App Content -->
     <div id="app" style="display: none;">
+        <!-- Home Section -->
         <section id="home">
             <h2>Цель накоплений</h2>
             <div class="goal-section">
@@ -54,12 +81,14 @@
                     <button onclick="saveGoal()" class="btn small">Сохранить</button>
                 </div>
             </div>
+            
             <div class="stats-grid">
                 <!-- Всего накоплено (все активы) -->
                 <div class="stat-card main-card">
                     <h3>Всего накоплено</h3>
                     <p class="value" id="total-savings">0 ₽</p>
                 </div>
+                
                 <!-- Рублевые накопления -->
                 <h2>Рублевые накопления</h2>
                 <div class="stat-card ruble-savings-card">
@@ -70,31 +99,36 @@
                     </div>
                     <p class="info" id="ruble-progress-text">0% от цели</p>
                 </div>
+                
                 <div class="stat-card">
                     <h3>Доход за месяц</h3>
                     <p class="value" id="monthly-income">0 ₽</p>
                 </div>
+                
                 <div class="stat-card">
                     <h3>Расход за месяц</h3>
                     <p class="value" id="monthly-expense">0 ₽</p>
                 </div>
             </div>
-            <!-- Блок: Долларовые накопления -->
+
+            <!-- Долларовые накопления -->
             <h2>Долларовые накопления</h2>
             <div class="stats-grid">
                 <div class="stat-card dollar-card">
                     <h3>Накоплено долларов</h3>
                     <p class="value" id="dollar-savings-amount">0 $</p>
-                    <p class="info" id="dollar-rate">Курс: загрузка...</p> <!-- Изменено: будет обновлено JS -->
+                    <p class="info" id="dollar-rate">Курс: загрузка...</p>
                 </div>
+                
                 <div class="stat-card ruble-card">
                     <h3>Сумма в рублях</h3>
                     <p class="value" id="dollar-savings-rub">0 ₽</p>
                     <p class="info">По курсу ЦБ</p>
                 </div>
             </div>
-            <!-- Конец блока -->
         </section>
+
+        <!-- Add Transaction Section -->
         <section id="add" style="display: none;">
             <h2>Добавить операцию</h2>
             <form id="add-form">
@@ -109,6 +143,7 @@
                 <input list="authors" id="author" placeholder="Автор" required />
                 <datalist id="authors"></datalist>
                 <input type="text" id="comment" placeholder="Комментарий (необязательно)" />
+                
                 <div class="toggle-container">
                     <div class="toggle-switch">
                         <input type="checkbox" id="dollar-savings" class="toggle-input" />
@@ -118,8 +153,11 @@
                     </div>
                     <span class="toggle-text">Доллары</span>
                 </div>
+                
                 <button type="submit" class="btn">Добавить</button>
             </form>
+
+            <!-- Edit Form -->
             <form id="edit-form" style="display: none;">
                 <input type="hidden" id="edit-id" />
                 <input type="date" id="edit-date" required />
@@ -133,6 +171,7 @@
                 <input list="edit-authors" id="edit-author" placeholder="Автор" required />
                 <datalist id="edit-authors"></datalist>
                 <input type="text" id="edit-comment" placeholder="Комментарий" />
+                
                 <div class="toggle-container">
                     <div class="toggle-switch">
                         <input type="checkbox" id="edit-dollar-savings" class="toggle-input" />
@@ -142,15 +181,20 @@
                     </div>
                     <span class="toggle-text">Доллары</span>
                 </div>
+                
                 <button type="submit" class="btn">Сохранить</button>
                 <button type="button" onclick="cancelEdit()" class="btn secondary">Отмена</button>
             </form>
+
             <h3>Последние 10 операций</h3>
             <ul id="recent-transactions"></ul>
         </section>
+
+        <!-- Financial Plan Section -->
         <section id="plan" style="display: none;">
             <h2>Финансовый план</h2>
             <p>Запланируйте доходы и расходы по месяцам</p>
+            
             <div class="card">
                 <h3>Ввести вручную</h3>
                 <form id="plan-form">
@@ -160,17 +204,22 @@
                     <button type="submit" class="btn">💾 Сохранить</button>
                 </form>
             </div>
+            
             <div class="card">
                 <h3>📥 Импорт из Excel</h3>
                 <p class="excel-hint">Формат: <code>Месяц (ГГГГ-ММ), Доход, Расход</code></p>
                 <input type="file" id="import-plan-file" accept=".xlsx, .xls" class="file-input" />
                 <button onclick="importPlanFromExcel()" class="btn small">Загрузить</button>
             </div>
+            
             <h3>Текущие планы</h3>
             <ul id="plan-list"></ul>
         </section>
+
+        <!-- Analytics Section -->
         <section id="analytics" style="display: none;">
             <h2>Отчет</h2>
+            
             <div class="card">
                 <h3>📊 Финансовый план на месяц</h3>
                 <p><strong>Текущий месяц:</strong> <span id="current-month">Загрузка...</span></p>
@@ -181,17 +230,21 @@
                 <p><strong>Расход (факт):</strong> <span id="fact-expense-value">0 ₽</span></p>
                 <div class="progress-bar"><div id="progress-expense-bar" class="progress-fill"></div></div>
             </div>
+            
             <div class="card">
                 <h3>📊 Итоги</h3>
                 <p><strong>Доходы:</strong> <span id="analytics-income">0 ₽</span></p>
                 <p><strong>Расходы:</strong> <span id="analytics-expense">0 ₽</span></p>
                 <p><strong>Накоплено в этом месяце:</strong> <span id="monthly-savings">0 ₽</span></p>
             </div>
+            
             <div class="card">
                 <h3>📉 Топ-3 статьи расходов</h3>
                 <ul id="top-expenses"></ul>
             </div>
+
             <h2>📊 Анализ</h2>
+            
             <div class="card">
                 <h3>📅 Выберите период</h3>
                 <div class="bi-filter">
@@ -200,34 +253,34 @@
                     <button onclick="updateBI()" class="btn small">Показать</button>
                 </div>
             </div>
+            
             <div class="chart-container">
                 <h3>📉 Расходы по категориям</h3>
                 <canvas id="expensePieChart"></canvas>
             </div>
+            
             <div class="chart-container fixed-height">
                 <h3>📈 Рост накоплений по неделям</h3>
                 <canvas id="savingsWeeklyChart"></canvas>
             </div>
         </section>
+
+        <!-- Transaction List Section -->
         <section id="list" style="display: none;">
             <h2>📋 История операций</h2>
+            
             <div class="filter-section">
-                <!-- Удалены старые input и кнопки -->
-                <!-- <input type="date" id="filter-start" placeholder="С даты" /> -->
-                <!-- <input type="date" id="filter-end" placeholder="По дату" /> -->
-                <!-- <button onclick="filterByDate()" class="btn">🔍 Фильтровать</button> -->
-                <!-- <button onclick="clearFilter()" class="btn secondary">Сбросить</button> -->
-                <!-- Добавлен новый компонент -->
-                <div class="date-range-container">
-                    <label for="filter-date-range">Выберите период:</label>
-                    <input type="text" id="filter-date-range" readonly placeholder="С - По" class="date-range-input" />
-                    <input type="hidden" id="filter-start" />
-                    <input type="hidden" id="filter-end" />
-                </div>
+                <input type="date" id="filter-start" placeholder="С даты" />
+                <input type="date" id="filter-end" placeholder="По дату" />
+                <button onclick="filterByDate()" class="btn">🔍 Фильтровать</button>
+                <button onclick="clearFilter()" class="btn secondary">Сбросить</button>
                 <button onclick="exportToExcel()" class="btn">📤 Экспорт</button>
             </div>
+            
             <ul id="all-transactions"></ul>
         </section>
+
+        <!-- Bottom Navigation -->
         <nav class="bottom-nav">
             <button onclick="show('home')" class="nav-btn">
                 <img src="icons/home-icon.png" alt="Главная" class="nav-icon">
@@ -251,6 +304,11 @@
             </button>
         </nav>
     </div>
+
+    <!-- JavaScript Files -->
+    <script src="config.js"></script>
     <script src="app.js"></script>
+    <script src="sw-register.js"></script>
+
 </body>
 </html>
