@@ -1,150 +1,347 @@
-const CACHE_NAME = 'family-budget-v1.1';
-const urlsToCache = [
+const CACHE_NAME = 'family-budget-v2.0';
+const API_CACHE_NAME = 'family-budget-api-v2.0';
+
+// URLs to cache during install
+const STATIC_URLS = [
   '/',
   '/index.html',
   '/style.css',
+  '/config.js',
   '/app.js',
+  '/sw-register.js',
   '/icons/favicon.ico',
-  '/icons/icon-72x72.png',
-  '/icons/icon-96x96.png',
-  '/icons/icon-128x128.png',
-  '/icons/icon-144x144.png',
-  '/icons/icon-152x152.png',
-  '/icons/icon-180x180.png',
-  '/icons/icon-192x192.png',
-  '/icons/icon-384x384.png',
-  '/icons/icon-512x512.png',
-  '/icons/home-icon.png',
-  '/icons/plan-icon.png',
-  '/icons/add-icon.png',
-  '/icons/analytics-icon.png',
-  '/icons/list-icon.png',
-  '/icons/theme-icon.png',
-  '/icons/logout-icon.png',
-  '/icons/edit.png',
-  '/icons/delete.png'
+  '/manifest.json'
 ];
 
-// Стратегия кэширования для разных типов ресурсов
-const CACHE_STRATEGIES = {
-  // Статические ресурсы - Cache First
-  STATIC: ['style.css', 'app.js', 'favicon.ico'],
-  // Иконки - Cache First
-  ICONS: ['/icons/'],
-  // HTML - Network First для актуальности
-  HTML: ['index.html', '/'],
-  // API и внешние библиотеки - Network First с fallback на кэш
-  EXTERNAL: [
-    'firebase',
-    'xlsx',
-    'chart.js'
-  ]
-};
+// External resources to cache
+const EXTERNAL_URLS = [
+  'https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js',
+  'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js',
+  'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js',
+  'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js',
+  'https://cdn.jsdelivr.net/npm/chart.js'
+];
 
-// Install event
+// API endpoints that should use network-first strategy
+const API_ENDPOINTS = [
+  '/api/',
+  'https://www.cbr-xml-daily.ru/'
+];
+
+// Install event - cache static assets
 self.addEventListener('install', event => {
+  console.log('🔄 Service Worker installing...');
+  
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => {
-        // Кэшируем только статические ресурсы при установке
-        const staticResources = urlsToCache.filter(url => 
-          CACHE_STRATEGIES.STATIC.some(static => url.includes(static)) ||
-          CACHE_STRATEGIES.ICONS.some(icon => url.includes(icon))
-        );
-        return cache.addAll(staticResources);
+        console.log('✅ Opened cache');
+        return cache.addAll([...STATIC_URLS, ...EXTERNAL_URLS]);
+      })
+      .then(() => {
+        console.log('✅ All resources cached');
+        return self.skipWaiting(); // Activate immediately
+      })
+      .catch(error => {
+        console.error('❌ Cache installation failed:', error);
       })
   );
-  self.skipWaiting(); // Активировать новый SW сразу
 });
-
-// Fetch event
-self.addEventListener('fetch', event => {
-  // Пропускаем cross-origin запросы и не-GET запросы
-  if (!event.request.url.startsWith(self.location.origin) || 
-      event.request.method !== 'GET') {
-    return;
-  }
-
-  const url = event.request.url;
-
-  // Определяем стратегию кэширования
-  if (CACHE_STRATEGIES.EXTERNAL.some(external => url.includes(external))) {
-    // Network First для внешних библиотек
-    event.respondWith(networkFirst(event.request));
-  } else if (CACHE_STRATEGIES.HTML.some(html => url.includes(html))) {
-    // Network First для HTML
-    event.respondWith(networkFirst(event.request));
-  } else {
-    // Cache First для всего остального
-    event.respondWith(cacheFirst(event.request));
-  }
-});
-
-// Cache First стратегия
-async function cacheFirst(request) {
-  const cachedResponse = await caches.match(request);
-  if (cachedResponse) {
-    return cachedResponse;
-  }
-  
-  try {
-    const networkResponse = await fetch(request);
-    // Кэшируем только успешные ответы
-    if (networkResponse && networkResponse.status === 200) {
-      const cache = await caches.open(CACHE_NAME);
-      cache.put(request, networkResponse.clone());
-    }
-    return networkResponse;
-  } catch (error) {
-    console.error('Fetch failed:', error);
-    // Возвращаем fallback для изображений
-    if (request.destination === 'image') {
-      return new Response('', { status: 404 });
-    }
-    throw error;
-  }
-}
-
-// Network First стратегия
-async function networkFirst(request) {
-  try {
-    const networkResponse = await fetch(request);
-    // Кэшируем только успешные ответы
-    if (networkResponse && networkResponse.status === 200) {
-      const cache = await caches.open(CACHE_NAME);
-      cache.put(request, networkResponse.clone());
-    }
-    return networkResponse;
-  } catch (error) {
-    // При ошибке сети возвращаем из кэша
-    const cachedResponse = await caches.match(request);
-    if (cachedResponse) {
-      return cachedResponse;
-    }
-    
-    // Для HTML возвращаем базовую страницу
-    if (request.headers.get('accept').includes('text/html')) {
-      return caches.match('/index.html');
-    }
-    
-    return new Response('Network error', { status: 408 });
-  }
-}
 
 // Activate event - clean up old caches
 self.addEventListener('activate', event => {
+  console.log('🔄 Service Worker activating...');
+  
   event.waitUntil(
     caches.keys().then(cacheNames => {
       return Promise.all(
         cacheNames.map(cacheName => {
-          if (cacheName !== CACHE_NAME) {
+          // Delete old caches
+          if (cacheName !== CACHE_NAME && cacheName !== API_CACHE_NAME) {
+            console.log('🗑️ Deleting old cache:', cacheName);
             return caches.delete(cacheName);
           }
         })
       );
     }).then(() => {
-      // Получаем контроль над всеми clients
-      return self.clients.claim();
+      console.log('✅ Service Worker activated');
+      return self.clients.claim(); // Take control of all clients
     })
   );
+});
+
+// Fetch event with advanced strategies
+self.addEventListener('fetch', event => {
+  const { request } = event;
+  const url = new URL(request.url);
+
+  // Skip non-GET requests
+  if (request.method !== 'GET') {
+    return;
+  }
+
+  // Handle different types of requests with different strategies
+  if (isStaticAsset(request)) {
+    event.respondWith(staticCacheStrategy(request));
+  } else if (isApiRequest(request)) {
+    event.respondWith(apiCacheStrategy(request));
+  } else if (isExternalResource(request)) {
+    event.respondWith(externalResourceStrategy(request));
+  } else {
+    event.respondWith(networkFirstStrategy(request));
+  }
+});
+
+// Strategy for static assets (CSS, JS, HTML)
+async function staticCacheStrategy(request) {
+  try {
+    // Try cache first
+    const cachedResponse = await caches.match(request);
+    if (cachedResponse) {
+      // Update cache in background
+      updateCache(request);
+      return cachedResponse;
+    }
+
+    // If not in cache, fetch from network
+    const networkResponse = await fetch(request);
+    
+    // Cache the new response
+    if (networkResponse.ok) {
+      const cache = await caches.open(CACHE_NAME);
+      cache.put(request, networkResponse.clone());
+    }
+    
+    return networkResponse;
+  } catch (error) {
+    console.error('❌ Static cache strategy failed:', error);
+    
+    // If both cache and network fail, return offline page
+    const cached = await caches.match('/index.html');
+    return cached || new Response('Network error', { status: 408 });
+  }
+}
+
+// Strategy for API requests
+async function apiCacheStrategy(request) {
+  const cache = await caches.open(API_CACHE_NAME);
+  
+  try {
+    // Try network first
+    const networkResponse = await fetch(request);
+    
+    // Cache successful responses
+    if (networkResponse.ok) {
+      await cache.put(request, networkResponse.clone());
+    }
+    
+    return networkResponse;
+  } catch (error) {
+    console.log('🌐 Network failed, trying cache for API:', request.url);
+    
+    // Network failed, try cache
+    const cachedResponse = await cache.match(request);
+    if (cachedResponse) {
+      return cachedResponse;
+    }
+    
+    // If no cache, return error
+    return new Response(JSON.stringify({ 
+      error: 'Network unavailable and no cached data' 
+    }), {
+      status: 408,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+}
+
+// Strategy for external resources
+async function externalResourceStrategy(request) {
+  try {
+    // Try cache first
+    const cachedResponse = await caches.match(request);
+    if (cachedResponse) {
+      // Update cache in background for external resources
+      updateCache(request);
+      return cachedResponse;
+    }
+
+    // If not in cache, fetch from network
+    const networkResponse = await fetch(request);
+    
+    // Cache successful responses
+    if (networkResponse.ok) {
+      const cache = await caches.open(CACHE_NAME);
+      cache.put(request, networkResponse.clone());
+    }
+    
+    return networkResponse;
+  } catch (error) {
+    console.error('❌ External resource strategy failed:', error);
+    
+    // Return generic error for external resources
+    return new Response('External resource unavailable', { status: 408 });
+  }
+}
+
+// Network first strategy for other requests
+async function networkFirstStrategy(request) {
+  try {
+    const networkResponse = await fetch(request);
+    
+    // Cache successful responses
+    if (networkResponse.ok) {
+      const cache = await caches.open(CACHE_NAME);
+      cache.put(request, networkResponse.clone());
+    }
+    
+    return networkResponse;
+  } catch (error) {
+    console.log('🌐 Network failed, trying cache:', request.url);
+    
+    // Network failed, try cache
+    const cachedResponse = await caches.match(request);
+    return cachedResponse || new Response('Network error', { status: 408 });
+  }
+}
+
+// Background cache update
+async function updateCache(request) {
+  try {
+    const response = await fetch(request);
+    if (response.ok) {
+      const cache = await caches.open(CACHE_NAME);
+      cache.put(request, response);
+    }
+  } catch (error) {
+    // Silent fail - we don't want to break anything
+    console.log('⚠️ Background cache update failed:', error);
+  }
+}
+
+// Helper functions to categorize requests
+function isStaticAsset(request) {
+  const url = new URL(request.url);
+  return (
+    url.origin === self.location.origin &&
+    (request.url.includes('.css') ||
+     request.url.includes('.js') ||
+     request.url.includes('.html') ||
+     request.url.includes('/icons/'))
+  );
+}
+
+function isApiRequest(request) {
+  return API_ENDPOINTS.some(endpoint => request.url.includes(endpoint));
+}
+
+function isExternalResource(request) {
+  const url = new URL(request.url);
+  return url.origin !== self.location.origin && EXTERNAL_URLS.some(extUrl => 
+    request.url.includes(new URL(extUrl).hostname)
+  );
+}
+
+// Background sync for offline operations
+self.addEventListener('sync', event => {
+  console.log('🔄 Background sync:', event.tag);
+  
+  if (event.tag === 'background-sync') {
+    event.waitUntil(
+      syncPendingOperations()
+        .then(() => console.log('✅ Background sync completed'))
+        .catch(error => console.error('❌ Background sync failed:', error))
+    );
+  }
+});
+
+// Periodic sync for data updates
+self.addEventListener('periodicsync', event => {
+  if (event.tag === 'data-update') {
+    console.log('🔄 Periodic data update');
+    event.waitUntil(updateCachedData());
+  }
+});
+
+// Sync pending operations (for future offline functionality)
+async function syncPendingOperations() {
+  // This would sync any operations that were performed offline
+  // For now, it's a placeholder for future functionality
+  console.log('📡 Syncing pending operations...');
+  
+  // In a real implementation, you would:
+  // 1. Get pending operations from IndexedDB
+  // 2. Send them to the server
+  // 3. Clear them from IndexedDB on success
+  
+  return Promise.resolve();
+}
+
+// Update cached data periodically
+async function updateCachedData() {
+  try {
+    // Update USD rate cache
+    const usdRateResponse = await fetch('https://www.cbr-xml-daily.ru/daily_json.js');
+    if (usdRateResponse.ok) {
+      const cache = await caches.open(API_CACHE_NAME);
+      cache.put('https://www.cbr-xml-daily.ru/daily_json.js', usdRateResponse);
+      console.log('✅ USD rate cache updated');
+    }
+  } catch (error) {
+    console.error('❌ Periodic data update failed:', error);
+  }
+}
+
+// Push notifications (for future features)
+self.addEventListener('push', event => {
+  if (!event.data) return;
+  
+  const data = event.data.json();
+  const options = {
+    body: data.body || 'Новое уведомление от Семейного бюджета',
+    icon: '/icons/icon-192x192.png',
+    badge: '/icons/icon-72x72.png',
+    tag: 'budget-notification',
+    requireInteraction: true,
+    actions: [
+      {
+        action: 'open',
+        title: 'Открыть'
+      },
+      {
+        action: 'close',
+        title: 'Закрыть'
+      }
+    ]
+  };
+  
+  event.waitUntil(
+    self.registration.showNotification(data.title || 'Семейный бюджет', options)
+  );
+});
+
+// Handle notification clicks
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  
+  if (event.action === 'open') {
+    event.waitUntil(
+      clients.matchAll({ type: 'window' }).then(windowClients => {
+        // Focus existing window or open new one
+        for (const client of windowClients) {
+          if (client.url === self.location.origin && 'focus' in client) {
+            return client.focus();
+          }
+        }
+        if (clients.openWindow) {
+          return clients.openWindow('/');
+        }
+      })
+    );
+  }
+});
+
+// Handle notification close
+self.addEventListener('notificationclose', event => {
+  console.log('📱 Notification closed:', event.notification.tag);
 });
