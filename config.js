@@ -219,12 +219,5 @@ const AppConfig = {
     `
 };
 
-// Export for use in other files
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { 
-        firebaseConfig, 
-        initializeFirebase, 
-        SecurityHelper, 
-        AppConfig 
-    };
-}
+// ES6 Module Exports
+export { firebaseConfig, initializeFirebase, SecurityHelper, AppConfig };
