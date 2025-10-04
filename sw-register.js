@@ -104,11 +104,11 @@ class ServiceWorkerManager {
             console.log('🔄 Syncing data...');
             
             // For now, we'll just reload the data
-            if (typeof loadFromFirebase === 'function') {
-                loadFromFirebase();
+            if (typeof window.loadFromFirebase === 'function') {
+                window.loadFromFirebase();
             }
-            if (typeof loadGoalFromFirebase === 'function') {
-                loadGoalFromFirebase();
+            if (typeof window.loadGoalFromFirebase === 'function') {
+                window.loadGoalFromFirebase();
             }
             
         } catch (error) {
@@ -135,7 +135,5 @@ if (document.readyState === 'loading') {
     new ServiceWorkerManager();
 }
 
-// Export for testing and other modules
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = ServiceWorkerManager;
-}
+// ES6 Module Export
+export default ServiceWorkerManager;
