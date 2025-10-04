@@ -134,6 +134,7 @@ body.dark-theme .notification {
     -webkit-backdrop-filter: blur(20px);
     max-width: 600px;
     margin: 0 auto;
+    display: none;
 }
 
 body.dark-theme .offline-indicator {
@@ -1003,4 +1004,119 @@ body.dark-theme .toggle-input:checked + .toggle-label .toggle-button {
         background: #000000;
         color: #ffffff;
     }
+}
+
+/* === Дополнительные стили для нового HTML === */
+.hidden {
+    display: none !important;
+}
+
+.app-container {
+    display: none;
+}
+
+.section {
+    display: none;
+}
+
+.section.active {
+    display: block;
+}
+
+/* Стили для списков */
+.transactions-list .loading-item,
+.plans-list .empty-item,
+.expenses-list .empty-item {
+    color: #999;
+    font-style: italic;
+}
+
+/* Стили для форм */
+.auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-width: 320px;
+    width: 100%;
+}
+
+.auth-error {
+    margin-top: 16px;
+    color: #ff3b30;
+}
+
+.transaction-form,
+.edit-form,
+.plan-form {
+    display: grid;
+    gap: 16px;
+}
+
+.edit-form-container {
+    margin-top: 20px;
+}
+
+/* Контейнеры */
+.filters-container,
+.import-container,
+.bi-filters {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.filter-input,
+.bi-filter-input,
+.file-input {
+    flex: 1;
+    min-width: 120px;
+}
+
+.stats-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.plan-fact-item {
+    margin: 16px 0;
+}
+
+.plan-fact-values {
+    display: flex;
+    justify-content: space-between;
+    margin: 8px 0;
+}
+
+.savings-summary {
+    text-align: center;
+    margin-top: 16px;
+}
+
+.savings-summary strong {
+    display: block;
+    margin-bottom: 8px;
+}
+
+.savings-summary #monthly-savings {
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.import-info {
+    margin-top: 8px;
+    font-size: 14px;
+    color: #86868b;
+}
+
+/* Темная тема */
+body.dark-theme .transactions-list .loading-item,
+body.dark-theme .plans-list .empty-item,
+body.dark-theme .expenses-list .empty-item {
+    color: #8e8e93;
+}
+
+body.dark-theme .import-info {
+    color: #8e8e93;
 }
