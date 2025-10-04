@@ -1,5 +1,5 @@
-const CACHE_NAME = 'family-budget-v2.0';
-const API_CACHE_NAME = 'family-budget-api-v2.0';
+const CACHE_NAME = 'family-budget-v2.2';
+const API_CACHE_NAME = 'family-budget-api-v2.2';
 
 // URLs to cache during install
 const STATIC_URLS = [
@@ -8,6 +8,15 @@ const STATIC_URLS = [
   '/style.css',
   '/config.js',
   '/app.js',
+  '/modules/firebase.js',
+  '/modules/state.js',
+  '/modules/utils.js',
+  '/modules/dom.js',
+  '/modules/ui.js',
+  '/modules/transactions.js',
+  '/modules/analytics.js',
+  '/modules/plans.js',
+  '/modules/auth.js',
   '/sw-register.js',
   '/icons/favicon.ico',
   '/manifest.json'
@@ -87,6 +96,8 @@ self.addEventListener('fetch', event => {
     event.respondWith(apiCacheStrategy(request));
   } else if (isExternalResource(request)) {
     event.respondWith(externalResourceStrategy(request));
+  } else if (isModuleRequest(request)) {
+    event.respondWith(moduleCacheStrategy(request));
   } else {
     event.respondWith(networkFirstStrategy(request));
   }
@@ -184,6 +195,33 @@ async function externalResourceStrategy(request) {
   }
 }
 
+// Strategy for module requests
+async function moduleCacheStrategy(request) {
+  try {
+    // For modules, try network first with cache fallback
+    const networkResponse = await fetch(request);
+    
+    // Cache successful module responses
+    if (networkResponse.ok) {
+      const cache = await caches.open(CACHE_NAME);
+      cache.put(request, networkResponse.clone());
+    }
+    
+    return networkResponse;
+  } catch (error) {
+    console.log('🌐 Network failed, trying cache for module:', request.url);
+    
+    // Network failed, try cache
+    const cachedResponse = await caches.match(request);
+    if (cachedResponse) {
+      return cachedResponse;
+    }
+    
+    // If module not in cache, return error
+    return new Response('Module unavailable offline', { status: 408 });
+  }
+}
+
 // Network first strategy for other requests
 async function networkFirstStrategy(request) {
   try {
@@ -239,6 +277,14 @@ function isExternalResource(request) {
   const url = new URL(request.url);
   return url.origin !== self.location.origin && EXTERNAL_URLS.some(extUrl => 
     request.url.includes(new URL(extUrl).hostname)
+  );
+}
+
+function isModuleRequest(request) {
+  const url = new URL(request.url);
+  return (
+    url.origin === self.location.origin &&
+    request.url.includes('/modules/')
   );
 }
 
